@@ -1,0 +1,50 @@
+# Dev-only tooling — not needed by the deployed app (main.py/demo_page.py).
+# Install with: pip install -r requirements.txt -r requirements-dev.txt
+#
+# --- Graphical browser scraping: occasional manual audit only, NOT the
+#     price-collection pipeline ---
+# This project's actual pricing intent is a no-human, no-browser pipeline:
+# scripts/refresh_openai_pricing.py parses OpenAI's pricing page's own
+# embedded JSON via plain urllib + regex, no browser, no screenshot, no
+# human glance required to trust its output structurally (2026-09-14 audit:
+# checked config/model-pricing.json directly — every committed record so
+# far was actually entered by a human transcribing a paste/screenshot or
+# researching third-party aggregators, and that script has never yet been
+# run to produce a committed record; it exists and is intended to be the
+# real mechanism going forward, it's just been unexercised so far).
+#
+# Required by scripts/capture_openai_pricing.py: a screenshot capture of
+# OpenAI's live pricing page for a human to glance at — deliberately NOT a
+# scraping/parsing script, does not write to config/model-pricing.json, and
+# is never meant to run as part of routine price collection. Its only
+# legitimate use is a rare, manual sanity-check of refresh_openai_pricing.py's
+# structural assumptions (e.g. "does this page still have the tier labels
+# and table shape that script expects") — an audit of the automated
+# pipeline, not a substitute for it, and never required for that pipeline
+# to run. Ported 2026-09-14 from
+# ../ai-eng-bootcamp.vera/scripts/capture_openai_pricing.py (see that
+# project's pricing-scraper-design-prv.md for the full design writeup).
+# After installing this file, also run:
+#   scripts/chromium-deps.sh        # system libs Chromium needs on Linux
+#   playwright install chromium     # the actual browser binary
+playwright==1.62.0
+
+# --- LAN-local inference (optional) ---
+# No additional Python package is needed here to USE a LAN-local inference
+# server from this app. providers.py talks to it purely over HTTP via the
+# `openai` package already pinned in requirements.txt — the same
+# OpenAI-compatible /v1/chat/completions and /v1/models endpoints used for
+# every cloud provider in the fallback chain. There is nothing "browser" or
+# "scraping" about that path; see providers.py's LAN-local block and
+# .env.example (LOCAL_INFERENCE_HOST/PORT, or LOCAL_INFERENCE_SERVERS for
+# more than one server) for how to point at one.
+#
+# What IS a real prerequisite, but lives entirely outside this repo's
+# Python dependencies: an actual running OpenAI-compatible inference server
+# on the LAN (e.g. llama.cpp's own built-in server, or an opencode-style
+# wrapper around it). Install and run that separately, on whichever
+# machine(s) will serve requests — this project only ever calls it as a
+# client, never bundles or launches it. Nothing about that server's setup,
+# or the models it serves, belongs in this repo's requirements files (see
+# providers.py's live-discovery design for why model names in particular
+# are deliberately kept out of code, config, and git history here).

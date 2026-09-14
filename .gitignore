@@ -2,8 +2,22 @@
 .env
 .env.local
 *.pem
+*-prv
+*-prv/
 secrets.toml
 .streamlit/secrets.toml
+
+# Local run artifacts (e.g. run.sh recording its active host:port)
+.faststream-local-url
+
+# LAN-local inference availability log — will contain locally-hosted model
+# names once used, which must never enter this portfolio-facing repo (see
+# providers.py's AVAILABILITY_LOG_PATH docstring)
+.model-availability.json
+
+# Planning
+p3m3/
+syllabus/
 
 # Python
 __pycache__/
@@ -12,6 +26,8 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.coverage
+htmlcov/
 dist/
 build/
 

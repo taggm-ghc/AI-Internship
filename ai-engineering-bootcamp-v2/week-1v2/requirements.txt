@@ -1,5 +1,7 @@
-fastapi[standard]
-httpx
-openai
-python-dotenv
-streamlit
+fastapi[standard]==0.141.1
+httpx==0.28.1
+openai==3.13.0
+pydantic==2.13.5
+python-dotenv==1.2.3
+slowapi==0.1.10
+streamlit==1.63.0

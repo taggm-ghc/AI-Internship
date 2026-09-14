@@ -10,3 +10,8 @@ __pycache__/
 venv/
 .venv/
 env/
+
+# scripts/capture_openai_pricing.py's screenshot output — local
+# human-verification artifacts, not something a graded/portfolio repo
+# needs committed (regenerable from the live page at any time).
+captures/

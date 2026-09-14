@@ -8,3 +8,17 @@ __pycache__/
 .git/
 .gitignore
 .DS_Store
+
+# Dev-only tooling, never imported by the deployed app (main.py/ask_service.py/
+# providers.py don't reference anything under scripts/) — keep entirely out of
+# the image, not just uninstalled. requirements-dev.txt pulls in Playwright,
+# which needs a separate `playwright install chromium` plus Chromium's own
+# system shared libraries (see scripts/chromium-deps.sh) neither of which this
+# Dockerfile provides; excluding the file here means an accidental
+# `pip install -r requirements-dev.txt` added to this Dockerfile later would
+# fail loudly at build time (file not found) instead of silently trying, and
+# failing at container runtime, to launch a browser that was never actually
+# usable in this image.
+requirements-dev.txt
+scripts/
+captures/
