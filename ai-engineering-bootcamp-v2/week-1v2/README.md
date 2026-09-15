@@ -43,15 +43,11 @@ Open `.env` and add your key:
 OPENAI_API_KEY=sk-...
 ```
 
-Leave values bare, no surrounding quotes — every value in this file
-(`.env`/`.env.example`) follows that convention. `python-dotenv` treats
-quoting as meaningful, not cosmetic: unquoted (this project's convention)
-strips surrounding whitespace with no escape processing; single-quoted is
-fully literal; double-quoted processes escape sequences like `\n`. None of
-this project's values (API keys, dates, host:port pairs) need any of that,
-so bare is simplest — the one case quoting would actually matter is a
-value containing a literal `#`, which unquoted gets truncated as a comment
-from that point on.
+Leave values bare, no quotes — `python-dotenv` treats quoting as
+meaningful (single-quoted is literal, double-quoted processes `\n`
+escapes), and none of this project's values need that. Exception: a
+value containing a literal `#` needs quoting, or everything after it is
+parsed as a comment.
 
 ## Terminal 1: Start the API
 
@@ -99,9 +95,59 @@ that response with Pydantic, records the failure, and retries with structured ou
 This is a small classroom-friendly example of a production habit: do not trust free-form
 LLM output at the boundary of your application.
 
+### How it works
+
+`ask_service.synthetic_malformed_json()` returns a fixed, free (no
+OpenAI call) payload with `confidence` as a string, where the `Answer`
+schema requires a `float`. `main.py`'s `ask()` handler validates that
+on attempt 1, catches the `ValidationError`, logs it as a failed
+`AttemptResult`, and retries — attempt 2 makes a real call and returns
+a valid `Answer`. The response's `attempts` array shows both tries, so
+the catch-and-recover is visible, not just asserted.
+
+### Why it matters
+
+Skip this layer and one of two things happens: the malformed payload
+ships as a "successful" 200 with a string where a caller was promised
+a float — silently breaking any downstream code that trusts the
+contract, with no link back to the LLM call that caused it — or, if
+nothing catches the validation exception, the caller gets a bare `500`
+with no explanation. The second case already happened once in this
+codebase for a different exception type (`AuthenticationError`, before
+it was mapped to a clean `401`) — the same class of gap the guardrail
+closes here for schema mismatches.
+
+### The rest of the guardrail stack
+
+`force_bad` shows one layer — schema validation and retry. `/ask` and
+its siblings also have:
+
+- **Typed error mapping** — `AuthenticationError` → `401`,
+  `RateLimitError` → `429`/`402`, other OpenAI errors → `502`, instead
+  of a generic `500`.
+- **A global exception handler** — no uncaught exception, from any
+  code path, ever reaches a caller as a raw traceback.
+- **A proactive key check** — an obviously invalid key returns a clean
+  `503` before spending a network call, not after.
+- **Input and output caps** — `max_length=4000` on request text and a
+  1,000-token completion cap keep per-call cost bounded and
+  calculable: typical usage runs about **$0.165/day**, worst case
+  (maximum-length input/output on every request) about **$0.96/day** —
+  comfortably inside a small wallet budget.
+- **A three-window rate limiter** (`10/min; 30/hour; 300/day`,
+  tightest window checked first) on every endpoint, so a burst of
+  traffic against the public demo URL can't run up an unbounded bill.
+- **Client timeout/retry** (20s, 3 retries) and **multi-provider
+  fallback** — a slow or unavailable provider doesn't hang the request
+  or take the whole endpoint down.
+
+Together: a malformed, oversized, or otherwise bad request meets a
+typed, bounded response at every layer — never a silent failure or an
+open-ended bill.
+
 ## Test With Curl
 
-Normal request:
+Normal request, against a local server:
 
 ```bash
 curl -s -X POST http://127.0.0.1:8000/ask \
@@ -116,6 +162,21 @@ curl -s -X POST http://127.0.0.1:8000/ask \
   -H "Content-Type: application/json" \
   -d '{"question": "What is a vector database?", "model": "gpt-4o-mini", "force_bad": true}'
 ```
+
+Same request against a deployed instance (see [Deploy](#deploy)), piped through
+`jq` for readable output — replace `$DEPLOYED_URL` with your own service's
+URL (keep that URL out of public commits, PRs, and this README; see the note
+in Deploy):
+
+```bash
+curl -s -X POST "$DEPLOYED_URL/ask" \
+  -H "Content-Type: application/json" \
+  -d '{"question": "What is RAG in one sentence?", "model": "gpt-4o-mini"}' | jq
+```
+
+Render's free tier spins the service down after periods of inactivity, so the
+first request after a while may take up to a minute while it wakes back up —
+that's expected, not an error.
 
 ## Instructor Flow
 
@@ -145,44 +206,108 @@ source .venv/bin/activate
 python smoke_test.py
 ```
 
+## Deploy
+
+The `Dockerfile` in this folder is the deploy artifact — it installs only
+`requirements.txt` (never `requirements-dev.txt`, see the Dockerfile's own
+comments) and runs `uvicorn main:app --host 0.0.0.0 --port 8000`.
+
+> **Critical — do not share your live URL publicly.** Never post your
+> Render (or other) service URL in this README, in commits/PRs on this
+> public repo, or on LinkedIn, Twitter/X, blogs, or any other public page.
+> Anyone with the URL can spend your API credits. Share it only through
+> the private channel your course/instructor specifies (e.g. an LMS
+> submission field), and keep it out of version control — e.g. a local,
+> gitignored note, or a `DEPLOYED_URL` var you export in your own shell.
+
+**Render:**
+
+1. New **Web Service** → connect this GitHub repo.
+2. Runtime: **Docker**.
+3. **Root Directory**: `ai-engineering-bootcamp-v2/week-1v2` — this is a
+   monorepo, so Render needs to be told which subfolder holds the
+   `Dockerfile`. Build and start commands are then read from that
+   Dockerfile automatically; leave them blank.
+4. **Environment Variables**: add `OPENAI_API_KEY` (required) and, if you
+   want the free-tier fallback chain, any of `GROQ_API_KEY`,
+   `GEMINI_API_KEY`, `MISTRAL_API_KEY`, `OPENROUTER_API_KEY`,
+   `SAMBANOVA_API_KEY`, `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID`
+   — see `.env.example` for what each one does. Set these directly in
+   Render's dashboard; never commit a `.env` file or paste real key values
+   into the repo.
+5. **Health Check Path**: `/health`.
+6. Deploy. Render builds the image from the Dockerfile and routes traffic
+   to the port it `EXPOSE`s (8000) — no `$PORT` wiring needed on this
+   runtime.
+
+On Render's free tier the service spins down after inactivity — see the
+cold-start note under [Test With Curl](#test-with-curl). To point the
+Streamlit demo at a deployed instance instead of localhost, paste that
+URL into the **API base URL** field in the sidebar (this stays local to
+your browser session, not committed anywhere).
+
+**Elsewhere (Fly.io, Railway, a VM, etc.):** the same `Dockerfile` works
+anywhere that can build and run a container and inject env vars at
+runtime — build with `docker build -t week-1v2 .`, run with `docker run -p
+8000:8000 -e OPENAI_API_KEY=sk-... week-1v2`, and set the platform's
+equivalent of a health check to `GET /health`.
+
 ## Model Choice
 
-Two separate model-selection questions, both answered from
-`config/model-selection.json`, not hardcoded in the code:
+Default: `gpt-4.1-nano` — OpenAI's cheapest structured-output-capable
+tier ($0.10/1M input, $0.40/1M output tokens). It fits `/ask`'s bounded
+single-turn Q&A contract, where a predictable schema matters more than
+deep reasoning; a real call against the deployed instance cost
+**$0.000096** (118 prompt + 210 completion tokens) — see [Cost per
+call](#cost-per-call).
 
-**Per-request override** — if a caller passes `model=`, that exact OpenAI
-model is used directly (`selected_model`/`supported_models`; default
-`gpt-4.1-nano`, cheapest acceptable model for a cost-observable `/ask`
-contract at this stage — revisit once answer quality becomes load-bearing).
+Model selection is sourced from `config/model-selection.json`, not
+hardcoded, and covers two cases:
 
-**No override given (the default path)** — a free-tier-first fallback
-chain (`provider_chain`) is tried in order before spending against the
-paid OpenAI key, which is always the chain's last entry: Groq and Gemini
-first (both independently confirmed, from their own docs, to support the
-schema-constrained structured output `/ask`/`/summarize`/`/analyze-sentiment`
-need), then Mistral/OpenRouter/SambaNova/Cloudflare Workers AI (usable in
-`/ask/stream`'s freeform chain now; not yet independently confirmed for
-structured output, so excluded from the structured endpoints until they
-are). Any entry whose API key isn't set in `.env` is skipped — see
-`GET /providers/status` to check what's actually configured, and every
-response's `model` field reports which provider/model actually served it
-(e.g. `"groq:openai/gpt-oss-20b"` vs. `"openai:gpt-4.1-nano"`).
+- **Per-request override** — `model=` routes straight to that OpenAI
+  model.
+- **No override (default path)** — a free-tier-first fallback chain
+  (`provider_chain`) tries Groq and Gemini first (confirmed
+  structured-output-capable), then Mistral/OpenRouter/SambaNova/
+  Cloudflare (freeform-only until confirmed), with OpenAI as the
+  always-available last entry. Unconfigured providers are skipped —
+  `GET /providers/status` shows what's live, and every response's
+  `model` field reports who actually served it (e.g.
+  `"groq:openai/gpt-oss-20b"`).
 
-A free tier is a rate/volume allowance, not a $0 price — `cost_usd` always
-reflects that provider's real per-token rate, never a fabricated zero (see
-`pricing_config.ProviderConfig`'s docstring for why that distinction
-matters). This also addresses Module 1.D2 — provider portability beyond
-OpenAI — with a real fallback chain rather than just a design note.
+A free tier is a rate/volume allowance, not a $0 price — `cost_usd`
+always reflects the provider's real per-token rate.
+
+### Cost per call
+
+Real `cost_usd` values from live calls, not estimates:
+
+| Call | Tokens (prompt + completion) | `cost_usd` |
+|------|-------------------------------|------------|
+| `/ask` roundtrip | 118 + 210 | `$0.000096` |
+| `/ask` roundtrip | — | `$0.000039` |
+| `test_all_stages.py`, 5 live calls | — | `$0.00061` total |
+
+**Roughly $0.00004–$0.0001 per short call** — a $5 OpenAI credit covers
+on the order of 50,000–100,000 of them at this default model and
+question length; cost scales with answer length for longer calls like
+`/summarize`.
+
+Two caveats: this isn't free-tier-inclusive (a Groq/Gemini call still
+reports its real per-token rate even when nothing was actually billed —
+see `free_tier_note` and the sidebar's per-provider breakdown for the
+truer "what did this cost" view), and it's not a cap (that's what the
+input/output limits under [Try the Guardrail
+Demo](#try-the-guardrail-demo) are for). Reproduce it yourself with
+`python test_all_stages.py` or the Streamlit sidebar's running-costs
+panel.
 
 ### LAN-local inference (optional)
 
 Point the fallback chain at your own OpenAI-compatible server(s) on the
 local network (e.g. llama.cpp) instead of, or alongside, the cloud
-providers above. This is **opt-in**: if none of the variables below are
-set, LAN-local is skipped entirely — it is never probed at some
-conventional default just because the block is empty, since that would
-let a server outside this app's knowledge silently win over OpenAI on
-every request with no way to tell from the response alone.
+providers above. Opt-in only: with none of the variables below set,
+LAN-local is skipped entirely.
 
 One server, in `.env`:
 
@@ -216,6 +341,8 @@ week-1v2/
 ├── main.py                         # Final API used by students
 ├── demo_page.py                    # Streamlit UI for the final API
 ├── smoke_test.py                   # No-token API startup check
+├── Dockerfile                      # Deploy artifact — see Deploy
+├── run.sh                          # Local dev launcher with port auto-retry
 ├── requirements.txt
 ├── requirements-dev.txt            # Optional: pricing-page screenshot verification (Playwright)
 ├── scripts/
@@ -223,7 +350,7 @@ week-1v2/
 │   ├── append_model_pricing.py         # Manual PricingRecord append helper
 │   ├── capture_openai_pricing.py       # Rare manual audit screenshots only (needs requirements-dev.txt)
 │   └── chromium-deps.sh                # System libs for the above
-├── .env.example
+├── .env.example                    # Copy to .env and fill in — .env itself is gitignored
 ├── .gitignore
 └── stages/
     ├── stage_1_bare_ask.py
