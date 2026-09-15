@@ -86,6 +86,11 @@ http://localhost:8501
 Use the page to ask a question, switch models, inspect the JSON response, and copy the
 equivalent `curl` request.
 
+The sidebar's **API base URL** field defaults to (in priority order): the
+`API_BASE_URL` env var if set, then whatever `run.sh` last recorded in
+`.faststream-local-url`, then `http://127.0.0.1:8000`. You can always
+override it by hand in the sidebar for the current session.
+
 ## Try the Guardrail Demo
 
 Turn on **Force a bad first response to demo validation + retry** in the Streamlit page.
@@ -242,9 +247,41 @@ comments) and runs `uvicorn main:app --host 0.0.0.0 --port 8000`.
 
 On Render's free tier the service spins down after inactivity — see the
 cold-start note under [Test With Curl](#test-with-curl). To point the
-Streamlit demo at a deployed instance instead of localhost, paste that
-URL into the **API base URL** field in the sidebar (this stays local to
-your browser session, not committed anywhere).
+Streamlit demo at a deployed instance instead of localhost, either paste
+that URL into the **API base URL** field in the sidebar for the current
+session (nothing committed anywhere), or see below to deploy the
+Streamlit UI itself as a second Render service with that URL wired in
+via an env var.
+
+### Deploying the Streamlit UI as its own Render service
+
+The same repo and `Dockerfile` also serve `demo_page.py` — Render just
+needs a different start command, since the Dockerfile's own `CMD` runs
+the API. This is optional; the sidebar's manual URL paste (above) covers
+the common case of a solo student pointing their own local Streamlit at
+their own deployed API.
+
+1. New **Web Service** → same GitHub repo, same **Root Directory**
+   (`ai-engineering-bootcamp-v2/week-1v2`), **Runtime**: Docker.
+2. Under **Advanced → Docker Command**, override the Dockerfile's `CMD`
+   with:
+
+   ```text
+   streamlit run demo_page.py --server.address 0.0.0.0 --server.port 8000
+   ```
+
+   Use port `8000` here (not Streamlit's default `8501`) — Render's
+   Docker runtime routes traffic to whatever port the `Dockerfile`
+   `EXPOSE`s, and this one only exposes `8000`.
+3. **Environment Variables**: add `API_BASE_URL` set to your deployed
+   API service's URL, e.g. `https://your-api-service.onrender.com` —
+   **set this in Render's dashboard only, never commit it** (see the
+   warning above). `demo_page.py` reads it as the sidebar's default so
+   it doesn't need to be pasted in by hand.
+4. **Health Check Path**: `/_stcore/health` (Streamlit's built-in health
+   endpoint).
+5. Deploy. You'll get a second, separate Render URL for the UI — same
+   "don't share it publicly" rule applies to this one too.
 
 **Elsewhere (Fly.io, Railway, a VM, etc.):** the same `Dockerfile` works
 anywhere that can build and run a container and inject env vars at
@@ -363,4 +400,4 @@ week-1v2/
 - `Cannot reach http://127.0.0.1:8000`: start the API server in another terminal.
 - `OPENAI_API_KEY` error: make sure `.env` exists and contains a real key.
 - `Address already in use`: another server is already using port `8000`; stop it or use a different port.
-- Streamlit opens but requests fail: confirm the sidebar API base URL is `http://127.0.0.1:8000`.
+- Streamlit opens but requests fail: confirm the sidebar API base URL is `http://127.0.0.1:8000` (or, on a deployed Streamlit service, that `API_BASE_URL` is set correctly).

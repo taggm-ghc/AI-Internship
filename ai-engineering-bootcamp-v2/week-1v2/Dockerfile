@@ -22,7 +22,9 @@ EXPOSE 8000
 #   docker build -t week-1v2 .
 #   docker run --rm -p 8000:8000 -e OPENAI_API_KEY=sk-... week-1v2
 #
-# Optional Streamlit UI on another port:
-#   docker run --rm -p 8501:8501 -e OPENAI_API_KEY=sk-... week-1v2 \
-#     streamlit run demo_page.py --server.address 0.0.0.0 --server.port 8501
+# Optional Streamlit UI, standalone (bind to the port this image EXPOSEs,
+# 8000, not Streamlit's default 8501 — matters on Render, which routes to
+# the Dockerfile's EXPOSE'd port; see README's Deploy section):
+#   docker run --rm -p 8000:8000 -e API_BASE_URL=https://your-api.example.com week-1v2 \
+#     streamlit run demo_page.py --server.address 0.0.0.0 --server.port 8000
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

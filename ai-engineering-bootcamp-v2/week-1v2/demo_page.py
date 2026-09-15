@@ -5,6 +5,7 @@ Run:
 """
 
 import json
+import os
 from pathlib import Path
 
 import httpx
@@ -31,6 +32,12 @@ _LOCAL_URL_FILE = Path(__file__).resolve().parent / ".faststream-local-url"
 
 
 def _default_api_base_url() -> str:
+    # Set as a Render dashboard env var on the deployed Streamlit service
+    # (never commit the real value) so the sidebar auto-fills instead of
+    # requiring a manual paste on every visit.
+    env_url = os.getenv("API_BASE_URL", "").strip()
+    if env_url:
+        return env_url
     try:
         return _LOCAL_URL_FILE.read_text().strip() or "http://127.0.0.1:8000"
     except FileNotFoundError:
