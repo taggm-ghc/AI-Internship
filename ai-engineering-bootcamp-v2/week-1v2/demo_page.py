@@ -344,15 +344,6 @@ if st.sidebar.button("Refresh provider status"):
                 )
             st.sidebar.caption(line)
 
-# Running (session) costs — left pane, per request: shows what a call
-# *would* cost cumulatively as you keep testing, broken out per
-# provider/model since that can change call to call (see record_roundtrip).
-st.sidebar.markdown("### Running costs (this session)")
-render_running_costs()
-if st.sidebar.button("Reset session totals"):
-    st.session_state["running_costs"] = {}
-    st.rerun()
-
 # Outside the form (not batched) so switching it reruns immediately and
 # the form below can show/hide the force_bad checkbox accordingly — /ask
 # supports the guardrail retry demo, /ask/stream does not (see
@@ -518,3 +509,24 @@ if submitted and not is_stream:
     with raw_col:
         with st.expander("Raw JSON", expanded=False):
             st.json(data)
+
+# Running (session) costs — left pane: shows what a call *would* cost
+# cumulatively as you keep testing, broken out per provider/model since
+# that can change call to call (see record_roundtrip). Deliberately placed
+# here, AFTER the submission-handling block above rather than near the
+# other sidebar setup near the top of this file — Streamlit reruns the
+# whole script top-to-bottom on every interaction, and st.sidebar calls
+# render into the sidebar regardless of where in the script they're made
+# (sidebar layout order follows st.sidebar call order, not file position
+# relative to main-body code). Rendering this before record_roundtrip()
+# ran (this session's original position) meant the sidebar always showed
+# the PREVIOUS submission's totals, one rerun stale — confirmed 2026-09-14
+# from two real screenshots where the just-submitted call's own real
+# tokens/cost never appeared in the grand total. Moving it here (same
+# bottom-of-sidebar visual position, since it was already the last
+# sidebar section) fixes that without changing the layout.
+st.sidebar.markdown("### Running costs (this session)")
+render_running_costs()
+if st.sidebar.button("Reset session totals"):
+    st.session_state["running_costs"] = {}
+    st.rerun()
