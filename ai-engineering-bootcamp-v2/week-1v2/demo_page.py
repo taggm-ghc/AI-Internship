@@ -6,6 +6,7 @@ Run:
 
 import json
 import os
+import time
 from pathlib import Path
 
 import altair as alt
@@ -100,50 +101,103 @@ def _timeout_message(url: str) -> str:
     )
 
 
+# Render's own edge can bounce a non-browser request (like every httpx call
+# this UI makes) with a bare, plain-text 429 while a free-tier instance is
+# still cold-booting — confirmed live 2026-09-15: a browser tab hitting the
+# same URL got Render's "WAKING UP" interstitial instead, but this UI's POST
+# just got bounced, because there's no HTML page to hand back to a
+# non-navigational request. Retrying with backoff covers exactly that
+# transient window; these delays sum to ~55s, matching Render's own
+# documented up-to-a-minute cold start.
+_COLD_START_RETRY_DELAYS_S = (3.0, 7.0, 15.0, 30.0)
+
+
+def _is_cold_start_bounce(status_code: int, raw_text: str) -> bool:
+    """True only for Render's edge-bounce pattern, never for this app's own
+    slowapi rate limiter — that one always replies with a JSON object shaped
+    like {"error": "Rate limit exceeded: ..."} (see main.py's
+    _rate_limit_exceeded_handler), so a real rate-limit response is left
+    alone for the caller to show as-is rather than retried."""
+    return status_code == 429 and not raw_text.strip().startswith("{")
+
+
+def _cold_start_bounce_message(url: str) -> str:
+    total_wait = sum(_COLD_START_RETRY_DELAYS_S)
+    return (
+        f"{url} kept bouncing this request with a bare 429 across "
+        f"{len(_COLD_START_RETRY_DELAYS_S) + 1} attempts over ~{total_wait:.0f}s — "
+        "consistent with Render's free tier still cold-starting (a plain "
+        "browser tab hitting the same URL would show Render's own "
+        "\"waking up\" page instead, which this UI's request can't). Open "
+        "the URL directly in a browser tab to let it finish waking up, "
+        "then try again here."
+    )
+
+
 def call_stream(url: str, payload: dict) -> tuple[int, str, str | None]:
     """Like call_json, but for /ask/stream: the body is plain text, not
     JSON, and the only structured metadata is the X-Served-By header (see
     main.py's ask_stream docstring for why a streamed response has nowhere
     else to report which provider/model actually answered)."""
-    try:
-        response = httpx.post(url, json=payload, timeout=120.0)
-        served_by = response.headers.get("X-Served-By")
-        if response.status_code >= 400:
-            try:
-                return response.status_code, json.dumps(response.json(), indent=2), served_by
-            except json.JSONDecodeError:
-                return response.status_code, response.text, served_by
-        return response.status_code, response.text, served_by
-    except httpx.ConnectError:
-        return 0, _unreachable_message(url), None
-    except httpx.TimeoutException:
-        return 0, _timeout_message(url), None
-    except httpx.HTTPError as exc:
-        return 0, str(exc), None
+    response = None
+    for delay in (0.0,) + _COLD_START_RETRY_DELAYS_S:
+        if delay:
+            time.sleep(delay)
+        try:
+            response = httpx.post(url, json=payload, timeout=120.0)
+        except httpx.ConnectError:
+            return 0, _unreachable_message(url), None
+        except httpx.TimeoutException:
+            return 0, _timeout_message(url), None
+        except httpx.HTTPError as exc:
+            return 0, str(exc), None
+        if not _is_cold_start_bounce(response.status_code, response.text):
+            break
+
+    if _is_cold_start_bounce(response.status_code, response.text):
+        return 0, _cold_start_bounce_message(url), None
+
+    served_by = response.headers.get("X-Served-By")
+    if response.status_code >= 400:
+        try:
+            return response.status_code, json.dumps(response.json(), indent=2), served_by
+        except json.JSONDecodeError:
+            return response.status_code, response.text, served_by
+    return response.status_code, response.text, served_by
 
 
 def call_json(method: str, url: str, payload: dict | None = None) -> tuple[int, dict | str]:
-    try:
-        if method == "POST":
-            response = httpx.post(url, json=payload, timeout=120.0)
-        else:
-            # 65s, not a snappy few seconds: this path also serves /health
-            # and /providers/status, and Render's free tier can take up to
-            # a minute to wake a cold-started deployment — a short timeout
-            # here misreported that wakeup delay as a generic HTTPError
-            # instead of ever reaching the clearer cold-start message below.
-            response = httpx.get(url, timeout=65.0)
-
+    response = None
+    for delay in (0.0,) + _COLD_START_RETRY_DELAYS_S:
+        if delay:
+            time.sleep(delay)
         try:
-            return response.status_code, response.json()
-        except json.JSONDecodeError:
-            return response.status_code, response.text
-    except httpx.ConnectError:
-        return 0, {"error": _unreachable_message(url)}
-    except httpx.TimeoutException:
-        return 0, {"error": _timeout_message(url)}
-    except httpx.HTTPError as exc:
-        return 0, {"error": str(exc)}
+            if method == "POST":
+                response = httpx.post(url, json=payload, timeout=120.0)
+            else:
+                # 65s, not a snappy few seconds: this path also serves
+                # /health and /providers/status, and Render's free tier can
+                # take up to a minute to wake a cold-started deployment — a
+                # short timeout here misreported that wakeup delay as a
+                # generic HTTPError instead of ever reaching the clearer
+                # cold-start message below.
+                response = httpx.get(url, timeout=65.0)
+        except httpx.ConnectError:
+            return 0, {"error": _unreachable_message(url)}
+        except httpx.TimeoutException:
+            return 0, {"error": _timeout_message(url)}
+        except httpx.HTTPError as exc:
+            return 0, {"error": str(exc)}
+        if not _is_cold_start_bounce(response.status_code, response.text):
+            break
+
+    if _is_cold_start_bounce(response.status_code, response.text):
+        return 0, {"error": _cold_start_bounce_message(url)}
+
+    try:
+        return response.status_code, response.json()
+    except json.JSONDecodeError:
+        return response.status_code, response.text
 
 
 def render_attempts(data: dict | str) -> None:
@@ -595,7 +649,17 @@ with main_col:
 if submitted and not is_stream:
     with raw_col:
         with st.expander("Raw JSON", expanded=False):
-            st.json(data)
+            # st.json expects an actual JSON-able object — handing it a
+            # plain string (call_json's fallback for a non-JSON body, e.g.
+            # Render's bare-text error responses) makes it try to
+            # client-side JSON.parse() that string and surface a raw
+            # "Json Parse Error" instead of just showing the text. Found
+            # live 2026-09-15 against a Render edge bounce during cold
+            # start.
+            if isinstance(data, (dict, list)):
+                st.json(data)
+            else:
+                st.code(str(data), language="text")
 
 # Running (session) costs — left pane: shows what a call *would* cost
 # cumulatively as you keep testing, broken out per provider/model since
