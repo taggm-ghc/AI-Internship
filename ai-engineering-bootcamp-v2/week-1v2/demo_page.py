@@ -69,6 +69,35 @@ def render_curl(base_url: str, path: str, payload: dict) -> str:
     )
 
 
+def _unreachable_message(url: str) -> str:
+    """ConnectError means nothing answered at all — the fix differs by
+    whether base_url is local (nobody started uvicorn) or a deployed
+    instance (wrong URL, or the service is actually down), so the old
+    one-size-fits-all "Start the API server first." was actively wrong
+    advice for a visitor to a deployed Streamlit page — they can't start
+    someone else's Render service. Bug found 2026-09-15 against a real
+    deployed instance."""
+    host = httpx.URL(url).host
+    if host in ("127.0.0.1", "localhost"):
+        return f"Cannot reach {url}. Start the API server first."
+    return (
+        f"Cannot reach {url} — nothing answered at all. Double-check the "
+        "URL, and confirm the service is actually deployed and running in "
+        "the Render dashboard (a slow *response*, as opposed to no "
+        "response, usually means a free-tier cold start instead — see the "
+        "timeout message)."
+    )
+
+
+def _timeout_message(url: str) -> str:
+    return (
+        f"Timed out waiting for {url}. If this is a Render free-tier "
+        "deployment, it may be waking from a cold start after a period of "
+        "inactivity — that can take up to a minute (see the README's "
+        "Test With Curl section) — try again in a moment."
+    )
+
+
 def call_stream(url: str, payload: dict) -> tuple[int, str, str | None]:
     """Like call_json, but for /ask/stream: the body is plain text, not
     JSON, and the only structured metadata is the X-Served-By header (see
@@ -84,7 +113,9 @@ def call_stream(url: str, payload: dict) -> tuple[int, str, str | None]:
                 return response.status_code, response.text, served_by
         return response.status_code, response.text, served_by
     except httpx.ConnectError:
-        return 0, f"Cannot reach {url}. Start the API server first.", None
+        return 0, _unreachable_message(url), None
+    except httpx.TimeoutException:
+        return 0, _timeout_message(url), None
     except httpx.HTTPError as exc:
         return 0, str(exc), None
 
@@ -94,14 +125,21 @@ def call_json(method: str, url: str, payload: dict | None = None) -> tuple[int, 
         if method == "POST":
             response = httpx.post(url, json=payload, timeout=120.0)
         else:
-            response = httpx.get(url, timeout=5.0)
+            # 65s, not a snappy few seconds: this path also serves /health
+            # and /providers/status, and Render's free tier can take up to
+            # a minute to wake a cold-started deployment — a short timeout
+            # here misreported that wakeup delay as a generic HTTPError
+            # instead of ever reaching the clearer cold-start message below.
+            response = httpx.get(url, timeout=65.0)
 
         try:
             return response.status_code, response.json()
         except json.JSONDecodeError:
             return response.status_code, response.text
     except httpx.ConnectError:
-        return 0, {"error": f"Cannot reach {url}. Start the API server first."}
+        return 0, {"error": _unreachable_message(url)}
+    except httpx.TimeoutException:
+        return 0, {"error": _timeout_message(url)}
     except httpx.HTTPError as exc:
         return 0, {"error": str(exc)}
 
