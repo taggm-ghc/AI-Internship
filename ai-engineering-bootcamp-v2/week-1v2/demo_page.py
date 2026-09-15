@@ -8,7 +8,9 @@ import json
 import os
 from pathlib import Path
 
+import altair as alt
 import httpx
+import pandas as pd
 import streamlit as st
 
 from pricing_config import load_model_selection
@@ -228,6 +230,7 @@ def record_roundtrip(
     completion_tokens: int | None,
     cost_usd: float | None,
     free_tier_note: str | None = None,
+    latency_ms: float | None = None,
 ) -> None:
     """Accumulates running totals keyed by the exact "provider:model" (or
     LAN-local "provider@host:port:model") string a response was served by
@@ -250,13 +253,19 @@ def record_roundtrip(
     response, so the first non-None value seen is as good as any later
     one. Surfaced in render_running_costs() so the *aggregate* total
     carries the same "not necessarily money actually billed" caveat the
-    per-roundtrip display already has, not just the individual call."""
+    per-roundtrip display already has, not just the individual call.
+
+    latency_ms (added 2026-09-15 for the sidebar's latency boxplot): kept
+    as a raw per-call list, not just a running sum, since a distribution
+    needs every sample — None for /ask/stream (see call_stream, same as
+    prompt/completion tokens above)."""
     costs = st.session_state.setdefault("running_costs", {})
     bucket = costs.setdefault(
         served_by,
         {
             "calls": 0, "prompt_tokens": 0, "completion_tokens": 0,
             "cost_usd": 0.0, "cost_known": True, "free_tier_note": None,
+            "latencies_ms": [],
         },
     )
     bucket["calls"] += 1
@@ -270,6 +279,8 @@ def record_roundtrip(
         bucket["cost_known"] = False
     if free_tier_note and not bucket["free_tier_note"]:
         bucket["free_tier_note"] = free_tier_note
+    if latency_ms is not None:
+        bucket["latencies_ms"].append(latency_ms)
 
 
 def render_running_costs() -> None:
@@ -304,6 +315,36 @@ def render_running_costs() -> None:
             f"{bucket['calls']} call(s) · {bucket['prompt_tokens']}+{bucket['completion_tokens']} tok "
             f"· ${bucket['cost_usd']:.6f}{note}"
         )
+
+
+def render_latency_boxplot() -> None:
+    """One box per provider/model, showing this session's /ask latency
+    spread — /ask/stream contributes no samples (see record_roundtrip),
+    so a session with only stream calls shows the empty-state caption
+    below instead of a chart. altair/pandas are already transitive
+    Streamlit dependencies (st.*_chart uses altair internally), pinned
+    explicitly in requirements.txt once this became a direct import."""
+    costs = st.session_state.get("running_costs", {})
+    rows = [
+        {"served_by": served_by, "latency_ms": value}
+        for served_by, bucket in costs.items()
+        for value in bucket["latencies_ms"]
+    ]
+    if not rows:
+        st.sidebar.caption("No /ask latency samples yet this session.")
+        return
+
+    chart = (
+        alt.Chart(pd.DataFrame(rows))
+        .mark_boxplot(extent="min-max")
+        .encode(
+            x=alt.X("served_by:N", title=None, axis=alt.Axis(labelAngle=-30)),
+            y=alt.Y("latency_ms:Q", title="latency (ms)"),
+            color=alt.Color("served_by:N", legend=None),
+        )
+        .properties(height=220)
+    )
+    st.sidebar.altair_chart(chart, use_container_width=True)
 
 
 st.set_page_config(page_title="Week 1 v2 /ask Demo", layout="wide")
@@ -542,6 +583,7 @@ with main_col:
                     data.get("completion_tokens"),
                     data.get("cost_usd"),
                     data.get("free_tier_note"),
+                    data.get("latency_ms"),
                 )
             st.markdown("### Response")
             st.markdown(f"**HTTP {status}**" if status else "**Request failed**")
@@ -572,6 +614,10 @@ if submitted and not is_stream:
 # sidebar section) fixes that without changing the layout.
 st.sidebar.markdown("### Running costs (this session)")
 render_running_costs()
+
+st.sidebar.markdown("### Latency (this session)")
+render_latency_boxplot()
+
 if st.sidebar.button("Reset session totals"):
     st.session_state["running_costs"] = {}
     st.rerun()

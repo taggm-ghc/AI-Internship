@@ -84,7 +84,9 @@ http://localhost:8501
 ```
 
 Use the page to ask a question, switch models, inspect the JSON response, and copy the
-equivalent `curl` request.
+equivalent `curl` request. The sidebar also tracks this session's running costs and,
+per provider/model, a latency boxplot built from real `/ask` response times
+(`/ask/stream` reports no latency — see `call_stream`, so it contributes no samples).
 
 The sidebar's **API base URL** field defaults to (in priority order): the
 `API_BASE_URL` env var if set, then whatever `run.sh` last recorded in
