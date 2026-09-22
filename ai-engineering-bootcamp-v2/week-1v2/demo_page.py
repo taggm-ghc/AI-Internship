@@ -266,6 +266,27 @@ st.caption(
 )
 
 base_url = st.sidebar.text_input("API base URL", _default_api_base_url())
+
+# p3m3 permanent item #20 — corpus hint, directly motivated by #19: a
+# question the corpus was never going to answer (e.g. "apple pie") can get
+# a confidently fabricated response through rag_mode "auto" rather than a
+# visible refusal (see week2-priority-checklist.md's D-N+1 section). This
+# doesn't fix that path; it helps a user avoid triggering it by showing
+# roughly what's actually in there before they ask. Cached in session
+# state so it's fetched once per session, not on every rerun (this
+# doesn't change while the app is running, unlike base_url/rag_mode).
+if "corpus_summary" not in st.session_state:
+    _cs_status, _cs_data = call_json("GET", f"{base_url.rstrip('/')}/debug/corpus-summary")
+    st.session_state["corpus_summary"] = _cs_data if _cs_status == 200 else None
+_corpus_summary = st.session_state["corpus_summary"]
+with st.sidebar.expander("📚 What's in the corpus?", expanded=False):
+    if isinstance(_corpus_summary, dict) and "document_count" in _corpus_summary:
+        st.caption(f"{_corpus_summary['document_count']} documents. A random sample of titles:")
+        for _title in _corpus_summary.get("sample_titles", []):
+            st.caption(f"• {_title}")
+    else:
+        st.caption("Couldn't load a corpus summary — check the API base URL above.")
+
 # p3m3 permanent item #17 — links to the new pages/1_Observability_Dashboard.py
 # (Streamlit's own multi-page convention: auto-discovered from pages/ next to
 # this entry script). That page reads its own copy of the API base URL rather

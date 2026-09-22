@@ -60,7 +60,7 @@ logging.basicConfig(level=logging.INFO)
 
 app = FastAPI(title="Agentic AI Engineering Bootcamp: Layered MVP")
 from operational_audit import OperationalAuditMiddleware
-from operational_store import record_event, put_artifact, query_events
+from operational_store import record_event, put_artifact, query_events, corpus_summary
 app.add_middleware(OperationalAuditMiddleware)
 
 # Caps request *rate*, not just per-request cost — the actual defense against
@@ -990,6 +990,29 @@ def debug_events(kind: str | None = None, limit: int = 200) -> list[EventRecord]
     if limit < 1 or limit > MAX_EVENTS_LIMIT:
         raise HTTPException(status_code=400, detail=f"limit must be between 1 and {MAX_EVENTS_LIMIT}")
     return [EventRecord(**row) for row in query_events(kind=kind, limit=limit)]
+
+
+class CorpusSummary(BaseModel):
+    document_count: int
+    sample_titles: list[str]
+
+
+MAX_SAMPLE_SIZE = 50
+
+
+@app.get("/debug/corpus-summary")
+def debug_corpus_summary(sample_size: int = 10) -> CorpusSummary:
+    """Read-only corpus hint — added 2026-09-22 (p3m3 permanent item #20)
+    so a caller (or the Streamlit UI) can see roughly what's in the corpus
+    before asking a question it was never going to answer. Directly
+    motivated by #19: a genuinely off-topic question through rag_mode
+    "auto" gets a confidently fabricated answer, not a visible refusal —
+    this doesn't fix that path, it helps a user avoid triggering it. No
+    LLM/embedding call, no OpenAI key required, not subject to
+    ASK_RATE_LIMIT, same as /debug/events."""
+    if sample_size < 1 or sample_size > MAX_SAMPLE_SIZE:
+        raise HTTPException(status_code=400, detail=f"sample_size must be between 1 and {MAX_SAMPLE_SIZE}")
+    return CorpusSummary(**corpus_summary(sample_size=sample_size))
 
 
 def _run_rag_retrieval(

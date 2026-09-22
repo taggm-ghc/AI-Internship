@@ -69,6 +69,31 @@ def query_events(kind=None, limit=200):
     ]
 
 
+def corpus_summary(sample_size=10):
+    """Document count + a random sample of titles, added 2026-09-22 (p3m3
+    permanent item #20) so the Streamlit UI can hint what the corpus
+    actually covers before a user asks something it was never going to
+    answer -- the gap found in #19 (a genuinely off-topic question gets a
+    confidently fabricated answer, not a visible refusal) is exactly the
+    failure mode this is meant to help a user avoid triggering. Falls back
+    to the document_id when provenance.title is missing (covers any
+    document ingested before this project's own provenance-parity fix,
+    #15) rather than omitting it."""
+    with get_engine().connect() as conn:
+        total = conn.execute(text('SELECT COUNT(*) FROM internship.documents')).scalar()
+        rows = conn.execute(
+            text(
+                "SELECT document_id, provenance->>'title' AS title FROM internship.documents "
+                "ORDER BY random() LIMIT :n"
+            ),
+            {'n': sample_size},
+        ).fetchall()
+    return {
+        'document_count': total,
+        'sample_titles': [r.title or r.document_id for r in rows],
+    }
+
+
 def put_artifact(path, payload, conn=None):
     params = {'path': path, 'sha': hashlib.sha256(payload).hexdigest(), 'payload': payload}
     stmt = text('''INSERT INTO internship.artifacts(path,sha256,payload) VALUES (:path,:sha,:payload)
