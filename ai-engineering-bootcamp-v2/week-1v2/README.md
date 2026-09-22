@@ -1,4 +1,4 @@
-# Week 1 v2: Minimal `/ask` Demo
+# Agentic AI Engineering Bootcamp: Layered MVP
 
 This folder is the simplified class version of the Week 1 AI Engineering bootcamp demo.
 Students run one final API and one small Streamlit page. The `stages/` files are optional
@@ -253,9 +253,15 @@ comments) and runs `uvicorn main:app --host 0.0.0.0 --port 8000`.
    want the free-tier fallback chain, any of `GROQ_API_KEY`,
    `GEMINI_API_KEY`, `MISTRAL_API_KEY`, `OPENROUTER_API_KEY`,
    `SAMBANOVA_API_KEY`, `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID`
-   — see `.env.example` for what each one does. Set these directly in
-   Render's dashboard; never commit a `.env` file or paste real key values
-   into the repo.
+   — see `.env.example` for what each one does. **Also required as of the
+   Session 2 RAG layer:** `INTERNAL_DB_URL` — the app now needs Postgres
+   at startup (`db.py`) and will fail to boot without it. Render sets
+   `RENDER=true` itself in every one of its environments, which makes the
+   app read `INTERNAL_DB_URL` rather than `EXTERNAL_DB_URL` — copy the
+   **Internal Database URL** from your Render Postgres instance's own page
+   (not the external one; it won't resolve from inside Render's network).
+   Set these directly in Render's dashboard; never commit a `.env` file or
+   paste real key/URL values into the repo.
 5. **Health Check Path**: `/health`.
 6. Deploy. Render builds the image from the Dockerfile and routes traffic
    to the port it `EXPOSE`s (8000) — no `$PORT` wiring needed on this

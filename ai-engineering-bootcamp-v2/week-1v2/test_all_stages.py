@@ -84,6 +84,9 @@ EXPECTED_KEYS = {
     # RAG fields, added Week 2 (2026-09-17) — always-on retrieval means
     # every /ask response carries these now, not just RAG-specific ones.
     "citations", "status", "embedding_cost_usd",
+    # rag_mode (force/auto override) and skills_used (static project
+    # metadata) added 2026-09-22 — see main.py's AskResponse.
+    "rag_mode", "skills_used",
 }
 
 

@@ -46,6 +46,29 @@ def record_event(kind, payload, *, event_id=None, conn=None):
     return event_id
 
 
+def query_events(kind=None, limit=200):
+    """Read-only counterpart to record_event, added 2026-09-22 for the
+    observability dashboard (GET /debug/events) — record_event has been
+    write-only since this table existed; nothing previously read it back
+    except raw SQL. Most-recent-first, optionally filtered to one kind
+    (http_started, http_completed, ingest, retrieval, retrieval_error).
+    limit is the caller's responsibility to bound (main.py caps it) —
+    this function trusts what it's given, same as the rest of this
+    module's query-side functions."""
+    stmt = text(
+        'SELECT id, kind, payload, created_at FROM internship.events'
+        + (' WHERE kind = :kind' if kind else '')
+        + ' ORDER BY created_at DESC LIMIT :limit'
+    )
+    params = {'limit': limit} | ({'kind': kind} if kind else {})
+    with get_engine().connect() as conn:
+        rows = conn.execute(stmt, params).fetchall()
+    return [
+        {'id': r.id, 'kind': r.kind, 'payload': r.payload, 'created_at': r.created_at.isoformat()}
+        for r in rows
+    ]
+
+
 def put_artifact(path, payload, conn=None):
     params = {'path': path, 'sha': hashlib.sha256(payload).hexdigest(), 'payload': payload}
     stmt = text('''INSERT INTO internship.artifacts(path,sha256,payload) VALUES (:path,:sha,:payload)

@@ -58,9 +58,9 @@ load_dotenv(THIS_DIR.parent / ".env")
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
-app = FastAPI(title="Week 1 v2 /ask Demo")
+app = FastAPI(title="Agentic AI Engineering Bootcamp: Layered MVP")
 from operational_audit import OperationalAuditMiddleware
-from operational_store import record_event, put_artifact
+from operational_store import record_event, put_artifact, query_events
 app.add_middleware(OperationalAuditMiddleware)
 
 # Caps request *rate*, not just per-request cost — the actual defense against
@@ -135,6 +135,15 @@ if _model_selection is None:
 SUPPORTED_MODELS: list[str] = _model_selection.supported_models
 ModelName = Literal[tuple(SUPPORTED_MODELS)]
 DEFAULT_MODEL: ModelName = _model_selection.selected_model
+
+# Static list of Claude Code Skills this project's own development used —
+# not a runtime capability the deployed app invokes (the app calls OpenAI/
+# Groq/etc. directly; it doesn't run inside a Claude Code session). Echoed
+# on /health and every /ask(/stream) response so it's visible from one
+# response in isolation, not just from browsing .claude/skills/ in the
+# repo. See p3m3/skills-and-mcp-inventory.md for the full audit (verified
+# 2026-09-22: exactly one Skill exists anywhere in this monorepo).
+SKILLS_USED: list[str] = ["rag-scaffold"]
 
 # Catches a missing/placeholder/malformed OPENAI_API_KEY at startup, before
 # the first request — ported 2026-09-13 from
@@ -212,6 +221,17 @@ class AskRequest(BaseModel):
     # explicit model already means OpenAI, unambiguously.
     provider: str | None = None
     force_bad: bool = False
+    # "auto" (default): the existing RAG_RELEVANCE_THRESHOLD gate decides
+    # whether the top retrieved chunk is close enough to ground on, same
+    # behavior as before this field existed. "force_rag" bypasses the gate
+    # and grounds on whatever was retrieved regardless of distance — useful
+    # for demoing retrieval on a question the gate would otherwise judge
+    # off-topic, at the cost of possibly grounding on irrelevant chunks.
+    # "no_rag" skips retrieval entirely, same as the direct/ungrounded path
+    # force_bad's guardrail demo already uses, but selectable independent
+    # of force_bad. Orthogonal to force_bad either way — force_bad's first
+    # attempt is a synthetic bad response, not a retrieval decision.
+    rag_mode: Literal["auto", "force_rag", "no_rag"] = "auto"
 
 
 class AttemptResult(BaseModel):
@@ -221,6 +241,11 @@ class AttemptResult(BaseModel):
     message: str
     raw_output: str | None = None
     validation_error: str | None = None
+
+
+class HealthResponse(BaseModel):
+    status: str
+    skills_used: list[str]
 
 
 class AskResponse(BaseModel):
@@ -256,11 +281,23 @@ class AskResponse(BaseModel):
     # (see 2.21's always-on-retrieval design), so that cost is real and
     # known even when no grounded answer resulted.
     embedding_cost_usd: float | None = None
+    # Echoes AskRequest.rag_mode back on the response, added 2026-09-22 —
+    # without this, "which of the three modes actually produced this
+    # answer" was only recoverable by remembering what you sent, not from
+    # the response (or a screenshot of one) alone.
+    rag_mode: Literal["auto", "force_rag", "no_rag"] = "auto"
+    # Static project metadata, added 2026-09-22 — see
+    # p3m3/skills-and-mcp-inventory.md for the full audit this echoes.
+    # Not per-request behavior: every response carries the same list,
+    # documenting which Claude Code Skill(s) this project's own
+    # development used, for a grader/portfolio viewer inspecting one
+    # response in isolation rather than the repo's .claude/ directory.
+    skills_used: list[str] = SKILLS_USED
 
 
 @app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
+def health() -> HealthResponse:
+    return HealthResponse(status="ok", skills_used=SKILLS_USED)
 
 
 @app.get("/providers/status")
@@ -603,6 +640,13 @@ class AskStreamRequest(BaseModel):
     # No structured-output eligibility requirement on this endpoint (see
     # _validate_forced_provider's require_structured parameter).
     provider: str | None = None
+    # Same semantics and default as AskRequest.rag_mode, added 2026-09-22
+    # when this endpoint gained retrieval at all — previously /ask/stream
+    # never ran RAG regardless of what /ask did. No force_bad-equivalent
+    # here (see AskStreamRequest's own no-guardrail-retry docstring above
+    # ask_stream), so "no_rag" is this endpoint's only way to skip
+    # retrieval.
+    rag_mode: Literal["auto", "force_rag", "no_rag"] = "auto"
 
 
 @app.post("/summarize")
@@ -676,8 +720,16 @@ def ask_stream(request: Request, body: AskStreamRequest) -> StreamingResponse:
     comes back as a proper HTTP status instead of a bare or truncated
     stream. With no `model` override, this goes through providers.py's
     fallback chain instead — same before-first-chunk-only fallback
-    boundary, see providers.stream_with_fallback's docstring."""
-    messages = [{"role": "user", "content": body.question}]
+    boundary, see providers.stream_with_fallback's docstring.
+
+    RAG retrieval added 2026-09-22, via the same _run_rag_retrieval /ask
+    uses, so rag_mode behaves identically on both endpoints. Unlike /ask,
+    there's no structured Answer schema here to carry sources_needed/
+    used_passage_numbers — GROUNDED_PROMPT still asks for that as prose in
+    the streamed text itself when grounded, a known quirk of this being
+    the "freeform" endpoint, not a new one this feature introduces."""
+    grounded_messages, retrieved_ids, _ = _run_rag_retrieval(request, body.question, body.rag_mode, skip=False)
+    messages = grounded_messages if grounded_messages is not None else [{"role": "user", "content": body.question}]
     if body.model is not None:
         _require_valid_key()
         if body.provider not in (None, "openai"):
@@ -701,8 +753,20 @@ def ask_stream(request: Request, body: AskStreamRequest) -> StreamingResponse:
     # X-Served-By added 2026-09-13: a streamed plain-text response has
     # nowhere else to report which provider/model actually answered — this
     # keeps that visible without changing the response body's shape.
+    # X-RAG-Grounded/X-RAG-Citations added 2026-09-22, same reasoning:
+    # there's no JSON body to carry status/citations the way /ask's
+    # AskResponse does, so whether grounding actually happened (and on
+    # which chunks) would otherwise be invisible from the response alone.
     return StreamingResponse(
-        generate(), media_type="text/plain", headers={"X-Served-By": f"{provider}:{model}"}
+        generate(),
+        media_type="text/plain",
+        headers={
+            "X-Served-By": f"{provider}:{model}",
+            "X-RAG-Grounded": "true" if grounded_messages is not None else "false",
+            "X-RAG-Citations": ",".join(retrieved_ids),
+            "X-RAG-Mode": body.rag_mode,
+            "X-Skills-Used": ",".join(SKILLS_USED),
+        },
     )
 
 
@@ -901,6 +965,88 @@ def debug_retrieve(query: str, top_k: int = 5, document_id: str | None = None) -
     ]
 
 
+class EventRecord(BaseModel):
+    id: str
+    kind: str
+    payload: dict
+    created_at: str
+
+
+MAX_EVENTS_LIMIT = 500
+
+
+@app.get("/debug/events")
+def debug_events(kind: str | None = None, limit: int = 200) -> list[EventRecord]:
+    """Read-only view into internship.events (operational_audit.py's
+    OperationalAuditMiddleware + rag_service.py's/main.py's own
+    record_event() calls) — added 2026-09-22 for the observability
+    dashboard. This table has been write-only since it existed; nothing
+    previously read it back outside raw SQL. No LLM/embedding call, no
+    OpenAI key required, not subject to ASK_RATE_LIMIT — but limit is
+    still bounded (MAX_EVENTS_LIMIT) so a request can't force an
+    unbounded table scan. kind filters to one event kind (http_started,
+    http_completed, ingest, retrieval, retrieval_error); omitted returns
+    all kinds interleaved, most-recent-first."""
+    if limit < 1 or limit > MAX_EVENTS_LIMIT:
+        raise HTTPException(status_code=400, detail=f"limit must be between 1 and {MAX_EVENTS_LIMIT}")
+    return [EventRecord(**row) for row in query_events(kind=kind, limit=limit)]
+
+
+def _run_rag_retrieval(
+    request: Request, question: str, rag_mode: Literal["auto", "force_rag", "no_rag"], skip: bool
+) -> tuple[list[dict] | None, list[str], float | None]:
+    """Shared retrieval step behind both /ask and /ask/stream, so grounding
+    behaves identically on both — extracted 2026-09-22 when /ask/stream
+    gained its own rag_mode instead of never retrieving at all. `skip` is
+    /ask's force_bad (the deterministic guardrail demo has nothing to do
+    with retrieval and always bypasses it regardless of rag_mode);
+    /ask/stream has no equivalent flag, so it always passes skip=False.
+
+    Returns (grounded_messages, retrieved_ids, embedding_cost_usd).
+    grounded_messages is None whenever retrieval didn't run at all
+    (skip=True or rag_mode="no_rag"), failed, or the relevance gate
+    (bypassed under rag_mode="force_rag") judged nothing close enough."""
+    if skip or rag_mode == "no_rag":
+        return None, [], None
+    grounded_messages: list[dict] | None = None
+    retrieved_ids: list[str] = []
+    embedding_cost_usd: float | None = None
+    try:
+        query_embedding, embed_tokens = embed_query(_get_embedding_client(), question)
+        embedding_cost_usd = compute_embedding_cost(embed_tokens)
+        # Overfetch beyond what actually reaches the generator (see
+        # rag_service.OVERFETCH_K's docstring) so select_context_chunks
+        # has real alternatives to backfill from when applying its
+        # per-document diversity cap — retrieving and grounding-on the
+        # same fixed top-5 would leave nothing to substitute in.
+        candidates = query_store(get_collection(), query_embedding, top_k=OVERFETCH_K)
+        # rag_mode="force_rag" bypasses the distance gate and grounds on
+        # whatever came back, even if the gate would normally judge it too
+        # far off-topic to trust — a deliberate demo override, not a claim
+        # that the forced context is actually relevant.
+        if candidates["distances"] and (
+            rag_mode == "force_rag" or candidates["distances"][0] <= RAG_RELEVANCE_THRESHOLD
+        ):
+            retrieved = select_context_chunks(candidates)
+            retrieved_ids = retrieved["ids"]
+            grounded_messages = build_grounded_messages(question, retrieved)
+        record_event("retrieval", {
+            "request_id": getattr(request.state, "operational_request_id", None),
+            "question": question, "candidate_ids": candidates["ids"],
+            "distances": candidates["distances"], "selected_ids": retrieved_ids,
+            "collection_revision": get_collection().revision(),
+            "embedding_tokens": embed_tokens, "embedding_cost_usd": embedding_cost_usd,
+        })
+    except Exception as exc:
+        record_event("retrieval_error", {"request_id": getattr(request.state, "operational_request_id", None), "error_type": type(exc).__name__})
+        # Retrieval must never be the reason /ask or /ask/stream fails
+        # outright — a vector-store or embedding-call problem degrades to
+        # a direct, non-RAG answer, same never-500-if-avoidable philosophy
+        # as compute_cost_breakdown's pricing-gap handling.
+        logger.exception("RAG retrieval failed — falling back to a direct, non-grounded answer")
+    return grounded_messages, retrieved_ids, embedding_cost_usd
+
+
 @app.post("/ask")
 @limiter.limit(ASK_RATE_LIMIT)
 def ask(request: Request, body: AskRequest) -> AskResponse:
@@ -921,43 +1067,16 @@ def ask(request: Request, body: AskRequest) -> AskResponse:
         )
     _validate_forced_provider(body.provider, require_structured=True)
 
-    # RAG retrieval — always-on (2.21's design: no client-facing flag),
-    # except for force_bad's deterministic guardrail demo, which is
-    # orthogonal to this feature and stays exactly as it was. Runs once,
-    # before the retry loop below, since it's deterministic and doesn't
-    # need that loop's validation-retry semantics.
-    grounded_messages: list[dict] | None = None
-    retrieved_ids: list[str] = []
-    embedding_cost_usd: float | None = None
-    if not body.force_bad:
-        try:
-            query_embedding, embed_tokens = embed_query(_get_embedding_client(), body.question)
-            embedding_cost_usd = compute_embedding_cost(embed_tokens)
-            # Overfetch beyond what actually reaches the generator (see
-            # rag_service.OVERFETCH_K's docstring) so select_context_chunks
-            # has real alternatives to backfill from when applying its
-            # per-document diversity cap — retrieving and grounding-on the
-            # same fixed top-5 would leave nothing to substitute in.
-            candidates = query_store(get_collection(), query_embedding, top_k=OVERFETCH_K)
-            if candidates["distances"] and candidates["distances"][0] <= RAG_RELEVANCE_THRESHOLD:
-                retrieved = select_context_chunks(candidates)
-                retrieved_ids = retrieved["ids"]
-                grounded_messages = build_grounded_messages(body.question, retrieved)
-            record_event("retrieval", {
-                "request_id": getattr(request.state, "operational_request_id", None),
-                "question": body.question, "candidate_ids": candidates["ids"],
-                "distances": candidates["distances"], "selected_ids": retrieved_ids,
-                "collection_revision": get_collection().revision(),
-                "embedding_tokens": embed_tokens, "embedding_cost_usd": embedding_cost_usd,
-            })
-        except Exception as exc:
-            record_event("retrieval_error", {"request_id": getattr(request.state, "operational_request_id", None), "error_type": type(exc).__name__})
-            # Retrieval must never be the reason /ask fails outright — a
-            # vector-store or embedding-call problem degrades to a direct,
-            # non-RAG answer (status stays "not_applicable"), same
-            # never-500-if-avoidable philosophy as compute_cost_breakdown's
-            # pricing-gap handling.
-            logger.exception("RAG retrieval failed — falling back to a direct, non-grounded answer")
+    # RAG retrieval — on by default (2.21's design: no client-facing flag
+    # originally), now overridable via rag_mode; shared with /ask/stream
+    # via _run_rag_retrieval. force_bad's deterministic guardrail demo
+    # always skips retrieval regardless of rag_mode, same as before this
+    # field existed. Runs once, before the retry loop below, since it's
+    # deterministic and doesn't need that loop's validation-retry
+    # semantics.
+    grounded_messages, retrieved_ids, embedding_cost_usd = _run_rag_retrieval(
+        request, body.question, body.rag_mode, skip=body.force_bad
+    )
 
     start = time.perf_counter()
 
@@ -1083,6 +1202,8 @@ def ask(request: Request, body: AskRequest) -> AskResponse:
                 citations=citations,
                 status=rag_status,
                 embedding_cost_usd=round(embedding_cost_usd, 6) if embedding_cost_usd is not None else None,
+                rag_mode=body.rag_mode,
+                skills_used=SKILLS_USED,
             )
         except (ValidationError, ValueError) as exc:
             last_error = str(exc)
