@@ -221,23 +221,19 @@ RETIREMENT_THRESHOLD_DAYS = 180
 
 
 def _load_availability_log() -> list[dict]:
-    if not AVAILABILITY_LOG_PATH.exists():
-        return []
-    try:
-        return json.loads(AVAILABILITY_LOG_PATH.read_text())
-    except Exception:
-        logger.exception("Failed to load or parse %s — treating as empty.", AVAILABILITY_LOG_PATH)
-        return []
+    """Latest durable observation per provider/model; no local operational log."""
+    from db import get_engine
+    from sqlalchemy import text
+    with get_engine().connect() as conn:
+        rows = conn.execute(text("SELECT provider,model,max(observed_at) AS observed_at FROM internship.provider_observations GROUP BY provider,model")).mappings()
+        return [{"provider":r["provider"], "model":r["model"], "observed_at":r["observed_at"].isoformat()} for r in rows]
 
 
 def record_seen(provider: str, model: str) -> None:
-    """Appends a timestamped observation that `provider`/`model` was just
-    successfully reached. Called from the trial loops on a successful call
-    and from discover_local_models() for each model a LAN-local server
-    currently reports — never on a failure, see module note above."""
-    log = _load_availability_log()
-    log.append({"provider": provider, "model": model, "observed_at": datetime.now(timezone.utc).isoformat()})
-    AVAILABILITY_LOG_PATH.write_text(json.dumps(log, indent=2) + "\n")
+    from db import get_engine
+    from sqlalchemy import text
+    with get_engine().begin() as conn:
+        conn.execute(text("INSERT INTO internship.provider_observations(provider,model,observed_at) VALUES (:provider,:model,now()) ON CONFLICT DO NOTHING"), {"provider":provider,"model":model})
 
 
 def is_retired(provider: str, model: str, threshold_days: int = RETIREMENT_THRESHOLD_DAYS) -> bool:

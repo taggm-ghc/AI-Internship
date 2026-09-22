@@ -6,12 +6,14 @@ Run:
 
 import logging
 import os
+import tempfile
 import time
+from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse, StreamingResponse
 from openai import AuthenticationError, OpenAIError, RateLimitError
 from pydantic import BaseModel, Field, ValidationError
@@ -29,12 +31,24 @@ from ask_service import (
     stream_answer,
     synthetic_malformed_json,
 )
+from openai import OpenAI
 from openai_key_check import OPENAI_KEY_ERROR_DETAIL, classify_openai_api_key
+from pdf_extract import extract_pdf_text
 from pricing_config import (
     latest_pricing_for,
     load_model_pricing,
     load_model_selection,
     load_web_search_pricing,
+)
+from rag_service import (
+    OVERFETCH_K,
+    RAG_RELEVANCE_THRESHOLD,
+    build_grounded_messages,
+    embed_query,
+    get_collection,
+    query_store,
+    select_context_chunks,
+    upsert_chunks,
 )
 
 THIS_DIR = Path(__file__).resolve().parent
@@ -45,6 +59,9 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 app = FastAPI(title="Week 1 v2 /ask Demo")
+from operational_audit import OperationalAuditMiddleware
+from operational_store import record_event, put_artifact
+app.add_middleware(OperationalAuditMiddleware)
 
 # Caps request *rate*, not just per-request cost — the actual defense against
 # something hammering /ask repeatedly (a bozo consumption attack, a stuck
@@ -227,6 +244,18 @@ class AskResponse(BaseModel):
     # wasn't actually billed money.
     free_tier_note: str | None
     attempts: list[AttemptResult]
+    # RAG fields, added 2026-09-17 (Week 2). citations is always [] outside
+    # the "supported" case (see ask()'s retrieval-gate logic below) — never
+    # omitted, so a caller can rely on the field's presence unconditionally.
+    citations: list[str] = []
+    status: Literal["supported", "insufficient", "not_applicable"] = "not_applicable"
+    # None only when retrieval didn't run at all (force_bad's first attempt)
+    # or text-embedding-3-small has no pricing record — see
+    # compute_embedding_cost. Not None just because the relevance gate
+    # routed to "not_applicable": the question is still embedded either way
+    # (see 2.21's always-on-retrieval design), so that cost is real and
+    # known even when no grounded answer resulted.
+    embedding_cost_usd: float | None = None
 
 
 @app.get("/health")
@@ -295,6 +324,23 @@ def compute_cost_breakdown(
         prompt_tokens / 1_000_000 * pricing.input,
         completion_tokens / 1_000_000 * pricing.output,
     )
+
+
+def compute_embedding_cost(num_tokens: int) -> float | None:
+    """Cost of one `text-embedding-3-small` call (query-side, RAG /ask's
+    always-on retrieval step, or POST /ingest's chunk embedding). Same
+    never-guess contract as compute_cost_breakdown: None means "no pricing
+    record for this model," not $0 — added 2026-09-17 alongside that
+    record in config/model-pricing.json. Embeddings have no output tokens,
+    so only the record's `input` rate applies."""
+    pricing = latest_pricing_for("text-embedding-3-small", _model_pricing, provider="openai")
+    if pricing is None:
+        logger.warning(
+            "No pricing record for text-embedding-3-small — returning "
+            "embedding_cost_usd=None. See config/model-pricing.json.",
+        )
+        return None
+    return num_tokens / 1_000_000 * pricing.input
 
 
 def free_tier_note(provider_name: str | None) -> str | None:
@@ -379,6 +425,17 @@ def compute_web_search_cost(
         return None
 
     return call_cost + (search_content_tokens / 1_000_000 * token_pricing.input)
+
+
+@lru_cache(maxsize=1)
+def _get_embedding_client() -> OpenAI:
+    """Separate from ask_service._get_client() (chat completions only,
+    module-private) — a short-timeout client for the always-on retrieval
+    step in ask() and for POST /ingest's embedding calls. Constructed lazily
+    (not at import time) so a missing OPENAI_API_KEY doesn't break app
+    startup; the same _require_valid_key() precondition chat calls already
+    rely on applies equally here."""
+    return OpenAI(timeout=15.0, max_retries=2)
 
 
 def _require_valid_key() -> None:
@@ -649,6 +706,201 @@ def ask_stream(request: Request, body: AskStreamRequest) -> StreamingResponse:
     )
 
 
+class IngestRequest(BaseModel):
+    # Same cost-ceiling reasoning as AskRequest.question — bounds the
+    # worst-case size of a single ad hoc document. Deliberately larger than
+    # the 4000-char question/text caps elsewhere: a whole document, not one
+    # question, is exactly what this endpoint expects to receive.
+    text: str = Field(min_length=1, max_length=200_000)
+    document_id: str = Field(min_length=1, max_length=200)
+    metadata: dict | None = None
+    # Added so ad hoc live ingests aren't a schema gap against the bulk-
+    # loaded baseline corpus, whose documents carry a real provenance
+    # record (source, source_url, provenance_type, fetched_at — see
+    # ingestion_quarantine/new_docs_provenance.json) via a one-time
+    # migration path this endpoint never went through. Optional: omitting
+    # it just means an empty provenance record, same as before this field
+    # existed, not an error.
+    provenance: dict | None = None
+
+
+class IngestResponse(BaseModel):
+    document_id: str
+    chunks_indexed: int
+    status: Literal["indexed", "empty"]
+
+
+@app.post("/ingest")
+@limiter.limit(ASK_RATE_LIMIT)
+def ingest(request: Request, body: IngestRequest) -> IngestResponse:
+    """Live, persistent document ingestion — distinct from rag_ingest.py's
+    one-off baseline-corpus script (see that module's docstring and
+    p3m3/week2-priority-checklist.md's "POST /ingest" section for why the
+    two aren't the same thing). Writes into the exact same chroma_store/
+    collection the 50-doc baseline corpus lives in, via
+    rag_service.upsert_chunks — a re-ingested document_id overwrites its
+    previous chunks (Chroma upsert semantics), it doesn't duplicate them."""
+    if not body.text.strip():
+        raise HTTPException(status_code=400, detail="text must not be empty or whitespace-only")
+    _require_valid_key()
+    try:
+        chunks_indexed = upsert_chunks(
+            _get_embedding_client(), get_collection(), body.document_id, body.text, body.metadata, provenance=body.provenance
+        )
+    except (AuthenticationError, RateLimitError, OpenAIError) as exc:
+        raise _map_openai_error(exc) from exc
+    return IngestResponse(
+        document_id=body.document_id,
+        chunks_indexed=chunks_indexed,
+        status="indexed" if chunks_indexed > 0 else "empty",
+    )
+
+
+class IngestBatchRequest(BaseModel):
+    # Capped at 10 documents/request (N.9) -- each document already bounds
+    # its own worst-case size (IngestRequest.text's 200_000-char cap), so
+    # this bounds worst-case embedding-call *count* per request the same
+    # way the per-field caps bound size, rather than leaving batch size
+    # unbounded.
+    documents: list[IngestRequest] = Field(min_length=1, max_length=10)
+
+
+class IngestBatchResponse(BaseModel):
+    results: list[IngestResponse]
+
+
+@app.post("/ingest/batch")
+@limiter.limit(ASK_RATE_LIMIT)
+def ingest_batch(request: Request, body: IngestBatchRequest) -> IngestBatchResponse:
+    """Batch form of POST /ingest (N.9) -- same upsert_chunks path, one call
+    per document, but validated and billed as one request instead of N
+    separate ones. All documents are validated non-empty up front (fail
+    before any embedding spend, not partway through the batch) but each
+    document is still upserted independently -- one document's chunk count
+    or metadata never affects another's, and a later document's failure
+    doesn't roll back an earlier one's already-completed upsert."""
+    for doc in body.documents:
+        if not doc.text.strip():
+            raise HTTPException(
+                status_code=400,
+                detail=f"text must not be empty or whitespace-only (document_id={doc.document_id!r})",
+            )
+    _require_valid_key()
+    client = _get_embedding_client()
+    collection = get_collection()
+    results: list[IngestResponse] = []
+    for doc in body.documents:
+        try:
+            chunks_indexed = upsert_chunks(client, collection, doc.document_id, doc.text, doc.metadata, provenance=doc.provenance)
+        except (AuthenticationError, RateLimitError, OpenAIError) as exc:
+            raise _map_openai_error(exc) from exc
+        results.append(
+            IngestResponse(
+                document_id=doc.document_id,
+                chunks_indexed=chunks_indexed,
+                status="indexed" if chunks_indexed > 0 else "empty",
+            )
+        )
+    return IngestBatchResponse(results=results)
+
+
+# Generous vs. the baseline corpus's 2.5MB/file cap (ingestion_quarantine/
+# README.md) -- that cap is tuned for chroma_store/'s committed-to-git size
+# at 50-document scale; this is one ad hoc live upload, not an addition to
+# the committed baseline corpus, so a looser bound is fine. Still bounded,
+# not unbounded, per this project's standing input-cap pattern.
+MAX_PDF_UPLOAD_BYTES = 10 * 1024 * 1024
+
+
+@app.post("/ingest-pdf")
+@limiter.limit(ASK_RATE_LIMIT)
+async def ingest_pdf(
+    request: Request, file: UploadFile = File(...), document_id: str | None = Form(None)
+) -> IngestResponse:
+    """Dedicated PDF-upload ingestion path (N.7, stretch item) — distinct
+    from POST /ingest (raw text body) and rag_ingest.py's one-off
+    baseline-corpus script. Extracts text via pdf_extract.extract_pdf_text
+    (the same references/bibliography-truncation logic the baseline corpus
+    uses, see 12.1.1) then reuses upsert_chunks, so a live-uploaded PDF gets
+    identical treatment to a corpus document rather than a second code path
+    with its own quirks. document_id defaults to the uploaded filename
+    (stem) when not given explicitly."""
+    if not (file.filename or "").lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="file must be a .pdf")
+    _require_valid_key()
+    contents = await file.read()
+    if not contents:
+        raise HTTPException(status_code=400, detail="uploaded file is empty")
+    if len(contents) > MAX_PDF_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=413, detail=f"file exceeds {MAX_PDF_UPLOAD_BYTES // (1024 * 1024)}MB limit"
+        )
+    resolved_document_id = document_id or Path(file.filename).stem
+    with tempfile.NamedTemporaryFile(suffix=".pdf") as tmp:
+        tmp.write(contents)
+        tmp.flush()
+        try:
+            text = extract_pdf_text(tmp.name)
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail=f"could not extract text from PDF: {exc}") from exc
+    if not text.strip():
+        raise HTTPException(status_code=400, detail="no extractable text found in PDF")
+    try:
+        chunks_indexed = upsert_chunks(_get_embedding_client(), get_collection(), resolved_document_id, text)
+        import hashlib
+        put_artifact("uploads/" + hashlib.sha256(contents).hexdigest() + ".pdf", contents)
+    except (AuthenticationError, RateLimitError, OpenAIError) as exc:
+        raise _map_openai_error(exc) from exc
+    return IngestResponse(
+        document_id=resolved_document_id,
+        chunks_indexed=chunks_indexed,
+        status="indexed" if chunks_indexed > 0 else "empty",
+    )
+
+
+class RetrieveResult(BaseModel):
+    chunk_id: str
+    document_id: str
+    text: str
+    distance: float
+
+
+@app.get("/debug/retrieve")
+def debug_retrieve(query: str, top_k: int = 5, document_id: str | None = None) -> list[RetrieveResult]:
+    """Read-only introspection into the vector store, no LLM call involved —
+    lets a caller (or the grader) see exactly what /ask's retrieval step
+    would find for a given query, independent of generation. Not
+    rate-limited like /ask (no OpenAI chat cost here — just one embedding
+    call plus a local Chroma query) but still costs one real embedding
+    call, unlike GET /health or GET /providers/status.
+
+    document_id, when given, narrows the search to that one document's
+    chunks via Chroma's own metadata filter (N.8) — e.g. to check how a
+    specific document ranks its own passages for a query, or to confirm a
+    freshly-/ingest-ed document is actually searchable. Omitted, retrieval
+    is corpus-wide as before."""
+    if not query.strip():
+        raise HTTPException(status_code=400, detail="query must not be empty or whitespace-only")
+    _require_valid_key()
+    try:
+        query_embedding, _tokens = embed_query(_get_embedding_client(), query)
+    except (AuthenticationError, RateLimitError, OpenAIError) as exc:
+        raise _map_openai_error(exc) from exc
+    where = {"document_id": document_id} if document_id else None
+    retrieved = query_store(get_collection(), query_embedding, top_k=top_k, where=where)
+    return [
+        RetrieveResult(
+            chunk_id=chunk_id,
+            document_id=meta["document_id"],
+            text=text,
+            distance=distance,
+        )
+        for chunk_id, text, meta, distance in zip(
+            retrieved["ids"], retrieved["documents"], retrieved["metadatas"], retrieved["distances"]
+        )
+    ]
+
+
 @app.post("/ask")
 @limiter.limit(ASK_RATE_LIMIT)
 def ask(request: Request, body: AskRequest) -> AskResponse:
@@ -668,6 +920,45 @@ def ask(request: Request, body: AskRequest) -> AskResponse:
             detail="model= already implies openai; provider= must be 'openai' or omitted alongside it.",
         )
     _validate_forced_provider(body.provider, require_structured=True)
+
+    # RAG retrieval — always-on (2.21's design: no client-facing flag),
+    # except for force_bad's deterministic guardrail demo, which is
+    # orthogonal to this feature and stays exactly as it was. Runs once,
+    # before the retry loop below, since it's deterministic and doesn't
+    # need that loop's validation-retry semantics.
+    grounded_messages: list[dict] | None = None
+    retrieved_ids: list[str] = []
+    embedding_cost_usd: float | None = None
+    if not body.force_bad:
+        try:
+            query_embedding, embed_tokens = embed_query(_get_embedding_client(), body.question)
+            embedding_cost_usd = compute_embedding_cost(embed_tokens)
+            # Overfetch beyond what actually reaches the generator (see
+            # rag_service.OVERFETCH_K's docstring) so select_context_chunks
+            # has real alternatives to backfill from when applying its
+            # per-document diversity cap — retrieving and grounding-on the
+            # same fixed top-5 would leave nothing to substitute in.
+            candidates = query_store(get_collection(), query_embedding, top_k=OVERFETCH_K)
+            if candidates["distances"] and candidates["distances"][0] <= RAG_RELEVANCE_THRESHOLD:
+                retrieved = select_context_chunks(candidates)
+                retrieved_ids = retrieved["ids"]
+                grounded_messages = build_grounded_messages(body.question, retrieved)
+            record_event("retrieval", {
+                "request_id": getattr(request.state, "operational_request_id", None),
+                "question": body.question, "candidate_ids": candidates["ids"],
+                "distances": candidates["distances"], "selected_ids": retrieved_ids,
+                "collection_revision": get_collection().revision(),
+                "embedding_tokens": embed_tokens, "embedding_cost_usd": embedding_cost_usd,
+            })
+        except Exception as exc:
+            record_event("retrieval_error", {"request_id": getattr(request.state, "operational_request_id", None), "error_type": type(exc).__name__})
+            # Retrieval must never be the reason /ask fails outright — a
+            # vector-store or embedding-call problem degrades to a direct,
+            # non-RAG answer (status stays "not_applicable"), same
+            # never-500-if-avoidable philosophy as compute_cost_breakdown's
+            # pricing-gap handling.
+            logger.exception("RAG retrieval failed — falling back to a direct, non-grounded answer")
+
     start = time.perf_counter()
 
     for attempt in range(2):
@@ -706,9 +997,14 @@ def ask(request: Request, body: AskRequest) -> AskResponse:
                 if body.model is not None:
                     _require_valid_key()
 
-                answer, tokens_used, prompt_tokens, completion_tokens, served_provider, served_model = (
-                    call_structured_model(body.question, body.model, body.provider)
-                )
+                if grounded_messages is not None:
+                    answer, tokens_used, prompt_tokens, completion_tokens, served_provider, served_model = (
+                        call_structured(body.model, grounded_messages, Answer, body.provider)
+                    )
+                else:
+                    answer, tokens_used, prompt_tokens, completion_tokens, served_provider, served_model = (
+                        call_structured_model(body.question, body.model, body.provider)
+                    )
                 total_tokens_used += tokens_used
                 total_prompt_tokens += prompt_tokens
                 total_completion_tokens += completion_tokens
@@ -725,7 +1021,53 @@ def ask(request: Request, body: AskRequest) -> AskResponse:
             input_cost_usd, output_cost_usd = compute_cost_breakdown(
                 served_model, total_prompt_tokens, total_completion_tokens, provider=served_provider
             )
-            cost_usd = None if input_cost_usd is None else input_cost_usd + output_cost_usd
+            cost_usd = (
+                None
+                if input_cost_usd is None
+                else input_cost_usd + output_cost_usd + (embedding_cost_usd or 0.0)
+            )
+            # grounded_messages is None whenever retrieval didn't run
+            # (force_bad) or the relevance gate judged the question
+            # off-topic — both cases stay "not_applicable". Otherwise the
+            # gate judged it topically relevant, and GROUNDED_PROMPT's own
+            # refusal instruction (via the existing Answer.sources_needed
+            # field, not a new schema field) decides supported vs
+            # insufficient — see rag_service.GROUNDED_PROMPT.
+            if grounded_messages is None:
+                rag_status: Literal["supported", "insufficient", "not_applicable"] = "not_applicable"
+                citations: list[str] = []
+            elif answer.sources_needed:
+                rag_status = "insufficient"
+                citations = []
+            else:
+                rag_status = "supported"
+                # Citation precision fix, 2026-09-18: used_passage_numbers
+                # is the model's own claim about which numbered passages
+                # (see build_grounded_messages) its answer actually drew
+                # on, mapped back to real chunk ids by 1-based position.
+                # Replaces the previous "cite everything retrieved"
+                # behavior, which over-attributed — a supported answer
+                # that only used 2 of 5 retrieved chunks was citing all 5.
+                # Deduped/sorted since the model isn't asked to dedup or
+                # order them itself, and out-of-range numbers (a
+                # hallucinated passage index) are silently dropped rather
+                # than raising, matching this project's fail-open stance on
+                # imperfect model output elsewhere in this function.
+                cited = sorted(
+                    {n for n in answer.used_passage_numbers if 1 <= n <= len(retrieved_ids)}
+                )
+                citations = [retrieved_ids[n - 1] for n in cited]
+                if not citations:
+                    # The model marked the answer supported but didn't
+                    # name any passage it used (empty/all-invalid
+                    # used_passage_numbers) -- an instruction-following
+                    # miss, not evidence the answer is actually
+                    # unsupported (sources_needed already covers that
+                    # case). Falling back to the full retrieved set here
+                    # keeps a "supported" answer from citing nothing,
+                    # rather than silently under-citing a real grounded
+                    # answer because of one imperfectly-followed field.
+                    citations = retrieved_ids
             return AskResponse(
                 answer=answer,
                 tokens_used=total_tokens_used,
@@ -738,6 +1080,9 @@ def ask(request: Request, body: AskRequest) -> AskResponse:
                 output_cost_usd=round(output_cost_usd, 6) if output_cost_usd is not None else None,
                 free_tier_note=free_tier_note(served_provider),
                 attempts=attempts,
+                citations=citations,
+                status=rag_status,
+                embedding_cost_usd=round(embedding_cost_usd, 6) if embedding_cost_usd is not None else None,
             )
         except (ValidationError, ValueError) as exc:
             last_error = str(exc)

@@ -1,0 +1,66 @@
+{
+  "schema_note": "Externalized from golden_eval.py's GOLDEN_SET Python literal, 2026-09-19 (direct instruction: 'there shouldn't be anything hardcoded in any script' -- see p3m3/golden-eval-remediation-design.md Gap 7). Loaded at runtime via golden_eval.load_golden_set(), matching config/model-pricing.json's existing loader pattern. Every entry's question/expected_status/expected_document_id was verified live against GET /debug/retrieve and POST /ask before being written in -- not guessed from filenames.",
+  "rebuilt_for_corpus": "250-document-full-rebuild-2026-09-19",
+  "entries": [
+    {
+      "question": "Does weight-free knowledge editing actually erase the original fact from a model, or does a trace of it remain?",
+      "expected_status": "supported",
+      "expected_document_id": "arxiv-2609.18985-suppressed-not-erased-knowledge-editing",
+      "note": "Replaces the NIST AI RMF question 2026-09-19 -- nist-ai-rmf-1.0 was excluded by the 700KB-cap corpus expansion (moved to ingestion_quarantine/dropped/). Live-verified via /debug/retrieve (top-1 distance 0.5665, correct document dominates top-3) and /ask (status=supported, correct citations) before being written in, same methodology as every prior golden-set replacement."
+    },
+    {
+      "question": "When is graph structure worth its cost in retrieval-augmented generation?",
+      "expected_status": "insufficient",
+      "expected_document_id": null,
+      "note": "Retrieval correctly surfaces the right document (verified: it supplies 4 of the raw top-5 nearest neighbors). But its own two lowest-distance chunks are the paper's title/abstract line (near-verbatim overlap with the query's own phrasing), not the conclusion section that actually states the paper's answer -- that chunk exists in the document but ranks 4th by distance, so select_context_chunks's per-document cap (top-2 by distance at the time) excludes it. gpt-4.1-nano correctly refuses given only the abstract-restating chunks it actually receives (verified 3/3, forced model=gpt-4.1-nano, 2026-09-18) -- a real chunk-quality gap (boilerplate/title text outranking substantive content by raw embedding distance), not a retrieval or selection defect. Originally written expecting 'supported'; corrected after live verification rather than guessed, matching this project's never-guess discipline. Underlying document (arxiv-2609.18099-when-is-graph-structure-worth-its-cost-rag) is one of the 31 survivors of the 700KB-cap expansion, still valid as of 2026-09-19."
+    },
+    {
+      "question": "When does work done with AI still feel like a person's own, according to research on ownership in AI-assisted tasks?",
+      "expected_status": "supported",
+      "expected_document_id": "arxiv-2609.20658-ownership-in-ai-assisted-everyday-tasks",
+      "note": "Replaces the 'first token matters' question 2026-09-19 -- arxiv-2609.18471 was excluded by the 700KB-cap corpus expansion (moved to ingestion_quarantine/dropped/); this was also the question used throughout module-2.2-naive-rag-failure-modes.md's failure-mode-3 diagnosis -- that write-up's evidence trail documents a real finding against a document that has since left the live corpus, not something this replacement invalidates. Live-verified via /debug/retrieve (top-1 distance 0.4395) and /ask (status=supported, correct citations) before being written in. (Historical note on the question this replaced: it itself had replaced an earlier, genuinely borderline question about LLM agent failure modes that flipped between supported/insufficient across repeated runs even with model pinned -- root cause was a references-list fragment outranking body text by distance within the dominant document. That instability class is exactly what the 2026-09-19 golden_eval remediation design's Gap 1/Gap 5 fixes address going forward.)"
+    },
+    {
+      "question": "How many effective dimensions does a language model's computation actually use, according to task-weighted charts?",
+      "expected_status": "supported",
+      "expected_document_id": "arxiv-2609.18989-function-lives-where-variance-doesnt",
+      "note": "Replaces the 'scientific retrievers' question 2026-09-19 -- arxiv-2609.18262 was excluded by the 700KB-cap corpus expansion (moved to ingestion_quarantine/dropped/). Live-verified via /debug/retrieve (top-1 distance 0.5715) and /ask (status=supported, correct citations) before being written in."
+    },
+    {
+      "question": "What are the limits of confidence estimation in diffusion models?",
+      "expected_status": "supported",
+      "expected_document_id": "arxiv-2609.20581-limits-of-confidence-in-diffusion",
+      "note": "Replaces a question about arxiv-2609.18453-mirage-of-calibrated-confidence-vlms, one of the 15 files removed by the 2026-09-18 2.5MB corpus cap (see ingestion_quarantine/README.md) -- re-verified live against GET /debug/retrieve (top hit 0.80) and POST /ask (status=supported, correctly cited) on the rebuilt corpus at the time, not guessed from the filename. Document survived the later 700KB-cap expansion (2026-09-19), still valid."
+    },
+    {
+      "question": "What is the memory wall problem for mixture-of-experts models on SSDs?",
+      "expected_status": "supported",
+      "expected_document_id": "arxiv-2609.18063-other-half-of-memory-wall-moe-ssd",
+      "note": "Document survived the 700KB-cap expansion (2026-09-19), still valid."
+    },
+    {
+      "question": "What was OpenAI's exact quarterly revenue in Q2 2026?",
+      "expected_status": "insufficient",
+      "expected_document_id": null,
+      "note": "Topically adjacent to the corpus (agentic-AI/audit territory) -- top-1 distance measured at 1.101, below RAG_RELEVANCE_THRESHOLD (1.2), so it passes the gate but no document actually answers it. This is exactly the two-layer design's reason to exist: the numeric gate alone would call this 'relevant.'"
+    },
+    {
+      "question": "What is a good recipe for chocolate chip cookies?",
+      "expected_status": "not_applicable",
+      "expected_document_id": null,
+      "note": null
+    },
+    {
+      "question": "What's a good training plan for running a marathon?",
+      "expected_status": "not_applicable",
+      "expected_document_id": null,
+      "note": null
+    },
+    {
+      "question": "Did cluster-based semantic chunking outperform simpler chunking strategies for retrieval-augmented generation?",
+      "expected_status": "supported",
+      "expected_document_id": "arxiv-2607.01852-evaluating-chunking-strategies-rag-academic-texts",
+      "note": "Added 2026-09-18 alongside the corpus swap that replaced arxiv-2609.18366 with this document (see ingestion_quarantine/README.md's status note) -- a question sourced from and verified against the new document specifically, not a generic filler case. Verified live 3/3 (model=gpt-4.1-nano): retrieval top-5 all from this document (top distance 0.549), /ask status=supported every run, citations always include this document_id, and the generated answer correctly states the paper's actual finding ('cluster-based chunking did not outperform simpler strategies') rather than a plausible-sounding but unverified paraphrase. Document survived the 700KB-cap expansion (2026-09-19), still valid."
+    }
+  ]
+}

@@ -14,6 +14,9 @@ A typed FastAPI endpoint that accepts a question and returns:
 - `latency_ms`: how long the request took
 - `cost_usd`: an estimated request cost
 - `attempts`: validation and retry details for the guardrail demo
+- `status`, `citations`, `embedding_cost_usd`: retrieval outcome and source
+  citations from `/ask`'s always-on RAG step — see [Retrieval-Augmented
+  Generation](#retrieval-augmented-generation-rag)
 
 The main idea: an LLM call becomes more useful in software when it has a predictable
 request shape, a predictable response shape, and observable runtime metadata.
@@ -184,6 +187,17 @@ curl -s -X POST "$DEPLOYED_URL/ask" \
 Render's free tier spins the service down after periods of inactivity, so the
 first request after a while may take up to a minute while it wakes back up —
 that's expected, not an error.
+
+RAG debug/ingest endpoints — see [Retrieval-Augmented
+Generation](#retrieval-augmented-generation-rag) for what each does:
+
+```bash
+curl -s "http://127.0.0.1:8000/debug/retrieve?query=what+is+retrieval-augmented+generation&top_k=5" | jq
+
+curl -s -X POST http://127.0.0.1:8000/ingest \
+  -H "Content-Type: application/json" \
+  -d '{"document_id": "my-note-1", "text": "Paste document text here."}'
+```
 
 ## Instructor Flow
 
@@ -372,6 +386,98 @@ candidate — local or cloud — is actually cheapest and reachable wins the
 no-override default path, per the economic utility frontier described
 above.
 
+## Retrieval-Augmented Generation (RAG)
+
+`/ask` always retrieves before answering. If the top retrieved chunk is
+close enough (`RAG_RELEVANCE_THRESHOLD`, L2 distance), the answer is
+grounded in retrieved context and cites its sources; otherwise it falls
+back to the model's own knowledge (`status: "not_applicable"`) or refuses
+(`status: "insufficient"`) — see `AskResponse.status` in `main.py`.
+
+### Architecture
+
+```text
+PDF corpus (ingestion_quarantine/pdfs/)
+  → extract_pdf_text()        pdf_extract.py — page-by-page text, trailing
+                               References/Bibliography section truncated
+  → chunk_text()               rag_ingest.py — RecursiveCharacterTextSplitter,
+                               800 chars / 100 overlap
+  → embed_chunks()             text-embedding-3-small
+  → build_store()               Chroma PersistentClient → chroma_store/
+
+/ask
+  → embed_query()               rag_service.py
+  → query_store(top_k=OVERFETCH_K)   dense nearest-neighbor search
+  → select_context_chunks()     per-document diversity cap (MAX_CHUNKS_
+                               PER_DOCUMENT), global top-CONTEXT_K, with
+                               (distance, document_id, chunk_index)
+                               tie-breaking and backfill
+  → RAG_RELEVANCE_THRESHOLD gate
+      relevant   → GROUNDED_PROMPT, numbered passages [1]..[N]
+      not relevant → ungrounded fallback or refusal
+  → Answer.used_passage_numbers  model states which numbered passages it
+                               actually used; main.py maps those back to
+                               real chunk ids for citations — not every
+                               retrieved chunk is assumed used
+```
+
+`chunk_id` format is `{document_id}::{chunk_index}` — the two are
+distinct fields, never conflate a document id with a chunk id.
+
+### Files
+
+| File | Role |
+|---|---|
+| `pdf_extract.py` | PDF → text, with references-section truncation |
+| `rag_ingest.py` | Chunk, embed, build/rebuild `chroma_store/` — run directly: `python rag_ingest.py` |
+| `rag_service.py` | Retrieval library: `query_store`, `select_context_chunks`, `build_grounded_messages`, `upsert_chunks` |
+| `golden_eval.py` | Golden-set eval — scores retrieval and generation separately against real, live-verified expected outcomes |
+| `ingestion_quarantine/` | Source PDFs (`pdfs/`), corpus provenance (`new_docs_provenance.json`), and `README.md` documenting sourcing/curation decisions |
+| `chroma_store/` | Persisted vector store — committed to git so it survives Render's free tier (no persistent disk) |
+
+### Ingesting new documents
+
+- **Add to the pre-built corpus and rebuild:** drop PDFs into
+  `ingestion_quarantine/pdfs/`, then `python rag_ingest.py` to rebuild
+  `chroma_store/` from scratch. This re-embeds the whole corpus — cheap
+  per-call on `text-embedding-3-small`, but not free, and it's the
+  expensive operation in this pipeline (vs. a live single-document add,
+  below), so batch additions rather than rebuilding per file.
+- **Add one document to a running server:** `POST /ingest` embeds and
+  upserts a single document into the live collection without a full
+  rebuild — see [Test With Curl](#test-with-curl).
+
+### Corpus
+
+50 open-access AI-research PDFs (arXiv, ACL), each capped at 2.5MB to
+bound `chroma_store/`'s size for the git-committed-store deploy strategy
+above. Every document's provenance — source URL, fetch timestamp,
+discovery path, selection method — is recorded in
+`ingestion_quarantine/new_docs_provenance.json` and narrated in
+`ingestion_quarantine/README.md`; that file is the source of truth for
+what's in the corpus and why, not this README.
+
+### Retrieval-quality notes
+
+- **Citation precision**: citations reflect passages the model actually
+  says it used (`used_passage_numbers`), not everything retrieved.
+- **Per-document diversity cap**: retrieval overfetches
+  (`OVERFETCH_K` > `CONTEXT_K`) and caps how many chunks any single
+  document can contribute, so one document with several close matches
+  can't crowd out the rest of the context window.
+- **`RAG_RELEVANCE_THRESHOLD`** is empirically calibrated per corpus/
+  embedding model/distance metric — not a universal constant. Re-check it
+  against `golden_eval.py` after any corpus or chunking change.
+- Known open gap: chunk-level quality (title/abstract-restatement or
+  leftover citation fragments can still outrank substantive content by
+  raw distance within a document) — references-section truncation at
+  extraction time addresses the bulk case; finer chunk-level filtering is
+  a deferred follow-up.
+- In progress: retrieval memory (persisted retrieval-run history), hybrid
+  dense + BM25 retrieval with Reciprocal Rank Fusion, and LLM-based
+  reranking — staged, evidence-driven additions on top of the dense-only
+  baseline above, not a replacement for it.
+
 ## File Map
 
 ```text
@@ -384,6 +490,15 @@ week-1v2/
 ├── run.sh                          # Local dev launcher with port auto-retry
 ├── requirements.txt
 ├── requirements-dev.txt            # Optional: pricing-page screenshot verification (Playwright)
+├── pdf_extract.py                  # RAG: PDF → text extraction — see RAG section
+├── rag_ingest.py                   # RAG: chunk, embed, build/rebuild chroma_store/
+├── rag_service.py                  # RAG: retrieval library used by /ask
+├── golden_eval.py                  # RAG: golden-set retrieval + generation eval
+├── chroma_store/                   # RAG: persisted vector store, committed to git
+├── ingestion_quarantine/           # RAG: source PDFs + corpus provenance
+│   ├── pdfs/
+│   ├── new_docs_provenance.json
+│   └── README.md                       # Corpus sourcing/curation decisions — source of truth
 ├── scripts/
 │   ├── refresh_openai_pricing.py       # Machine-readable price extraction (no browser needed)
 │   ├── append_model_pricing.py         # Manual PricingRecord append helper

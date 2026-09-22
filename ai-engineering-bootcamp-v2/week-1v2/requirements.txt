@@ -1,9 +1,15 @@
 altair==6.2.2
+chromadb==1.5.9
 fastapi[standard]==0.141.1
 httpx==0.28.1
+langchain-text-splitters==1.1.2
 openai==3.13.0
 pandas==3.0.5
+psycopg2-binary==2.9.10
 pydantic==2.13.5
+pypdf==6.19.0
 python-dotenv==1.2.3
+rank-bm25==0.2.2
 slowapi==0.1.10
+sqlalchemy==2.0.36
 streamlit==1.63.0

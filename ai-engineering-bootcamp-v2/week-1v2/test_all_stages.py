@@ -81,6 +81,9 @@ EXPECTED_KEYS = {
     "answer", "tokens_used", "prompt_tokens", "completion_tokens", "model",
     "latency_ms", "cost_usd", "input_cost_usd", "output_cost_usd",
     "free_tier_note", "attempts",
+    # RAG fields, added Week 2 (2026-09-17) — always-on retrieval means
+    # every /ask response carries these now, not just RAG-specific ones.
+    "citations", "status", "embedding_cost_usd",
 }
 
 

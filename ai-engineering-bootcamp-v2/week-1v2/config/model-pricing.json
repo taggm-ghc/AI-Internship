@@ -1101,6 +1101,20 @@
       "retrieved_at": "2026-09-13T00:00:00Z",
       "effective_from": "2026-09-13",
       "notes": "Real canonical price for Gemini 3.8 Flash, the provider_chain entry used for the free-tier-first fallback. Deliberately NOT a $0 record -- Gemini grants a separate free rate-limited allowance (60 RPM) on top of this real price; see ProviderConfig.free_entitlement_* instead. Needs reconfirmation against Google primary docs before being treated as fully authoritative."
+    },
+    {
+      "provider": "openai",
+      "model": "text-embedding-3-small",
+      "service_tier": "standard",
+      "currency": "USD",
+      "unit": "per_1m_tokens",
+      "input": 0.02,
+      "cached_input": null,
+      "output": 0.0,
+      "source_url": "https://openai.com/api/pricing/",
+      "retrieved_at": "2026-09-17T00:00:00Z",
+      "effective_from": "2026-09-17",
+      "notes": "Embedding models bill only per input token (no completion/output tokens exist for this call type) \u2014 output recorded as 0.0, a genuine fact (no output-token billing dimension), not a missing-data placeholder. Verified live via web search 2026-09-17, not transcribed from memory. Batch API price ($0.01/1M) not used here since rag_ingest.py and rag_service.py both call the synchronous embeddings endpoint."
     }
   ]
 }

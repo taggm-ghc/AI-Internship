@@ -33,11 +33,32 @@ import providers
 
 
 class Answer(BaseModel):
-    """The model output shape we want every caller to receive."""
+    """The model output shape we want every caller to receive.
+
+    used_passage_numbers (added 2026-09-18, Week 2 citation-precision fix):
+    only meaningful on the RAG-grounded /ask path, where rag_service's
+    GROUNDED_PROMPT numbers each retrieved passage [1]..[N] and asks the
+    model which ones it actually drew on. main.py only reads this field when
+    grounded_messages is not None -- on every other path (ungrounded /ask,
+    /summarize's and /analyze-sentiment's own schemas don't use Answer at
+    all, force_bad's synthetic first attempt) there are no numbered passages
+    in the prompt for the model to reference, so whatever it returns here is
+    simply never consulted. Kept on the one shared Answer model rather than
+    a second RAG-only response schema, matching this field's siblings
+    (confidence, sources_needed) that are also only fully meaningful in
+    some call paths -- splitting the schema per path would mean
+    call_structured/call_structured_model no longer sharing one contract,
+    a bigger change than this fix calls for. OpenAI's structured-output
+    strict mode requires every property regardless of this default, so the
+    model always populates it; the default only matters for the
+    force_bad/synthetic_malformed_json path below, which pydantic parses
+    directly rather than through the API's strict-mode schema.
+    """
 
     answer: str = Field(min_length=1)
     confidence: float = Field(ge=0.0, le=1.0)
     sources_needed: bool
+    used_passage_numbers: list[int] = Field(default_factory=list)
 
 
 class Summary(BaseModel):
@@ -123,6 +144,16 @@ def call_structured(
             messages=messages,
             response_format=response_format,
             max_completion_tokens=providers.MAX_COMPLETION_TOKENS,
+            # Pinned 2026-09-19 (golden_eval.py remediation, Gap 5) -- was
+            # unset (API default 1.0), the confirmed root cause of this
+            # session's observed golden_eval.py generation-score flakiness
+            # (10/10 -> 9/10 -> 8/10 across identical fresh runs on an
+            # unchanged, deterministic retrieved context). Only fixes the
+            # explicit-model path (what golden_eval.py always exercises,
+            # passing model="gpt-4.1-nano") -- the no-explicit-model
+            # fallback chain (providers.call_structured_with_fallback)
+            # is untouched, a scoped decision, not an oversight.
+            temperature=0,
         )
         parsed = completion.choices[0].message.parsed
         if parsed is None:

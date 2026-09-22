@@ -270,6 +270,19 @@ def render_response_summary(data: dict | str) -> None:
     if data.get("free_tier_note"):
         st.caption(f"ℹ️ {data['free_tier_note']}")
 
+    # RAG fields, added Week 2 (2026-09-17) — always present on every /ask
+    # response now (see main.py's ask(), 2.21's always-on-retrieval
+    # design), not just when a grounded answer actually resulted.
+    rag_status = data.get("status")
+    if rag_status == "supported":
+        st.success(f"Grounded in retrieved context — {len(data.get('citations', []))} citation(s)")
+        st.caption("Citations (chunk IDs): " + ", ".join(data.get("citations", [])))
+    elif rag_status == "insufficient":
+        st.warning("Question was topically relevant, but the retrieved context didn't cover it — refused rather than guessed.")
+    elif rag_status == "not_applicable":
+        st.caption("ℹ️ status: not_applicable — retrieval judged this question unrelated to the ingested corpus; answered directly.")
+    st.caption(f"embedding_cost_usd: ${format_cost(data.get('embedding_cost_usd'))}")
+
 
 # LOCAL_INFERENCE_PROVIDER_NAME's value, duplicated here rather than
 # importing providers.py — this UI module only ever talks to the API over
@@ -483,6 +496,32 @@ if st.sidebar.button("Refresh provider status"):
                     "won't necessarily reflect money actually billed."
                 )
             st.sidebar.caption(line)
+
+# Week 2: ingest a document into the same chroma_store/ collection /ask's
+# retrieval step reads from. Collapsed by default — most demo visits are
+# asking questions against the pre-loaded 50-doc baseline corpus (see
+# rag_ingest.py), not adding new documents — but this is what proves
+# POST /ingest is a real, live pipeline and not just a deploy-time
+# hard-coded corpus (see p3m3/week2-priority-checklist.md's "Hard-coding
+# docs at deploy is not a pipeline" guardrail note).
+with st.expander("Ingest a document (POST /ingest)", expanded=False):
+    with st.form("ingest_form"):
+        ingest_document_id = st.text_input("document_id", "streamlit-demo-doc")
+        ingest_text = st.text_area(
+            "text", "Paste or type the document text to ingest here.", height=120
+        )
+        ingest_submitted = st.form_submit_button("Ingest")
+
+    ingest_payload = {"text": ingest_text, "document_id": ingest_document_id, "metadata": None}
+    st.code(render_curl(base_url, "/ingest", ingest_payload), language="bash")
+
+    if ingest_submitted:
+        with st.spinner("Calling /ingest..."):
+            ingest_status, ingest_data = call_json(
+                "POST", f"{base_url.rstrip('/')}/ingest", ingest_payload
+            )
+        st.markdown(f"**HTTP {ingest_status}**" if ingest_status else "**Request failed**")
+        st.json(ingest_data)
 
 # Outside the form (not batched) so switching it reruns immediately and
 # the form below can show/hide the force_bad checkbox accordingly — /ask

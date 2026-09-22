@@ -15,3 +15,11 @@ env/
 # human-verification artifacts, not something a graded/portfolio repo
 # needs committed (regenerable from the live page at any time).
 captures/
+
+# Local-only Postgres-migration inputs (p3m3/audit-2026-09-19.md) — kept
+# on disk pending verified restore capability, never pushed: chroma.sqlite3
+# and data_level0.bin each exceed GitHub's 100MB single-file limit, and
+# ingestion_quarantine/'s 250 source PDFs are pure migration scratch now
+# that PostgreSQL is the durable store.
+chroma_store/
+ingestion_quarantine/
