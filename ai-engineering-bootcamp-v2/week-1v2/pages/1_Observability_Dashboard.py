@@ -7,18 +7,18 @@ rate, a retrieval-quality panel reusing this app's own already-computed
 status field).
 
 A standalone Streamlit multi-page file (Streamlit's own convention: a
-pages/ directory next to the entry script, demo_page.py, is auto-
-discovered by `streamlit run demo_page.py`). Does NOT import demo_page.py
+pages/ directory next to the entry script, MVP_Layered_Ask.py, is auto-
+discovered by `streamlit run MVP_Layered_Ask.py`). Does NOT import MVP_Layered_Ask.py
 itself as a module — each page in pages/ runs as its own script, and
 importing a sibling *page* would re-execute its top-level UI code — but
 DOES import the shared, non-page api_client.py module (pure Python, no
 Streamlit calls, safe to import from anywhere) for the HTTP-client layer,
-so this page and demo_page.py share one cold-start-retry implementation
+so this page and MVP_Layered_Ask.py share one cold-start-retry implementation
 instead of two drifting copies (component reuse corrected 2026-09-22,
 after an initial version of this file duplicated a minimal copy instead).
 
 This page reads server-side, durable data spanning ALL sessions/users —
-distinct from demo_page.py's session-only sidebar cost/latency metrics.
+distinct from MVP_Layered_Ask.py's session-only sidebar cost/latency metrics.
 """
 import altair as alt
 import pandas as pd
@@ -50,7 +50,7 @@ kind_filter = st.sidebar.selectbox(
 limit = st.sidebar.slider("Events to fetch", 50, 500, 200)
 # No explicit "back" link: Streamlit's classic pages/-directory mode already
 # auto-generates sidebar navigation back to the entrypoint script, and an
-# explicit st.page_link("demo_page.py", ...) here raised
+# explicit st.page_link("MVP_Layered_Ask.py", ...) here raised
 # StreamlitPageNotFoundError — the entrypoint isn't addressable that way
 # from inside pages/ in this Streamlit version (1.63.0), only confirmed by
 # actually running this page with streamlit.testing.v1.AppTest, not by

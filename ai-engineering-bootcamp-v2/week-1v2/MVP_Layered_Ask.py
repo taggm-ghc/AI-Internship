@@ -1,7 +1,7 @@
 """Minimal Streamlit UI for the Week 1 v2 `/ask` demo.
 
 Run:
-  streamlit run demo_page.py
+  streamlit run MVP_Layered_Ask.py
 """
 
 import pandas as pd
@@ -302,7 +302,7 @@ st.sidebar.code(
 )
 st.sidebar.markdown("### Start this page")
 st.sidebar.code(
-    f"cd {WORKDIR_CMD}\nsource .venv/bin/activate\nstreamlit run demo_page.py",
+    f"cd {WORKDIR_CMD}\nsource .venv/bin/activate\nstreamlit run MVP_Layered_Ask.py",
     language="bash",
 )
 

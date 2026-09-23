@@ -66,7 +66,7 @@ echo "Starting uvicorn on http://${HOST}:${PORT}"
 echo "  health check: http://${HOST}:${PORT}/health"
 echo "  API docs:     http://${HOST}:${PORT}/docs"
 
-# Record the active address so demo_page.py can default to it instead of a
+# Record the active address so MVP_Layered_Ask.py can default to it instead of a
 # hardcoded port that drifts whenever this is started on a non-default one.
 echo "http://${HOST}:${PORT}" > .faststream-local-url
 

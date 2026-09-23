@@ -95,7 +95,7 @@ class ModelSelection(BaseModel):
     own separate Literal of allowed model names, which had to be kept in
     sync with this file by hand (and briefly drifted while adding
     gpt-4.1-nano — the immediate trigger for this fix). This list is now the
-    single source of truth main.py, demo_page.py, and the startup pricing
+    single source of truth main.py, MVP_Layered_Ask.py, and the startup pricing
     check all read from, instead of each hardcoding their own copy."""
 
     selected_model: str

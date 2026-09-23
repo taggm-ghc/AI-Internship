@@ -1,7 +1,7 @@
 """Shared HTTP-client layer for every Streamlit page in this app —
-demo_page.py (the entry script) and pages/1_Observability_Dashboard.py.
+MVP_Layered_Ask.py (the entry script) and pages/1_Observability_Dashboard.py.
 
-Extracted 2026-09-22 from demo_page.py, where these functions originally
+Extracted 2026-09-22 from MVP_Layered_Ask.py, where these functions originally
 lived: the dashboard page initially duplicated a minimal copy of the
 cold-start-retry logic rather than sharing it (each Streamlit multi-page
 file runs standalone, so importing a sibling *page* script as a module

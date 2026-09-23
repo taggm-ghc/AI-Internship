@@ -59,7 +59,7 @@ source .venv/bin/activate
 uvicorn main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-Or use `./run.sh [port]`, which also refuses to start if the port's already taken and records the actual address it started on (so `demo_page.py`'s sidebar default tracks it automatically instead of assuming 8000).
+Or use `./run.sh [port]`, which also refuses to start if the port's already taken and records the actual address it started on (so `MVP_Layered_Ask.py`'s sidebar default tracks it automatically instead of assuming 8000).
 
 Check that the API is running without spending tokens:
 
@@ -77,7 +77,7 @@ http://127.0.0.1:8000/docs
 
 ```bash
 source .venv/bin/activate
-streamlit run demo_page.py
+streamlit run MVP_Layered_Ask.py
 ```
 
 Open:
@@ -201,7 +201,7 @@ curl -s -X POST http://127.0.0.1:8000/ingest \
 
 ## Instructor Flow
 
-Use `main.py` and `demo_page.py` for the live student demo. Open the stage files only when
+Use `main.py` and `MVP_Layered_Ask.py` for the live student demo. Open the stage files only when
 you want to explain how each capability was introduced:
 
 | Stage | File | Teaching point |
@@ -277,7 +277,7 @@ via an env var.
 
 ### Deploying the Streamlit UI as its own Render service
 
-The same repo and `Dockerfile` also serve `demo_page.py` — Render just
+The same repo and `Dockerfile` also serve `MVP_Layered_Ask.py` — Render just
 needs a different start command, since the Dockerfile's own `CMD` runs
 the API. This is optional; the sidebar's manual URL paste (above) covers
 the common case of a solo student pointing their own local Streamlit at
@@ -289,7 +289,7 @@ their own deployed API.
    with:
 
    ```text
-   streamlit run demo_page.py --server.address 0.0.0.0 --server.port 8000
+   streamlit run MVP_Layered_Ask.py --server.address 0.0.0.0 --server.port 8000
    ```
 
    Use port `8000` here (not Streamlit's default `8501`) — Render's
@@ -298,7 +298,7 @@ their own deployed API.
 3. **Environment Variables**: add `API_BASE_URL` set to your deployed
    API service's URL, e.g. `https://your-api-service.onrender.com` —
    **set this in Render's dashboard only, never commit it** (see the
-   warning above). `demo_page.py` reads it as the sidebar's default so
+   warning above). `MVP_Layered_Ask.py` reads it as the sidebar's default so
    it doesn't need to be pasted in by hand.
 4. **Health Check Path**: `/_stcore/health` (Streamlit's built-in health
    endpoint).
@@ -490,7 +490,7 @@ what's in the corpus and why, not this README.
 week-1v2/
 ├── README.md
 ├── main.py                         # Final API used by students
-├── demo_page.py                    # Streamlit UI for the final API
+├── MVP_Layered_Ask.py                    # Streamlit UI for the final API
 ├── smoke_test.py                   # No-token API startup check
 ├── Dockerfile                      # Deploy artifact — see Deploy
 ├── run.sh                          # Local dev launcher with port auto-retry
