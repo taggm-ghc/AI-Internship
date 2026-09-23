@@ -377,7 +377,8 @@ with st.expander("Ingest a document (POST /ingest)", expanded=False):
         ingest_submitted = st.form_submit_button("Ingest")
 
     ingest_payload = {"text": ingest_text, "document_id": ingest_document_id, "metadata": None}
-    st.code(render_curl(base_url, "/ingest", ingest_payload), language="bash")
+    st.code(render_curl("/ingest", ingest_payload), language="bash")
+    st.caption("$API_BASE_URL is a placeholder -- swap in your own API's URL to actually run this.")
 
     if ingest_submitted:
         with st.spinner("Calling /ingest..."):
@@ -523,7 +524,8 @@ with main_col:
     )
 
     st.markdown("### Request")
-    st.code(render_curl(base_url, endpoint_path, payload), language="bash")
+    st.code(render_curl(endpoint_path, payload), language="bash")
+    st.caption("$API_BASE_URL is a placeholder -- swap in your own API's URL to actually run this.")
 
     health_col, _ = st.columns(2)
     with health_col:

@@ -56,10 +56,20 @@ def build_stream_payload(question: str, model: str | None, provider: str | None 
     return {"question": question, "model": model, "provider": provider, "rag_mode": rag_mode}
 
 
-def render_curl(base_url: str, path: str, payload: dict) -> str:
+def render_curl(path: str, payload: dict) -> str:
+    """Renders a curl command for display only -- never called to make an
+    actual request (real calls go through call_json/call_stream with the
+    resolved base_url directly). The host is always the literal placeholder
+    $API_BASE_URL, never the real base_url: unlike
+    ui_widgets.base_url_sidebar_widget's blank input field, the st.code(...)
+    block this feeds is always visible with nothing gating it, so taking a
+    base_url parameter here at all would just move the same leak that
+    widget's docstring describes (a screenshot of the page) from the input
+    field to the "Request" curl preview below it.
+    """
     body = json.dumps(payload)
     return (
-        f'curl -s -X POST {base_url.rstrip("/")}{path} '
+        f'curl -s -X POST $API_BASE_URL{path} '
         f'-H "Content-Type: application/json" '
         f"-d '{body}'"
     )
