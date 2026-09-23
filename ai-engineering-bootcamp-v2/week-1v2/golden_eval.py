@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """Golden-set RAG eval: measures retrieval and generation separately against
-real, live-verified behavior on the actual 250-document corpus (expanded
-from 50 on 2026-09-19), per deliverables-outcomes.md's Session 2 core
+real, live-verified behavior on the actual corpus (250 documents as of
+2026-09-19; 258 as of 2026-09-23 after live /ingest validation for D5/D-N —
+the golden set's own expected_document_id references are unaffected, since
+they point at the original 250 and preflight_check() below verifies that
+live on every run rather than trusting this comment), per
+deliverables-outcomes.md's Session 2 core
 deliverable ("Golden-set eval... Measure retrieval + generation separately")
 and week2-priority-checklist.md's Tier 4a.
 

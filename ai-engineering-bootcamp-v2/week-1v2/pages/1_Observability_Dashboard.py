@@ -47,7 +47,7 @@ st.caption(
 
 base_url = st.sidebar.text_input("API base URL", default_api_base_url())
 kind_filter = st.sidebar.selectbox(
-    "Event kind", ["(all)", "http_completed", "retrieval", "retrieval_error", "ingest", "http_started"]
+    "Event kind", ["(all)", "http_completed", "retrieval", "retrieval_error", "ingest", "http_started", "golden_eval"]
 )
 limit = st.sidebar.slider("Events to fetch", 50, 500, 200)
 # No explicit "back" link: Streamlit's classic pages/-directory mode already
