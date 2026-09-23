@@ -385,6 +385,7 @@ with st.expander("Ingest a document (POST /ingest)", expanded=False):
         ingest_key = st.text_input(
             "X-Ingest-Key (optional)",
             type="password",
+            placeholder="(leave blank to ingest as an unauthenticated caller)",
             help="Leave blank to ingest as an unauthenticated caller (new documents still go live; "
             "re-ingesting an existing document_id always stages a version for review). A valid key "
             "authenticates the call for auto-accept and the unauthenticated phrase-scan bypass.",
