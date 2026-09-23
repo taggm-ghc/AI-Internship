@@ -16,6 +16,7 @@ from api_client import (
     default_api_base_url as _default_api_base_url,
     render_curl,
 )
+from ui_theme import apply_custom_css
 from pricing_config import load_model_selection
 
 WORKDIR_CMD = "ai-engineering-bootcamp-v2/week-1v2"
@@ -260,6 +261,7 @@ def render_latency_boxplot() -> None:
 
 
 st.set_page_config(page_title="Agentic AI Engineering Bootcamp: Layered MVP", layout="wide")
+apply_custom_css()
 st.title("Agentic AI Engineering Bootcamp: Layered MVP")
 st.caption(
     "One final demo endpoint. The separate `stages/` files show how this grows step by step."

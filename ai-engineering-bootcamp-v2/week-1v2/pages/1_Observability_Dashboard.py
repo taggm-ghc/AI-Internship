@@ -25,6 +25,7 @@ import pandas as pd
 import streamlit as st
 
 from api_client import call_json, default_api_base_url
+from ui_theme import apply_custom_css
 
 # Fixed status-palette hex values (dataviz skill's reference palette,
 # `references/palette.md`) — never themed/reused for categorical series,
@@ -37,6 +38,7 @@ RAG_RELEVANCE_THRESHOLD = 1.2  # mirrors rag_service.py's own constant — refer
 
 
 st.set_page_config(page_title="Observability Dashboard", layout="wide")
+apply_custom_css()
 st.title("Observability Dashboard")
 st.caption(
     "Server-side durable log across ALL sessions/users — internship.events via GET /debug/events. "

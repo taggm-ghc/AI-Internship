@@ -13,8 +13,10 @@ this app duplicated that logic instead of sharing it.
 import streamlit as st
 
 from api_client import call_json, default_api_base_url
+from ui_theme import apply_custom_css
 
 st.set_page_config(page_title="MVP Layered Health", layout="wide")
+apply_custom_css()
 st.title("MVP Layered Health")
 st.caption("A quick, no-cost check of GET /health — status and which Claude Code Skills this project's own development used (see p3m3/skills-and-mcp-inventory.md).")
 
