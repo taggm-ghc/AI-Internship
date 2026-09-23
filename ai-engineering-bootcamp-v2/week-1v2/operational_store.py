@@ -95,16 +95,121 @@ def corpus_summary(sample_size=10):
 
 
 def document_exists(document_id):
-    """p3m3 D-N+2 (item #30) -- backs main.py's overwrite guard: an
-    unauthenticated /ingest caller may create a new document_id but not
-    silently replace an existing one (including the baseline corpus),
-    closing the single-ID-collision corpus-poisoning vector OWASP's RAG
-    Security Cheat Sheet flags. Indexed primary-key lookup, same
-    get_engine().connect() pattern as corpus_summary above."""
+    """p3m3 item #30, repurposed by item #33: backs main.py's decision of
+    whether a POST /ingest call is a first-time ingest (goes live
+    immediately, nothing to conflict with) or a re-ingest of an existing
+    document_id (item #33: always staged as a new version now, never a
+    direct overwrite -- the single-ID-collision corpus-poisoning vector
+    OWASP's RAG Security Cheat Sheet flags is closed structurally, not by
+    an auth check on a destructive path that no longer exists). Indexed
+    primary-key lookup, same get_engine().connect() pattern as
+    corpus_summary above."""
     with get_engine().connect() as conn:
         return conn.execute(
             text('SELECT 1 FROM internship.documents WHERE document_id=:id'), {'id': document_id}
         ).first() is not None
+
+
+def stage_document_version(document_id, text_content, metadata, provenance, content_sha256, adversarial_flags, client_ip, authenticated):
+    """p3m3 item #33 -- the only way a re-ingest of an existing document_id
+    can ever reach internship.documents/vectors is through
+    accept_document_version below; this never writes to either. Backfills
+    version=1 from the document's current live content the first time it's
+    ever re-ingested, so the full lineage (including the original) is
+    always diffable, not just versions created after staging existed.
+    Returns the new version's row as a dict, or {"duplicate": True} with
+    no version created if content_sha256 exactly matches ANY version this
+    document has ever had -- the live content, a pending staged version,
+    or a historical (superseded) one, not just the currently active one.
+    An exact-duplicate re-ingest has nothing to version, and staging it
+    anyway would just be a no-op row cluttering the history."""
+    with get_engine().begin() as conn:
+        conn.execute(text("SELECT pg_advisory_xact_lock(hashtextextended(:id, 1))"), {"id": document_id})
+        already_seen = conn.execute(
+            text("""SELECT 1 FROM internship.document_versions WHERE document_id=:id AND content_sha256=:sha
+                UNION SELECT 1 FROM internship.documents WHERE document_id=:id AND provenance->>'content_sha256'=:sha"""),
+            {"id": document_id, "sha": content_sha256},
+        ).first()
+        if already_seen is not None:
+            return {"document_id": document_id, "version": None, "duplicate": True}
+        existing_max = conn.execute(
+            text("SELECT max(version) FROM internship.document_versions WHERE document_id=:id"), {"id": document_id}
+        ).scalar()
+        if existing_max is None:
+            original = conn.execute(
+                text("SELECT text_content, metadata, provenance FROM internship.documents WHERE document_id=:id"),
+                {"id": document_id},
+            ).mappings().one()
+            conn.execute(
+                text("""INSERT INTO internship.document_versions
+                    (document_id, version, text_content, metadata, provenance, content_sha256, accepted_at, accepted_by)
+                    VALUES (:id, 1, :content, :metadata, :provenance, :sha, now(), 'original')"""),
+                {
+                    "id": document_id,
+                    "content": bytes(original["text_content"]) if original["text_content"] is not None else None,
+                    "metadata": json.dumps(original["metadata"]),
+                    "provenance": json.dumps(original["provenance"]),
+                    "sha": original["provenance"].get("content_sha256"),
+                },
+            )
+            existing_max = 1
+        new_version = existing_max + 1
+        conn.execute(
+            text("""INSERT INTO internship.document_versions
+                (document_id, version, text_content, metadata, provenance, content_sha256,
+                 adversarial_flags, client_ip, authenticated)
+                VALUES (:id, :version, :content, CAST(:metadata AS jsonb), CAST(:provenance AS jsonb), :sha,
+                        CAST(:flags AS jsonb), :ip, :authed)"""),
+            {
+                "id": document_id, "version": new_version,
+                "content": text_content.encode("utf-8"),
+                "metadata": json.dumps(metadata or {}), "provenance": json.dumps(provenance or {}),
+                "sha": content_sha256, "flags": json.dumps(adversarial_flags or {}),
+                "ip": client_ip, "authed": authenticated,
+            },
+        )
+        return {"document_id": document_id, "version": new_version}
+
+
+def list_document_versions(document_id):
+    with get_engine().connect() as conn:
+        rows = conn.execute(
+            text("""SELECT version, provenance, adversarial_flags, authenticated, created_at, accepted_at, accepted_by
+                FROM internship.document_versions WHERE document_id=:id ORDER BY version"""),
+            {"id": document_id},
+        ).mappings().all()
+        return [dict(r) for r in rows]
+
+
+def get_document_version(document_id, version):
+    with get_engine().connect() as conn:
+        row = conn.execute(
+            text("SELECT * FROM internship.document_versions WHERE document_id=:id AND version=:v"),
+            {"id": document_id, "v": version},
+        ).mappings().first()
+        if row is None:
+            return None
+        row = dict(row)
+        if row["text_content"] is not None:
+            row["text_content"] = bytes(row["text_content"]).decode("utf-8")
+        return row
+
+
+def accept_document_version(document_id, version, accepted_by):
+    """Marks a staged version as accepted. Does NOT itself write to
+    internship.documents/vectors -- main.py calls upsert_chunks separately
+    (the exact same chunk/embed/upsert path every ingest already goes
+    through) once this returns the accepted text, so accepting a version
+    is never a second, divergent code path from normal ingestion."""
+    version_row = get_document_version(document_id, version)
+    if version_row is None:
+        return None
+    with get_engine().begin() as conn:
+        conn.execute(
+            text("UPDATE internship.document_versions SET accepted_at=now(), accepted_by=:by WHERE document_id=:id AND version=:v"),
+            {"by": accepted_by, "id": document_id, "v": version},
+        )
+    return version_row
 
 
 def put_artifact(path, payload, conn=None):

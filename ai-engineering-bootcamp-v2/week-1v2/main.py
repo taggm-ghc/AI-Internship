@@ -64,7 +64,17 @@ logging.basicConfig(level=logging.INFO)
 
 app = FastAPI(title="Agentic AI Engineering Bootcamp: Layered MVP")
 from operational_audit import OperationalAuditMiddleware
-from operational_store import record_event, put_artifact, query_events, corpus_summary, document_exists
+from operational_store import (
+    record_event,
+    put_artifact,
+    query_events,
+    corpus_summary,
+    document_exists,
+    stage_document_version,
+    list_document_versions,
+    get_document_version,
+    accept_document_version,
+)
 app.add_middleware(OperationalAuditMiddleware)
 
 # Caps request *rate*, not just per-request cost — the actual defense against
@@ -511,39 +521,36 @@ def _ingest_authenticated(request: Request) -> bool:
     return (not INGEST_API_KEY) or request.headers.get("X-Ingest-Key") == INGEST_API_KEY
 
 
-def _guard_ingest(request: Request, document_id: str, text: str) -> dict:
-    """Runs before any embedding spend for a given document_id. An
-    unauthenticated caller may create a new document but not silently
-    overwrite an existing one (including the baseline corpus) -- closes
-    the single-ID-collision corpus-poisoning vector found in the #30 audit.
-    Returns the fields main.py's ingest handlers fold into upsert_chunks's
-    extra_event_fields, so the audit trail records who as well as what.
+def _guard_ingest(request: Request, text: str) -> tuple[dict, dict]:
+    """Runs before any embedding spend. Invisible Unicode is always blocked
+    unconditionally here -- no legitimate use in plain text, regardless of
+    whether this content will go live immediately or only be staged.
 
-    detect_adversarial_content moved to rag_service.py (item #30, third
+    p3m3 item #33 -- overwriting an existing document_id must never
+    happen, full stop, so this no longer takes a document_id or decides
+    overwrite eligibility: a re-ingest of an existing id is always staged
+    as a new version (see stage_document_version), which can never reach a
+    live agent without a separate, explicitly gated accept step. That
+    means the injection-phrase check can't be fully enforced here either
+    -- whether it blocks depends on whether this content can go live at
+    all, which only ingest() below knows. Returns (extra_event_fields,
+    flags) and leaves the phrase-block decision to the caller.
+
+    detect_adversarial_content lives in rag_service.py (item #30, third
     pass) so scripts/scan_corpus_content.py and build_grounded_messages's
     retrieval-time sanitization can both import the same function instead
     of main.py owning logic a script and a different module also need."""
     authenticated = _ingest_authenticated(request)
-    if not authenticated and document_exists(document_id):
-        raise HTTPException(
-            status_code=409,
-            detail=f"document_id {document_id!r} already exists -- overwrite requires a valid X-Ingest-Key",
-        )
     flags = detect_adversarial_content(text)
     if "invisible_unicode_chars" in flags:
         raise HTTPException(
             status_code=422,
             detail=f"rejected: {flags['invisible_unicode_chars']} invisible/zero-width Unicode character(s) found -- no legitimate use in plain text, always blocked",
         )
-    if "injection_phrases" in flags and not authenticated:
-        raise HTTPException(
-            status_code=422,
-            detail=f"rejected: content matches known prompt-injection phrasing ({', '.join(flags['injection_phrases'])}) -- ingestion by unauthenticated callers requires a valid X-Ingest-Key when this is detected",
-        )
     extra = {"client_ip": get_remote_address(request), "authenticated": authenticated}
     if flags:
         extra["adversarial_flags"] = flags
-    return extra
+    return extra, flags
 
 
 def _validate_forced_provider(provider_name: str | None, require_structured: bool) -> None:
@@ -842,7 +849,67 @@ class IngestRequest(BaseModel):
 class IngestResponse(BaseModel):
     document_id: str
     chunks_indexed: int
-    status: Literal["indexed", "empty"]
+    # p3m3 item #33 -- "staged" means a new version was recorded but never
+    # touched the live, searchable corpus; version/accepted are only
+    # populated on that path (None for a first-time, immediately-live
+    # ingest, which has no version concept).
+    status: Literal["indexed", "empty", "staged", "duplicate"]
+    version: int | None = None
+    accepted: bool | None = None
+
+
+def _ingest_or_stage(
+    client, collection, document_id: str, text: str, metadata: dict | None, provenance: dict,
+    extra_event_fields: dict, flags: dict,
+) -> IngestResponse:
+    """Shared by all three ingest endpoints (single/batch/PDF) so "never
+    overwrite an existing document_id" (item #33) is enforced exactly once,
+    not re-implemented per endpoint. document_exists is the branch: a
+    first-time id goes live immediately (unauthenticated phrase-block still
+    applies, since this path has no accept step to catch it later); an
+    existing id always stages a new version, auto-accepted only when
+    authenticated and clean, same trust distinction #30 already made."""
+    authenticated = extra_event_fields["authenticated"]
+    if document_exists(document_id):
+        staged = stage_document_version(
+            document_id, text, metadata, provenance, provenance["content_sha256"],
+            flags, extra_event_fields["client_ip"], authenticated,
+        )
+        if staged.get("duplicate"):
+            return IngestResponse(document_id=document_id, chunks_indexed=0, status="duplicate", version=None, accepted=None)
+        version = staged["version"]
+        if authenticated and not flags:
+            chunks_indexed = upsert_chunks(
+                client, collection, document_id, text, metadata,
+                provenance=provenance, extra_event_fields=extra_event_fields,
+            )
+            accept_document_version(document_id, version, "auto")
+            return IngestResponse(document_id=document_id, chunks_indexed=chunks_indexed, status="indexed", version=version, accepted=True)
+        return IngestResponse(document_id=document_id, chunks_indexed=0, status="staged", version=version, accepted=False)
+    if "injection_phrases" in flags and not authenticated:
+        raise HTTPException(
+            status_code=422,
+            detail=f"rejected: content matches known prompt-injection phrasing ({', '.join(flags['injection_phrases'])}) -- ingestion by unauthenticated callers requires a valid X-Ingest-Key when this is detected",
+        )
+    chunks_indexed = upsert_chunks(
+        client, collection, document_id, text, metadata,
+        provenance=provenance, extra_event_fields=extra_event_fields,
+    )
+    return IngestResponse(document_id=document_id, chunks_indexed=chunks_indexed, status="indexed" if chunks_indexed > 0 else "empty")
+
+
+def _accept_version_now(document_id: str, version: int, text: str, metadata: dict | None, provenance: dict, extra_event_fields: dict, accepted_by: str) -> int:
+    """Shared by ingest()'s auto-accept path and POST /ingest/versions/accept
+    below -- promoting a version to live is always exactly upsert_chunks
+    (the same path every ingest already goes through) followed by marking
+    the version row accepted, never a second, divergent way of writing to
+    internship.documents/vectors."""
+    chunks_indexed = upsert_chunks(
+        _get_embedding_client(), get_collection(), document_id, text, metadata,
+        provenance=provenance, extra_event_fields=extra_event_fields,
+    )
+    accept_document_version(document_id, version, accepted_by)
+    return chunks_indexed
 
 
 @app.post("/ingest")
@@ -851,32 +918,124 @@ def ingest(request: Request, body: IngestRequest) -> IngestResponse:
     """Live, persistent document ingestion — distinct from rag_ingest.py's
     one-off baseline-corpus script (see that module's docstring and
     p3m3/week2-priority-checklist.md's "POST /ingest" section for why the
-    two aren't the same thing). Writes into the exact same chroma_store/
-    collection the 50-doc baseline corpus lives in, via
-    rag_service.upsert_chunks — a re-ingested document_id overwrites its
-    previous chunks (Chroma upsert semantics), it doesn't duplicate them."""
+    two aren't the same thing). Writes into the same PostgreSQL collection
+    the baseline corpus lives in, via rag_service.upsert_chunks.
+
+    p3m3 item #33 -- a first-time document_id goes live immediately, same
+    as always (nothing to version against). Re-ingesting an EXISTING
+    document_id never overwrites it: it always stages a new version
+    (stage_document_version), which only reaches the live, searchable
+    corpus through an explicit accept -- automatic here only when the
+    caller is authenticated AND the content scan is clean, matching #30's
+    own existing trust distinction rather than inventing a new one;
+    otherwise it waits in scripts/GET /ingest/versions for a human."""
     if not body.text.strip():
         raise HTTPException(status_code=400, detail="text must not be empty or whitespace-only")
     _require_valid_key()
-    extra_event_fields = _guard_ingest(request, body.document_id, body.text)
+    extra_event_fields, flags = _guard_ingest(request, body.text)
     provenance = {**(body.provenance or {}), "content_sha256": hashlib.sha256(body.text.encode()).hexdigest()}
     try:
-        chunks_indexed = upsert_chunks(
-            _get_embedding_client(),
-            get_collection(),
-            body.document_id,
-            body.text,
-            body.metadata,
-            provenance=provenance,
-            extra_event_fields=extra_event_fields,
+        return _ingest_or_stage(
+            _get_embedding_client(), get_collection(), body.document_id, body.text, body.metadata,
+            provenance, extra_event_fields, flags,
         )
     except (AuthenticationError, RateLimitError, OpenAIError) as exc:
         raise _map_openai_error(exc) from exc
-    return IngestResponse(
-        document_id=body.document_id,
-        chunks_indexed=chunks_indexed,
-        status="indexed" if chunks_indexed > 0 else "empty",
+
+
+class DocumentVersionSummary(BaseModel):
+    version: int
+    provenance: dict
+    adversarial_flags: dict
+    authenticated: bool
+    created_at: str
+    accepted_at: str | None
+    accepted_by: str | None
+
+
+@app.get("/ingest/versions")
+def get_ingest_versions(document_id: str) -> list[DocumentVersionSummary]:
+    """p3m3 item #33 -- the "list of versions to accept one" surface. No
+    OpenAI dependency, no embedding call: pure DB read, same free-of-model-
+    cost pattern as GET /debug/similar-documents."""
+    rows = list_document_versions(document_id)
+    if not rows:
+        raise HTTPException(status_code=404, detail=f"document_id {document_id!r} has no version history")
+    return [
+        DocumentVersionSummary(
+            version=r["version"], provenance=r["provenance"], adversarial_flags=r["adversarial_flags"],
+            authenticated=r["authenticated"], created_at=r["created_at"].isoformat(),
+            accepted_at=r["accepted_at"].isoformat() if r["accepted_at"] else None, accepted_by=r["accepted_by"],
+        )
+        for r in rows
+    ]
+
+
+class VersionDiffResponse(BaseModel):
+    document_id: str
+    from_version: int
+    to_version: int
+    similarity_ratio: float
+    unified_diff: str
+
+
+@app.get("/ingest/versions/diff")
+def get_ingest_versions_diff(document_id: str, from_version: int, to_version: int) -> VersionDiffResponse:
+    """p3m3 item #33 -- "examine the evolution of changes between document
+    versions." difflib is stdlib -- no new dependency for this. Serves two
+    uses: a human reviewer sees exactly what changed before accepting a
+    staged version, and general lineage forensics independent of
+    accept/reject (every version, including the original, stays diffable
+    against any other, forever)."""
+    import difflib
+
+    from_row = get_document_version(document_id, from_version)
+    to_row = get_document_version(document_id, to_version)
+    if from_row is None or to_row is None:
+        raise HTTPException(status_code=404, detail=f"document_id {document_id!r} is missing version {from_version if from_row is None else to_version}")
+    from_text, to_text = from_row["text_content"] or "", to_row["text_content"] or ""
+    diff = "\n".join(
+        difflib.unified_diff(
+            from_text.splitlines(), to_text.splitlines(),
+            fromfile=f"v{from_version}", tofile=f"v{to_version}", lineterm="",
+        )
     )
+    ratio = difflib.SequenceMatcher(None, from_text, to_text).ratio()
+    return VersionDiffResponse(
+        document_id=document_id, from_version=from_version, to_version=to_version,
+        similarity_ratio=ratio, unified_diff=diff,
+    )
+
+
+class AcceptVersionRequest(BaseModel):
+    document_id: str
+    version: int
+
+
+@app.post("/ingest/versions/accept")
+@limiter.limit(ASK_RATE_LIMIT)
+def post_accept_ingest_version(request: Request, body: AcceptVersionRequest) -> IngestResponse:
+    """p3m3 item #33 -- the only way a staged version reaches the live,
+    searchable corpus other than ingest()'s own auto-accept path. Always
+    requires the real operator credential, unlike staging itself: this is
+    the exact action that changes what /ask actually serves, so it's the
+    one step that stays gated on genuine trust regardless of how open
+    staging/self-service token generation ends up being."""
+    _require_valid_key()
+    if not INGEST_API_KEY or request.headers.get("X-Ingest-Key") != INGEST_API_KEY:
+        raise HTTPException(status_code=403, detail="accepting a version requires a valid X-Ingest-Key")
+    version_row = get_document_version(body.document_id, body.version)
+    if version_row is None:
+        raise HTTPException(status_code=404, detail=f"document_id {body.document_id!r} has no version {body.version}")
+    extra_event_fields = {"client_ip": get_remote_address(request), "authenticated": True}
+    try:
+        chunks_indexed = _accept_version_now(
+            body.document_id, body.version, version_row["text_content"], version_row["metadata"],
+            version_row["provenance"], extra_event_fields, "operator",
+        )
+    except (AuthenticationError, RateLimitError, OpenAIError) as exc:
+        raise _map_openai_error(exc) from exc
+    return IngestResponse(document_id=body.document_id, chunks_indexed=chunks_indexed, status="indexed", version=body.version, accepted=True)
 
 
 class IngestBatchRequest(BaseModel):
@@ -908,36 +1067,23 @@ def ingest_batch(request: Request, body: IngestBatchRequest) -> IngestBatchRespo
                 status_code=400,
                 detail=f"text must not be empty or whitespace-only (document_id={doc.document_id!r})",
             )
-    # Guard every document_id up front, same "fail before any embedding
-    # spend" discipline the empty-text check above already uses -- an
-    # overwrite rejection partway through a batch would leave earlier
-    # documents already upserted with no way to roll them back.
-    extra_event_fields_by_doc = {doc.document_id: _guard_ingest(request, doc.document_id, doc.text) for doc in body.documents}
+    # Guard (and content-scan) every document up front, same "fail before
+    # any embedding spend" discipline the empty-text check above already
+    # uses. Item #33 -- "never overwrite" applies here too, so this can no
+    # longer reject up front on document_exists (that's not a rejection
+    # anymore, it's a branch to staging inside _ingest_or_stage per doc).
+    guard_by_doc = {doc.document_id: _guard_ingest(request, doc.text) for doc in body.documents}
     _require_valid_key()
     client = _get_embedding_client()
     collection = get_collection()
     results: list[IngestResponse] = []
     for doc in body.documents:
+        extra_event_fields, flags = guard_by_doc[doc.document_id]
         provenance = {**(doc.provenance or {}), "content_sha256": hashlib.sha256(doc.text.encode()).hexdigest()}
         try:
-            chunks_indexed = upsert_chunks(
-                client,
-                collection,
-                doc.document_id,
-                doc.text,
-                doc.metadata,
-                provenance=provenance,
-                extra_event_fields=extra_event_fields_by_doc[doc.document_id],
-            )
+            results.append(_ingest_or_stage(client, collection, doc.document_id, doc.text, doc.metadata, provenance, extra_event_fields, flags))
         except (AuthenticationError, RateLimitError, OpenAIError) as exc:
             raise _map_openai_error(exc) from exc
-        results.append(
-            IngestResponse(
-                document_id=doc.document_id,
-                chunks_indexed=chunks_indexed,
-                status="indexed" if chunks_indexed > 0 else "empty",
-            )
-        )
     return IngestBatchResponse(results=results)
 
 
@@ -985,25 +1131,17 @@ async def ingest_pdf(
     # Guard after extraction (needs the extracted text for the content
     # scan), but still before the embedding spend below -- extraction
     # itself is local/cheap, not the resource this ordering protects.
-    extra_event_fields = _guard_ingest(request, resolved_document_id, text)
+    extra_event_fields, flags = _guard_ingest(request, text)
+    provenance = {"content_sha256": hashlib.sha256(text.encode()).hexdigest()}
     try:
-        provenance = {"content_sha256": hashlib.sha256(text.encode()).hexdigest()}
-        chunks_indexed = upsert_chunks(
-            _get_embedding_client(),
-            get_collection(),
-            resolved_document_id,
-            text,
-            provenance=provenance,
-            extra_event_fields=extra_event_fields,
+        response = _ingest_or_stage(
+            _get_embedding_client(), get_collection(), resolved_document_id, text, None,
+            provenance, extra_event_fields, flags,
         )
         put_artifact("uploads/" + hashlib.sha256(contents).hexdigest() + ".pdf", contents)
     except (AuthenticationError, RateLimitError, OpenAIError) as exc:
         raise _map_openai_error(exc) from exc
-    return IngestResponse(
-        document_id=resolved_document_id,
-        chunks_indexed=chunks_indexed,
-        status="indexed" if chunks_indexed > 0 else "empty",
-    )
+    return response
 
 
 class RetrieveResult(BaseModel):

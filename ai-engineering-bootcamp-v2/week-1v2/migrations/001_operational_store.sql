@@ -31,6 +31,23 @@ CREATE TABLE IF NOT EXISTS internship.provider_observations (
     provider text NOT NULL, model text NOT NULL, observed_at timestamptz NOT NULL,
     PRIMARY KEY(provider, model, observed_at)
 );
+-- p3m3 item #33 -- re-ingesting an existing document_id never overwrites it;
+-- every re-ingest stages a new row here instead. The FK enforces the actual
+-- invariant (a version can only exist for a document that was already
+-- created), not just a convention. version=1 is backfilled from the current
+-- internship.documents row the first time a document is ever re-ingested, so
+-- the full lineage -- including the original content -- is always diffable,
+-- not just versions created after staging existed.
+CREATE TABLE IF NOT EXISTS internship.document_versions (
+    document_id text NOT NULL REFERENCES internship.documents(document_id) ON DELETE CASCADE,
+    version integer NOT NULL,
+    text_content bytea, metadata jsonb NOT NULL DEFAULT '{}', provenance jsonb NOT NULL DEFAULT '{}',
+    content_sha256 text, adversarial_flags jsonb NOT NULL DEFAULT '{}',
+    client_ip text, authenticated boolean NOT NULL DEFAULT false,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    accepted_at timestamptz, accepted_by text,
+    PRIMARY KEY(document_id, version)
+);
 INSERT INTO internship.schema_version(version) VALUES (1) ON CONFLICT DO NOTHING;
 
 -- Upgrade an interrupted first installation without dropping existing data.
