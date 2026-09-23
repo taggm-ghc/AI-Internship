@@ -33,9 +33,16 @@ if status != 200 or not isinstance(data, dict):
 st.success(f"API status: {data.get('status', '(missing)')}")
 skills_used = data.get("skills_used", [])
 if skills_used:
-    st.metric("Skills used (this project's own development)", len(skills_used))
+    st.metric("Skills used building this project", len(skills_used))
     for skill in skills_used:
         st.caption(f"• {skill}")
+    st.caption(
+        "Disambiguation: this is which Claude Code Skills the *developers* used while "
+        "**building** this app's code — not something the deployed app invokes to handle "
+        "any given question. It never runs inside a Claude Code session itself (it just "
+        "calls OpenAI/Groq/etc. directly), so this list is identical on every call, not "
+        "computed per-request."
+    )
 else:
     st.caption("No skills_used field in the response — check the API base URL, or this may be an older deployed build.")
 

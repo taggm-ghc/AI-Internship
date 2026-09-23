@@ -7,6 +7,7 @@ Run:
 import hashlib
 import logging
 import os
+import re
 import tempfile
 import time
 from functools import lru_cache
@@ -150,14 +151,36 @@ SUPPORTED_MODELS: list[str] = _model_selection.supported_models
 ModelName = Literal[tuple(SUPPORTED_MODELS)]
 DEFAULT_MODEL: ModelName = _model_selection.selected_model
 
-# Static list of Claude Code Skills this project's own development used —
-# not a runtime capability the deployed app invokes (the app calls OpenAI/
-# Groq/etc. directly; it doesn't run inside a Claude Code session). Echoed
-# on /health and every /ask(/stream) response so it's visible from one
-# response in isolation, not just from browsing .claude/skills/ in the
-# repo. See p3m3/skills-and-mcp-inventory.md for the full audit (verified
-# 2026-09-22: exactly one Skill exists anywhere in this monorepo).
-SKILLS_USED: list[str] = ["rag-scaffold"]
+# Claude Code Skills this project's own development used — not a runtime
+# capability the deployed app invokes (the app calls OpenAI/Groq/etc.
+# directly; it doesn't run inside a Claude Code session). Echoed on /health
+# and every /ask(/stream) response so it's visible from one response in
+# isolation, not just from browsing .claude/skills/ in the repo. See
+# p3m3/skills-and-mcp-inventory.md for the full prose audit of each one.
+#
+# Derived from .claude/skills/*/SKILL.md's own frontmatter `name:` field
+# (2026-09-23) rather than hand-maintained, after a hardcoded list here and
+# a separate hand-maintained count in the (gitignored, not-shipped)
+# p3m3 audit doc both went stale the same day, independently, same root
+# cause: two hand-written sources of the same fact will eventually drift.
+# p3m3/ itself can't be the single source -- it's gitignored, never pushed
+# to origin, so it doesn't exist in the deployed container at all;
+# .claude/skills/ is tracked and shipped, so it's the only thing both this
+# constant and a human reading the repo can agree is the ground truth.
+def _discover_skills_used() -> list[str]:
+    skills_dir = Path(__file__).parent / ".claude" / "skills"
+    names = []
+    if skills_dir.is_dir():
+        for skill_path in sorted(skills_dir.iterdir()):
+            skill_file = skill_path / "SKILL.md"
+            if skill_file.is_file():
+                match = re.search(r"^name:\s*(\S+)", skill_file.read_text(), re.MULTILINE)
+                if match:
+                    names.append(match.group(1))
+    return names
+
+
+SKILLS_USED: list[str] = _discover_skills_used()
 
 # Catches a missing/placeholder/malformed OPENAI_API_KEY at startup, before
 # the first request — ported 2026-09-13 from
