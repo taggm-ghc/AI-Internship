@@ -374,6 +374,21 @@ with st.expander("Ingest a document (POST /ingest)", expanded=False):
         ingest_text = st.text_area(
             "text", "Paste or type the document text to ingest here.", height=120
         )
+        # p3m3 item #30/#33 -- optional, matches INGEST_API_KEY's own
+        # fail-open design: blank means the same unauthenticated behavior
+        # as before this field existed (new docs go live, re-ingests of an
+        # existing document_id always stage). A real key here authenticates
+        # the call -- auto-accept on a clean re-ingest, and the phrase-scan
+        # bypass on a brand-new document. type="password" masks it the same
+        # way base_url_sidebar_widget's own field is hidden, so a
+        # screenshot of this form can't leak it either.
+        ingest_key = st.text_input(
+            "X-Ingest-Key (optional)",
+            type="password",
+            help="Leave blank to ingest as an unauthenticated caller (new documents still go live; "
+            "re-ingesting an existing document_id always stages a version for review). A valid key "
+            "authenticates the call for auto-accept and the unauthenticated phrase-scan bypass.",
+        )
         ingest_submitted = st.form_submit_button("Ingest")
 
     ingest_payload = {"text": ingest_text, "document_id": ingest_document_id, "metadata": None}
@@ -381,9 +396,10 @@ with st.expander("Ingest a document (POST /ingest)", expanded=False):
     st.caption("$API_BASE_URL is a placeholder -- swap in your own API's URL to actually run this.")
 
     if ingest_submitted:
+        ingest_headers = {"X-Ingest-Key": ingest_key} if ingest_key else None
         with st.spinner("Calling /ingest..."):
             ingest_status, ingest_data = call_json(
-                "POST", f"{base_url.rstrip('/')}/ingest", ingest_payload
+                "POST", f"{base_url.rstrip('/')}/ingest", ingest_payload, headers=ingest_headers
             )
         st.markdown(f"**HTTP {ingest_status}**" if ingest_status else "**Request failed**")
         st.json(ingest_data)

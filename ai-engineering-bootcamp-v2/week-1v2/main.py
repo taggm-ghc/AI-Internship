@@ -8,6 +8,7 @@ import hashlib
 import logging
 import os
 import re
+import secrets
 import tempfile
 import time
 from functools import lru_cache
@@ -541,7 +542,21 @@ INGEST_API_KEY = os.getenv("INGEST_API_KEY")
 
 
 def _ingest_authenticated(request: Request) -> bool:
-    return (not INGEST_API_KEY) or request.headers.get("X-Ingest-Key") == INGEST_API_KEY
+    """secrets.compare_digest, not `==` -- a plain string comparison
+    short-circuits at the first mismatched byte, a real timing side-channel
+    (CWE-208) an attacker measuring response times precisely enough could
+    in principle exploit to guess INGEST_API_KEY one character at a time.
+    compare_digest runs in constant time regardless of where a mismatch
+    is. Hashing either side first wouldn't fix this on its own (the hash
+    comparison itself still needs to be constant-time) and doesn't reduce
+    exposure the way password hashing does for something stored in a
+    database -- this is a Render env var, already trusted at the same
+    level as OPENAI_API_KEY in this same deployment, not a secret that
+    needs to survive a data breach.
+    default="" since compare_digest requires two arguments of the same
+    type and errors on None, which request.headers.get(...) returns for a
+    caller that sent no header at all."""
+    return (not INGEST_API_KEY) or secrets.compare_digest(request.headers.get("X-Ingest-Key", ""), INGEST_API_KEY)
 
 
 def _guard_ingest(request: Request, text: str) -> tuple[dict, dict]:
@@ -1045,7 +1060,14 @@ def post_accept_ingest_version(request: Request, body: AcceptVersionRequest) -> 
     one step that stays gated on genuine trust regardless of how open
     staging/self-service token generation ends up being."""
     _require_valid_key()
-    if not INGEST_API_KEY or request.headers.get("X-Ingest-Key") != INGEST_API_KEY:
+    # Same secrets.compare_digest fix as _ingest_authenticated, and the
+    # same reason -- a second, separate `!=` comparison here had the exact
+    # same timing side-channel. Not reused via _ingest_authenticated()
+    # itself: that function fails OPEN when INGEST_API_KEY is unset, correct
+    # for staging elsewhere, but accepting a version must never fail open --
+    # deny outright if no key is configured at all, not just if the
+    # supplied one is wrong.
+    if not INGEST_API_KEY or not secrets.compare_digest(request.headers.get("X-Ingest-Key", ""), INGEST_API_KEY):
         raise HTTPException(status_code=403, detail="accepting a version requires a valid X-Ingest-Key")
     version_row = get_document_version(body.document_id, body.version)
     if version_row is None:

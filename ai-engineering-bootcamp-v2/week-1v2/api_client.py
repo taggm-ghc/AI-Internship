@@ -179,14 +179,14 @@ def call_stream(url: str, payload: dict) -> tuple[int, str, str | None, bool | N
     return response.status_code, response.text, served_by, grounded, citations, skills_used
 
 
-def call_json(method: str, url: str, payload: dict | None = None) -> tuple[int, dict | str]:
+def call_json(method: str, url: str, payload: dict | None = None, headers: dict | None = None) -> tuple[int, dict | str]:
     response = None
     for delay in (0.0,) + COLD_START_RETRY_DELAYS_S:
         if delay:
             time.sleep(delay)
         try:
             if method == "POST":
-                response = httpx.post(url, json=payload, timeout=120.0)
+                response = httpx.post(url, json=payload, headers=headers, timeout=120.0)
             else:
                 # 65s, not a snappy few seconds: this path also serves
                 # /health and /providers/status, and Render's free tier can
