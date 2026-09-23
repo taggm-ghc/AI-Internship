@@ -275,6 +275,36 @@ session (nothing committed anywhere), or see below to deploy the
 Streamlit UI itself as a second Render service with that URL wired in
 via an env var.
 
+### PostgreSQL runtime and recovery (p3m3 item #2.g)
+
+All durable state lives in one Postgres database, `internship` schema,
+seven tables: `documents` (source text + provenance), `vectors` (chunk and
+document-centroid embeddings), `artifacts` (raw file bytes, SHA-256-keyed —
+uploaded PDFs and quarantined originals, 278 stored as of this writing),
+`events` (the audit/observability log every `record_event()` call writes
+to), `provider_observations`, `collections`, `schema_version`. Nothing the
+deployed app needs lives only on local disk or in `chroma_store/` (legacy,
+pre-migration, excluded from the deploy image — see `.dockerignore`).
+
+**Recovery, in order of what's actually durable:**
+1. **Render's own Postgres backups** (if enabled on your plan) are the
+   first line of defense — check your Postgres instance's own dashboard
+   for retention settings; this project does not configure or rely on a
+   separate backup job.
+2. **`internship.artifacts`** already holds a DB-side copy of every PDF
+   ever ingested through `/ingest-pdf` or the original migration, keyed by
+   SHA-256 — a `pg_dump`/restore of this table alone recovers original
+   source files even if `ingestion_quarantine/` (the local, gitignored
+   copy) is lost.
+3. **`ingestion_quarantine/`** is the local-disk copy of original source
+   PDFs, kept for provenance/recovery reference — never read by the
+   deployed app at runtime (excluded from the Docker build context), and
+   not itself backed up beyond normal filesystem/git-host redundancy.
+4. A full `pg_dump` of the `internship` schema is the actual restorable
+   snapshot; no automated snapshot job exists in this project as of this
+   writing (see p3m3's programme-closeout item for the planned one-time
+   export before the course ends).
+
 ### Deploying the Streamlit UI as its own Render service
 
 The same repo and `Dockerfile` also serve `MVP_Layered_Ask.py` — Render just

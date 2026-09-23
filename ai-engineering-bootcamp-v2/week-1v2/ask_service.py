@@ -168,10 +168,33 @@ def call_structured(
     return providers.call_structured_with_fallback(messages, response_format, forced_provider)
 
 
+# p3m3 item #19, fixed 2026-09-23 -- root cause of the live "not_applicable
+# fabrication" gap found 2026-09-22: this path (every case where main.py's
+# grounded_messages is None -- the relevance gate judging a question too
+# far off-topic, rag_mode="no_rag", or force_bad's retry) sent the bare
+# question with zero system framing, no different from asking a
+# general-purpose assistant. Nothing told the model it had no verified
+# source material, so a question resembling what the corpus *should* cover
+# (e.g. a specific company's HR policy) got answered with confident,
+# specific, fabricated details instead of an honest "I don't have verified
+# information for that." rag_service.GROUNDED_PROMPT already solves this
+# for the grounded path; this is the same fix for the ungrounded one.
+UNGROUNDED_HONESTY_PROMPT = """{question}
+
+(No retrieved source documents were available for this question -- answer \
+from general knowledge only. If the question asks about specific facts, \
+figures, policies, or details belonging to a particular named \
+organization, product, or document you cannot verify, say so honestly \
+rather than inventing plausible-sounding specifics, and set confidence \
+low. General knowledge you're genuinely confident is broadly true is fine \
+to state as such.)"""
+
+
 def call_structured_model(
     question: str, explicit_model: str | None, forced_provider: str | None = None
 ) -> tuple[Answer, int, int, int, str, str]:
-    return call_structured(explicit_model, [{"role": "user", "content": question}], Answer, forced_provider)
+    prompt = UNGROUNDED_HONESTY_PROMPT.format(question=question)
+    return call_structured(explicit_model, [{"role": "user", "content": prompt}], Answer, forced_provider)
 
 
 def stream_answer(explicit_model: str | None, messages: list[dict], forced_provider: str | None = None):

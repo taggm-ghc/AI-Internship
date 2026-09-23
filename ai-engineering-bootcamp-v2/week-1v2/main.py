@@ -4,6 +4,7 @@ Run:
   uvicorn main:app --host 127.0.0.1 --port 8000 --reload
 """
 
+import hashlib
 import logging
 import os
 import tempfile
@@ -44,8 +45,11 @@ from rag_service import (
     OVERFETCH_K,
     RAG_RELEVANCE_THRESHOLD,
     build_grounded_messages,
+    detect_adversarial_content,
     embed_query,
+    find_similar_documents,
     get_collection,
+    get_document_collection,
     query_store,
     select_context_chunks,
     upsert_chunks,
@@ -60,7 +64,7 @@ logging.basicConfig(level=logging.INFO)
 
 app = FastAPI(title="Agentic AI Engineering Bootcamp: Layered MVP")
 from operational_audit import OperationalAuditMiddleware
-from operational_store import record_event, put_artifact, query_events, corpus_summary
+from operational_store import record_event, put_artifact, query_events, corpus_summary, document_exists
 app.add_middleware(OperationalAuditMiddleware)
 
 # Caps request *rate*, not just per-request cost — the actual defense against
@@ -495,6 +499,53 @@ def _require_valid_key() -> None:
         raise HTTPException(status_code=503, detail=OPENAI_KEY_ERROR_DETAIL[key_status])
 
 
+# p3m3 D-N+2 (item #30) -- distinct from _require_valid_key above, which only
+# checks the server's own OpenAI config, never the caller. Unset by default:
+# every /ingest* endpoint stays exactly as open as it is today until this is
+# explicitly set on the deployment, so this ships with zero behavior change
+# for the live graded service unless the user opts in.
+INGEST_API_KEY = os.getenv("INGEST_API_KEY")
+
+
+def _ingest_authenticated(request: Request) -> bool:
+    return (not INGEST_API_KEY) or request.headers.get("X-Ingest-Key") == INGEST_API_KEY
+
+
+def _guard_ingest(request: Request, document_id: str, text: str) -> dict:
+    """Runs before any embedding spend for a given document_id. An
+    unauthenticated caller may create a new document but not silently
+    overwrite an existing one (including the baseline corpus) -- closes
+    the single-ID-collision corpus-poisoning vector found in the #30 audit.
+    Returns the fields main.py's ingest handlers fold into upsert_chunks's
+    extra_event_fields, so the audit trail records who as well as what.
+
+    detect_adversarial_content moved to rag_service.py (item #30, third
+    pass) so scripts/scan_corpus_content.py and build_grounded_messages's
+    retrieval-time sanitization can both import the same function instead
+    of main.py owning logic a script and a different module also need."""
+    authenticated = _ingest_authenticated(request)
+    if not authenticated and document_exists(document_id):
+        raise HTTPException(
+            status_code=409,
+            detail=f"document_id {document_id!r} already exists -- overwrite requires a valid X-Ingest-Key",
+        )
+    flags = detect_adversarial_content(text)
+    if "invisible_unicode_chars" in flags:
+        raise HTTPException(
+            status_code=422,
+            detail=f"rejected: {flags['invisible_unicode_chars']} invisible/zero-width Unicode character(s) found -- no legitimate use in plain text, always blocked",
+        )
+    if "injection_phrases" in flags and not authenticated:
+        raise HTTPException(
+            status_code=422,
+            detail=f"rejected: content matches known prompt-injection phrasing ({', '.join(flags['injection_phrases'])}) -- ingestion by unauthenticated callers requires a valid X-Ingest-Key when this is detected",
+        )
+    extra = {"client_ip": get_remote_address(request), "authenticated": authenticated}
+    if flags:
+        extra["adversarial_flags"] = flags
+    return extra
+
+
 def _validate_forced_provider(provider_name: str | None, require_structured: bool) -> None:
     """Rejects an unknown or (on the structured endpoints) not-yet-verified
     forced `provider=` with a clear 400 *before* any call is attempted —
@@ -807,9 +858,17 @@ def ingest(request: Request, body: IngestRequest) -> IngestResponse:
     if not body.text.strip():
         raise HTTPException(status_code=400, detail="text must not be empty or whitespace-only")
     _require_valid_key()
+    extra_event_fields = _guard_ingest(request, body.document_id, body.text)
+    provenance = {**(body.provenance or {}), "content_sha256": hashlib.sha256(body.text.encode()).hexdigest()}
     try:
         chunks_indexed = upsert_chunks(
-            _get_embedding_client(), get_collection(), body.document_id, body.text, body.metadata, provenance=body.provenance
+            _get_embedding_client(),
+            get_collection(),
+            body.document_id,
+            body.text,
+            body.metadata,
+            provenance=provenance,
+            extra_event_fields=extra_event_fields,
         )
     except (AuthenticationError, RateLimitError, OpenAIError) as exc:
         raise _map_openai_error(exc) from exc
@@ -849,13 +908,27 @@ def ingest_batch(request: Request, body: IngestBatchRequest) -> IngestBatchRespo
                 status_code=400,
                 detail=f"text must not be empty or whitespace-only (document_id={doc.document_id!r})",
             )
+    # Guard every document_id up front, same "fail before any embedding
+    # spend" discipline the empty-text check above already uses -- an
+    # overwrite rejection partway through a batch would leave earlier
+    # documents already upserted with no way to roll them back.
+    extra_event_fields_by_doc = {doc.document_id: _guard_ingest(request, doc.document_id, doc.text) for doc in body.documents}
     _require_valid_key()
     client = _get_embedding_client()
     collection = get_collection()
     results: list[IngestResponse] = []
     for doc in body.documents:
+        provenance = {**(doc.provenance or {}), "content_sha256": hashlib.sha256(doc.text.encode()).hexdigest()}
         try:
-            chunks_indexed = upsert_chunks(client, collection, doc.document_id, doc.text, doc.metadata, provenance=doc.provenance)
+            chunks_indexed = upsert_chunks(
+                client,
+                collection,
+                doc.document_id,
+                doc.text,
+                doc.metadata,
+                provenance=provenance,
+                extra_event_fields=extra_event_fields_by_doc[doc.document_id],
+            )
         except (AuthenticationError, RateLimitError, OpenAIError) as exc:
             raise _map_openai_error(exc) from exc
         results.append(
@@ -909,9 +982,20 @@ async def ingest_pdf(
             raise HTTPException(status_code=400, detail=f"could not extract text from PDF: {exc}") from exc
     if not text.strip():
         raise HTTPException(status_code=400, detail="no extractable text found in PDF")
+    # Guard after extraction (needs the extracted text for the content
+    # scan), but still before the embedding spend below -- extraction
+    # itself is local/cheap, not the resource this ordering protects.
+    extra_event_fields = _guard_ingest(request, resolved_document_id, text)
     try:
-        chunks_indexed = upsert_chunks(_get_embedding_client(), get_collection(), resolved_document_id, text)
-        import hashlib
+        provenance = {"content_sha256": hashlib.sha256(text.encode()).hexdigest()}
+        chunks_indexed = upsert_chunks(
+            _get_embedding_client(),
+            get_collection(),
+            resolved_document_id,
+            text,
+            provenance=provenance,
+            extra_event_fields=extra_event_fields,
+        )
         put_artifact("uploads/" + hashlib.sha256(contents).hexdigest() + ".pdf", contents)
     except (AuthenticationError, RateLimitError, OpenAIError) as exc:
         raise _map_openai_error(exc) from exc
@@ -962,6 +1046,30 @@ def debug_retrieve(query: str, top_k: int = 5, document_id: str | None = None) -
         for chunk_id, text, meta, distance in zip(
             retrieved["ids"], retrieved["documents"], retrieved["metadatas"], retrieved["distances"]
         )
+    ]
+
+
+class SimilarDocumentResult(BaseModel):
+    document_id: str
+    distance: float
+
+
+@app.get("/debug/similar-documents")
+def debug_similar_documents(document_id: str, top_k: int = 5) -> list[SimilarDocumentResult]:
+    """p3m3 item #11 -- read path for the document-centroid collection,
+    written to since D5 but never queried until now. No embedding call and
+    no OpenAI dependency at all (reuses the target document's own already-
+    stored centroid as the query vector), so unlike GET /debug/retrieve
+    this costs nothing beyond a local index lookup -- no _require_valid_key
+    guard needed, same reasoning as GET /health/GET /providers/status."""
+    if not document_id.strip():
+        raise HTTPException(status_code=400, detail="document_id must not be empty or whitespace-only")
+    result = find_similar_documents(get_document_collection(), document_id, top_k=top_k)
+    if not result:
+        raise HTTPException(status_code=404, detail=f"document_id {document_id!r} has no centroid on record")
+    return [
+        SimilarDocumentResult(document_id=doc_id, distance=distance)
+        for doc_id, distance in zip(result["ids"], result["distances"])
     ]
 
 

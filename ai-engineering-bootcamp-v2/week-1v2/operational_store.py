@@ -94,6 +94,19 @@ def corpus_summary(sample_size=10):
     }
 
 
+def document_exists(document_id):
+    """p3m3 D-N+2 (item #30) -- backs main.py's overwrite guard: an
+    unauthenticated /ingest caller may create a new document_id but not
+    silently replace an existing one (including the baseline corpus),
+    closing the single-ID-collision corpus-poisoning vector OWASP's RAG
+    Security Cheat Sheet flags. Indexed primary-key lookup, same
+    get_engine().connect() pattern as corpus_summary above."""
+    with get_engine().connect() as conn:
+        return conn.execute(
+            text('SELECT 1 FROM internship.documents WHERE document_id=:id'), {'id': document_id}
+        ).first() is not None
+
+
 def put_artifact(path, payload, conn=None):
     params = {'path': path, 'sha': hashlib.sha256(payload).hexdigest(), 'payload': payload}
     stmt = text('''INSERT INTO internship.artifacts(path,sha256,payload) VALUES (:path,:sha,:payload)

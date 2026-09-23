@@ -22,3 +22,13 @@ __pycache__/
 requirements-dev.txt
 scripts/
 captures/
+
+# p3m3 item #2.g -- local migration binaries, superseded by the Session 2
+# Postgres migration (D2.5): chroma_store/ was the pre-migration vector
+# store, now dead weight (all reads/writes go through operational_store.py's
+# PgCollection); ingestion_quarantine/ holds the original source PDFs kept
+# locally for provenance/recovery reference, not something the deployed app
+# reads at runtime. Excluding both keeps the build context (and therefore
+# the image) from carrying ~367MB neither COPY . . nor the app needs.
+chroma_store/
+ingestion_quarantine/
