@@ -309,8 +309,21 @@ else:
         # keeps the real distinct values in the data itself -- a display
         # bug, not a data bug, confirmed by inspecting the DataFrame's own
         # values directly before this fix).
+        # Row background color by status, added 2026-09-24 -- user-caught
+        # real bug: the guidance text below says "(green)"/"(amber)"/
+        # "(gray)" but the table itself had no color at all, only the
+        # boxplots further down did. Reuses _STATUS_COLOR_BY_OUTCOME (same
+        # mapping the boxplots already use) rather than a second palette,
+        # at ~20% opacity ("33" hex alpha) so text stays readable over a
+        # saturated fill — a background tint, not colored text (dataviz
+        # convention: text carries text tokens, a colored fill carries
+        # identity/status, never the reverse).
+        def _row_color(row):
+            color = _STATUS_COLOR_BY_OUTCOME.get(row["status"], "")
+            return [f"background-color: {color}33" if color else ""] * len(row)
+
         st.dataframe(
-            summary,
+            summary.style.apply(_row_color, axis=1),
             width="stretch",
             hide_index=True,
             column_config={
