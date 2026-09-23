@@ -19,8 +19,6 @@ from api_client import (
 from ui_theme import apply_custom_css
 from pricing_config import load_model_selection
 
-WORKDIR_CMD = "ai-engineering-bootcamp-v2/week-1v2"
-
 # Read from config/model-selection.json (the same file main.py reads)
 # instead of a separately hardcoded list, so this dropdown can't drift out
 # of sync with what the API actually accepts — added 2026-09-13 alongside
@@ -289,26 +287,16 @@ with st.sidebar.expander("📚 What's in the corpus?", expanded=False):
     else:
         st.caption("Couldn't load a corpus summary — check the API base URL above.")
 
-# p3m3 permanent item #17 — links to the new pages/1_Observability_Dashboard.py
-# (Streamlit's own multi-page convention: auto-discovered from pages/ next to
-# this entry script). That page reads its own copy of the API base URL rather
-# than sharing this widget's value (Streamlit doesn't share widget state
-# across pages by default), so both default the same way independently.
-st.sidebar.page_link("pages/1_Observability_Dashboard.py", label="📊 Observability Dashboard", icon="📊")
-# p3m3 permanent item #22 — same pattern as the link above.
-st.sidebar.page_link("pages/2_MVP_Layered_Health.py", label="💚 Health", icon="💚")
-st.sidebar.markdown("### Start the API")
-st.sidebar.code(
-    f"cd {WORKDIR_CMD}\n"
-    "source .venv/bin/activate\n"
-    "uvicorn main:app --host 127.0.0.1 --port 8000 --reload",
-    language="bash",
-)
-st.sidebar.markdown("### Start this page")
-st.sidebar.code(
-    f"cd {WORKDIR_CMD}\nsource .venv/bin/activate\nstreamlit run MVP_Layered_Ask.py",
-    language="bash",
-)
+# p3m3 permanent item #25 — explicit st.sidebar.page_link() calls to the
+# other pages used to live here (added in #17/#22), but Streamlit's own
+# multi-page nav (auto-generated from pages/, confirmed working in #17's
+# D-N section) already lists every page at the top of every sidebar —
+# these were pure duplication, plus a visible bug (icon="..." doubled the
+# emoji already in the label text: "📊📊 Observability Dashboard"). Removed
+# rather than fixed in place, per user feedback ("jumbled, repetitive").
+# The "Start the API"/"Start this page" setup instructions that used to
+# follow also moved out — see pages/3_Setup.py — so this sidebar only
+# shows what's relevant to actually using the app, not one-time setup.
 
 # Cached in session_state (not re-fetched every rerun) so the provider
 # selector below can use it immediately on first page load, not just after
