@@ -293,6 +293,8 @@ with st.sidebar.expander("📚 What's in the corpus?", expanded=False):
 # than sharing this widget's value (Streamlit doesn't share widget state
 # across pages by default), so both default the same way independently.
 st.sidebar.page_link("pages/1_Observability_Dashboard.py", label="📊 Observability Dashboard", icon="📊")
+# p3m3 permanent item #22 — same pattern as the link above.
+st.sidebar.page_link("pages/2_MVP_Layered_Health.py", label="💚 Health", icon="💚")
 st.sidebar.markdown("### Start the API")
 st.sidebar.code(
     f"cd {WORKDIR_CMD}\n"
