@@ -13,10 +13,10 @@ from api_client import (
     build_stream_payload,
     call_json,
     call_stream,
-    default_api_base_url as _default_api_base_url,
     render_curl,
 )
 from ui_theme import apply_custom_css
+from ui_widgets import base_url_sidebar_widget
 from pricing_config import load_model_selection
 
 # Read from config/model-selection.json (the same file main.py reads)
@@ -265,7 +265,7 @@ st.caption(
     "One final demo endpoint. The separate `stages/` files show how this grows step by step."
 )
 
-base_url = st.sidebar.text_input("API base URL", _default_api_base_url())
+base_url = base_url_sidebar_widget()
 
 # p3m3 permanent item #20 — corpus hint, directly motivated by #19: a
 # question the corpus was never going to answer (e.g. "apple pie") can get

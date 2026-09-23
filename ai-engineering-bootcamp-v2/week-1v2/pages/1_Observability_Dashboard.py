@@ -24,8 +24,9 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 
-from api_client import call_json, default_api_base_url
+from api_client import call_json
 from ui_theme import apply_custom_css
+from ui_widgets import base_url_sidebar_widget
 
 # Fixed status-palette hex values (dataviz skill's reference palette,
 # `references/palette.md`) — never themed/reused for categorical series,
@@ -45,7 +46,7 @@ st.caption(
     "Distinct from the Ask demo's session-only sidebar cost/latency metrics."
 )
 
-base_url = st.sidebar.text_input("API base URL", default_api_base_url())
+base_url = base_url_sidebar_widget()
 kind_filter = st.sidebar.selectbox(
     "Event kind", ["(all)", "http_completed", "retrieval", "retrieval_error", "ingest", "http_started", "golden_eval"]
 )
