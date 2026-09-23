@@ -266,6 +266,13 @@ else:
                 # covers the aggregate input/output split; this is cost
                 # attributed BY outcome specifically).
                 "cost_usd": response.get("cost_usd"),
+                # Added same session per user request -- mean, not p50/p90/
+                # p99 like Panel 2 (avg-hides-the-tail research finding
+                # still applies in principle, but per-outcome-group n here
+                # is small, currently 1-29 -- percentiles would be noisy,
+                # not informative, at this granularity).
+                "latency_ms": p.get("latency_ms"),
+                "tokens_used": response.get("tokens_used"),
             }
         )
     outcome_df = pd.DataFrame(outcome_rows).dropna(subset=["confidence"])
@@ -273,19 +280,65 @@ else:
     if outcome_df.empty:
         st.caption("No joinable /ask outcomes (with both a status and a matching retrieval event) in this window.")
     else:
+        # cost_uscents, not cost_usd, for the per-row table -- these are
+        # sub-cent amounts (~$0.00015-$0.0003), so dollars means several
+        # leading zeros before any meaningful digit; cents removes two of
+        # them. The total-spend caption below stays in dollars -- that's a
+        # single, larger, human-facing summary number where dollars still
+        # read naturally, unlike a table of many sub-cent per-row means.
+        outcome_df["cost_uscents"] = outcome_df["cost_usd"] * 100
         summary = (
             outcome_df.groupby(["status", "rag_mode"])
             .agg(
                 n=("status", "size"),
                 confidence_mean=("confidence", "mean"),
                 distance_mean=("distance", "mean"),
-                cost_usd_mean=("cost_usd", "mean"),
-                cost_usd_total=("cost_usd", "sum"),
+                cost_uscents_mean=("cost_uscents", "mean"),
+                cost_uscents_total=("cost_uscents", "sum"),
+                latency_ms_mean=("latency_ms", "mean"),
+                tokens_used_mean=("tokens_used", "mean"),
             )
             .round(6)
             .reset_index()
         )
-        st.dataframe(summary, width="stretch", hide_index=True)
+        # Explicit column_config, added 2026-09-24 -- user-reported real bug:
+        # st.dataframe's default float display doesn't show enough decimal
+        # places to distinguish these sub-cent cost values (e.g. 0.000151,
+        # 0.000182, 0.000191, 0.000194 USD all rounded to the same "$0.0002"
+        # at default precision, even though .round(6) upstream already
+        # keeps the real distinct values in the data itself -- a display
+        # bug, not a data bug, confirmed by inspecting the DataFrame's own
+        # values directly before this fix).
+        st.dataframe(
+            summary,
+            width="stretch",
+            hide_index=True,
+            column_config={
+                "cost_uscents_mean": st.column_config.NumberColumn("cost_uscents_mean", format="%.4f¢"),
+                "cost_uscents_total": st.column_config.NumberColumn("cost_uscents_total", format="%.4f¢"),
+                "confidence_mean": st.column_config.NumberColumn("confidence_mean", format="%.3f"),
+                "distance_mean": st.column_config.NumberColumn("distance_mean", format="%.3f"),
+                "latency_ms_mean": st.column_config.NumberColumn("latency_ms_mean", format="%d ms"),
+                "tokens_used_mean": st.column_config.NumberColumn("tokens_used_mean", format="%d"),
+            },
+        )
+        with st.expander("How to read this table"):
+            st.markdown(
+                "- **`supported`** (green): high confidence + low distance is the healthy case — the "
+                "pipeline worked as designed.\n"
+                "- **`insufficient`** (amber): the gate judged the question topically plausible (distance "
+                "near/under the threshold), but confidence should be low/zero — the model correctly "
+                "declined rather than guessed. Low confidence here is *correct* behavior, not a defect.\n"
+                "- **`not_applicable`** (gray): the gate never attempted retrieval (distance well over "
+                "threshold), so any confidence shown comes from the model's own pretrained knowledge, "
+                "**not** the corpus — a *high* confidence here is the confident-and-ungrounded risk (see "
+                "permanent item #19), not a sign of quality.\n"
+                "- **`rag_mode` split**: `force_rag` rows are deliberate demo overrides that bypass the "
+                "relevance gate — don't average them into `auto`'s real production numbers (this is exactly "
+                "the confound found while building this panel, see the caption above it).\n"
+                "- **Cost/latency/tokens**: useful for spend and performance profile per outcome — e.g. "
+                "whether declining is cheaper than answering, not for judging correctness on their own."
+            )
         st.caption(
             f"Total spend across this window's joinable outcomes: ${outcome_df['cost_usd'].sum():.6f} — "
             f"${outcome_df.loc[outcome_df['status'] == 'not_applicable', 'cost_usd'].sum():.6f} of that on "
