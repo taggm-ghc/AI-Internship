@@ -34,6 +34,11 @@ from ui_widgets import base_url_sidebar_widget
 _STATUS_GOOD = "#0ca30c"
 _STATUS_CRITICAL = "#d03b3b"
 _STATUS_WARNING = "#fab219"
+# Hoisted from a local var in Panel 4 to module level 2026-09-24 (p3m3
+# permanent item #27) so Panel 4b can reuse the exact same status->color
+# mapping instead of redefining it — same reuse discipline api_client.py/
+# ui_theme.py/ui_widgets.py already established at the module level.
+_STATUS_COLOR_BY_OUTCOME = {"supported": _STATUS_GOOD, "insufficient": _STATUS_WARNING, "not_applicable": "#8a8a86"}
 
 RAG_RELEVANCE_THRESHOLD = 1.2  # mirrors rag_service.py's own constant — reference line only, not re-imported (that module is server-side, not importable from a Streamlit page)
 
@@ -195,8 +200,7 @@ else:
     statuses.columns = ["status", "count"]
     hit_rate = statuses.loc[statuses["status"] == "supported", "count"].sum() / statuses["count"].sum()
     st.metric("Grounded-answer hit rate (supported / total)", f"{hit_rate:.1%}")
-    status_color = {"supported": _STATUS_GOOD, "insufficient": _STATUS_WARNING, "not_applicable": "#8a8a86"}
-    statuses["color"] = statuses["status"].map(status_color)
+    statuses["color"] = statuses["status"].map(_STATUS_COLOR_BY_OUTCOME)
     status_chart = (
         alt.Chart(statuses)
         .mark_bar()
@@ -225,6 +229,96 @@ if not retrievals.empty:
         rule = alt.Chart(pd.DataFrame({"x": [RAG_RELEVANCE_THRESHOLD]})).mark_rule(color=_STATUS_CRITICAL, strokeDash=[4, 4]).encode(x="x:Q")
         st.altair_chart(dist_chart + rule, width="stretch")
         st.caption(f"Dashed line: RAG_RELEVANCE_THRESHOLD = {RAG_RELEVANCE_THRESHOLD} — queries left of it pass the relevance gate.")
+
+st.markdown("## Panel 4b — confidence & similarity by outcome")
+st.caption(
+    "p3m3 permanent item #27 — accepted (supported) vs. rejected-against-corpus (insufficient) vs. "
+    "not-against-corpus (not_applicable), each broken out by rag_mode so a force_rag test case (which "
+    "bypasses the relevance gate) can't silently blend into auto mode's real numbers — a real confound "
+    "found while proving this query live before this panel existed."
+)
+if completed.empty or retrievals.empty:
+    st.caption("Needs both http_completed and retrieval events in this window — select Event kind = (all).")
+else:
+    # Join by request_id, same as the raw SQL query this panel replaces —
+    # done here in pandas since the dashboard already has both event kinds
+    # as fetched DataFrames, not a second DB round trip.
+    distance_by_request = {
+        p.get("request_id"): p["distances"][0]
+        for p in retrievals["payload"]
+        if p.get("request_id") and p.get("distances")
+    }
+    outcome_rows = []
+    for p in completed["payload"]:
+        response = p.get("response")
+        if not isinstance(response, dict) or not response.get("status"):
+            continue
+        outcome_rows.append(
+            {
+                "status": response["status"],
+                "rag_mode": response.get("rag_mode", "auto"),
+                "confidence": response.get("answer", {}).get("confidence"),
+                "distance": distance_by_request.get(p.get("request_id")),
+                # Cost tied to outcome, added same session per accounting/
+                # financial request — answers "how much are we actually
+                # spending on rejected/off-topic questions vs. accepted
+                # ones," not just unit cost per call (Panel 5 already
+                # covers the aggregate input/output split; this is cost
+                # attributed BY outcome specifically).
+                "cost_usd": response.get("cost_usd"),
+            }
+        )
+    outcome_df = pd.DataFrame(outcome_rows).dropna(subset=["confidence"])
+
+    if outcome_df.empty:
+        st.caption("No joinable /ask outcomes (with both a status and a matching retrieval event) in this window.")
+    else:
+        summary = (
+            outcome_df.groupby(["status", "rag_mode"])
+            .agg(
+                n=("status", "size"),
+                confidence_mean=("confidence", "mean"),
+                distance_mean=("distance", "mean"),
+                cost_usd_mean=("cost_usd", "mean"),
+                cost_usd_total=("cost_usd", "sum"),
+            )
+            .round(6)
+            .reset_index()
+        )
+        st.dataframe(summary, width="stretch", hide_index=True)
+        st.caption(
+            f"Total spend across this window's joinable outcomes: ${outcome_df['cost_usd'].sum():.6f} — "
+            f"${outcome_df.loc[outcome_df['status'] == 'not_applicable', 'cost_usd'].sum():.6f} of that on "
+            "not-against-corpus questions the gate never attempted to ground (accounting/financial framing: "
+            "spend that produced no citable answer, not necessarily wasted, but worth knowing)."
+        )
+
+        box_cols = st.columns(2)
+        conf_box = (
+            alt.Chart(outcome_df)
+            .mark_boxplot(extent="min-max")
+            .encode(
+                x=alt.X("status:N", title=None),
+                y=alt.Y("confidence:Q", title="confidence"),
+                color=alt.Color("status:N", scale=alt.Scale(domain=list(_STATUS_COLOR_BY_OUTCOME.keys()), range=list(_STATUS_COLOR_BY_OUTCOME.values())), legend=None),
+            )
+            .properties(height=220, title="Confidence by outcome")
+        )
+        box_cols[0].altair_chart(conf_box, width="stretch")
+
+        dist_by_outcome = outcome_df.dropna(subset=["distance"])
+        if not dist_by_outcome.empty:
+            dist_box = (
+                alt.Chart(dist_by_outcome)
+                .mark_boxplot(extent="min-max")
+                .encode(
+                    x=alt.X("status:N", title=None),
+                    y=alt.Y("distance:Q", title="top-1 distance"),
+                    color=alt.Color("status:N", scale=alt.Scale(domain=list(_STATUS_COLOR_BY_OUTCOME.keys()), range=list(_STATUS_COLOR_BY_OUTCOME.values())), legend=None),
+                )
+                .properties(height=220, title="Top-1 distance by outcome")
+            )
+            box_cols[1].altair_chart(dist_box, width="stretch")
 
 st.markdown("## Panel 5 — cost")
 if not ask_responses:
