@@ -1559,3 +1559,42 @@ def ask(request: Request, body: AskRequest) -> AskResponse:
         status_code=502,
         detail=f"Model response failed schema validation after retry: {last_error}",
     )
+
+
+class AgentRequest(BaseModel):
+    question: str
+
+
+class AgentStep(BaseModel):
+    role: str
+    content: str | None = None
+    tool_calls: list[dict] | None = None
+    tool_call_id: str | None = None
+
+
+class AgentResponse(BaseModel):
+    answer: str
+    trace: list[AgentStep]
+
+
+@app.post("/agent")
+@limiter.limit(ASK_RATE_LIMIT)
+def agent(request: Request, body: AgentRequest) -> AgentResponse:
+    """p3m3 item #38 (W3/S3) -- the Session 3 capstone-as-agent assignment,
+    exposed on the same Render service as /ask (the assignment's own
+    "prefer exposing on the same service when you can" note). Wraps
+    agent_service.run_agent(): a LangGraph agent that decides for itself
+    whether to call search_corpus (wrapping this project's existing
+    Session 2 retrieval) rather than always retrieving on a fixed
+    threshold the way /ask's rag_mode="auto" gate does -- the actual
+    agent-vs-workflow distinction, not a relabeled pipeline. Rate-limited
+    the same as /ask (real LLM calls, potentially several per request)."""
+    if not body.question.strip():
+        raise HTTPException(status_code=400, detail="question must not be empty or whitespace-only")
+    from agent_service import run_agent
+
+    try:
+        result = run_agent(body.question)
+    except (AuthenticationError, RateLimitError, OpenAIError) as exc:
+        raise _map_openai_error(exc) from exc
+    return AgentResponse(answer=result["answer"], trace=[AgentStep(**step) for step in result["trace"]])
