@@ -60,3 +60,32 @@ DO $$ BEGIN
  END IF;
 END $$;
 ALTER TABLE internship.events ADD COLUMN IF NOT EXISTS payload_raw bytea;
+
+-- p3m3 item #37 -- provenance as queryable table records. A view, not a
+-- physical table: internship.documents.provenance is already the single
+-- source of truth and is fully populated; a view gives plain-SQL columns for
+-- querying/reporting with zero migration/backfill risk and zero chance of
+-- drifting from the JSONB it reads. CREATE OR REPLACE so re-running this
+-- file (the existing install pattern) picks up column changes without a
+-- DROP. published_at/fetched_at are kept as text, not cast to timestamptz:
+-- checked the real data first -- 39 of 260 documents carry a non-ISO
+-- fetched_at (some are valid-but-non-Z-suffixed ISO, some are a genuine
+-- annotation like "2026-09-19 (reverification, no original record)") and a
+-- hard cast throws for the whole query, not just the offending row.
+CREATE OR REPLACE VIEW internship.document_provenance AS
+SELECT
+    document_id,
+    provenance->>'title' AS title,
+    provenance->>'source' AS source,
+    provenance->>'source_url' AS source_url,
+    provenance->>'author' AS author,
+    provenance->>'provenance_type' AS provenance_type,
+    provenance->>'published_at' AS published_at,
+    provenance->>'fetched_at' AS fetched_at,
+    provenance->>'content_sha256' AS content_sha256,
+    (provenance->>'size_bytes')::bigint AS size_bytes,
+    provenance->>'size_verification_note' AS size_verification_note,
+    provenance->>'batch' AS batch,
+    provenance->'content_scan' AS content_scan,
+    updated_at
+FROM internship.documents;
