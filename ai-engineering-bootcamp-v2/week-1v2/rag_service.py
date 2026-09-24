@@ -8,6 +8,7 @@ FastAPI/HTTP knowledge, so main.py's routing layer is the only place that
 translates its return values (or exceptions) into HTTP responses.
 """
 
+import os
 import re
 import statistics
 import unicodedata
@@ -18,6 +19,9 @@ from operational_store import PgCollection, record_event
 from openai import OpenAI
 from pydantic import BaseModel
 from rank_bm25 import BM25Okapi
+from sqlalchemy import text as sql_text
+
+from db import get_engine
 
 from rag_ingest import (
     CHUNK_OVERLAP,
@@ -88,6 +92,45 @@ MAX_CHUNKS_PER_DOCUMENT = 3
 # reranking step -- defined now so the three-way split exists as real
 # configuration before anything reads it, not bolted on later.
 RERANK_K = 8
+
+
+def _env_flag(name: str, default: bool) -> bool:
+    value = os.getenv(name)
+    return default if value is None else value.strip().lower() in ("1", "true", "yes", "on")
+
+
+# p3m3 item #41 (2026-09-24, user decision after item #40's 200-question
+# eval): hybrid retrieval and the reranker are wired into /ask behind
+# these switches, so production can change either without a redeploy
+# (set the env var in Render and restart). Defaults: RAG_RERANK on,
+# RAG_HYBRID off. Both off = the dense-only path /ask used before #41. #40's measured numbers, for whoever flips
+# these: hybrid showed no significant gain and trended worse on paraphrased
+# questions (+~1.3s, plus a ~230 MB in-process BM25 index); the reranker
+# significantly improved ranking but only ~1 point of final-context hit rate
+# (+~2s, one extra LLM call per on-topic question).
+#
+# Functions, not module constants: main.py calls load_dotenv() only after
+# importing this module, so constants would silently ignore a value set in
+# .env (real environment variables, as on Render, would still work).
+def rag_hybrid_enabled() -> bool:
+    # Default OFF (user decision 2026-09-24, after #41's eval of the shipped
+    # pipeline): hybrid->rerank scored below rerank alone (doc_hit@5 0.925
+    # vs 0.935, and 0.825 vs 0.875 on paraphrase), added ~1.5 s over it, and
+    # its in-process BM25 index costs ~232 MB (~600 MB peak during a
+    # post-ingest rebuild) against Render free tier's 512 MB. Kept switchable.
+    return _env_flag("RAG_HYBRID", False)
+
+
+def rag_rerank_enabled() -> bool:
+    return _env_flag("RAG_RERANK", True)
+
+
+def rag_rerank_model() -> str:
+    # Pinned, not the free-tier fallback chain: in #40's eval the chain's
+    # first provider (Groq) rate-limited 53/200 calls, so reranking quality
+    # came from whichever provider answered. call_structured's explicit-model
+    # path goes straight to OpenAI at temperature 0.
+    return os.getenv("RAG_RERANK_MODEL", "gpt-4.1-nano")
 
 GROUNDED_PROMPT = """You are answering strictly from the numbered context \
 passages below. Rules:
@@ -332,12 +375,14 @@ def build_candidates(retrieved: dict) -> list[RetrievalCandidate]:
         meta.get("document_id") or chunk_id.rsplit("::", 1)[0] for chunk_id, meta in zip(ids, metadatas)
     ]
     pool = list(zip(ids, document_ids, documents))
+    historical_scores = compute_historical_scores(ids)
     return [
         RetrievalCandidate(
             chunk_id=chunk_id,
             document_id=doc_id,
             semantic_distance=distance,
             intrinsic_quality=compute_intrinsic_quality(chunk_id, text, doc_id, pool),
+            historical_score=historical_scores.get(chunk_id),
         )
         for chunk_id, doc_id, text, distance in zip(ids, document_ids, documents, retrieved["distances"])
     ]
@@ -447,21 +492,29 @@ def bm25_search(query: str, top_k: int) -> list[tuple[str, str, float]]:
     ]
 
 
-def _semantic_distance_for_chunk(query_embedding: list[float], chunk_id: str) -> float | None:
-    """Backfills a real (not placeholder/guessed) semantic_distance for a
-    BM25-only candidate that dense retrieval's overfetch window didn't
-    surface -- fetches that one chunk's stored embedding and computes the
-    same L2-squared metric Chroma uses by default (see this module's
-    RAG_RELEVANCE_THRESHOLD comment). Returns None only if the chunk_id
-    somehow no longer exists in the store (race with a concurrent
-    upsert/delete) -- callers must handle that, not assume it can't
-    happen."""
-    fetched = get_collection().get(ids=[chunk_id], include=["embeddings"])
-    embeddings = fetched.get("embeddings")
-    if embeddings is None or len(embeddings) == 0:
-        return None
-    chunk_embedding = embeddings[0]
-    return float(sum((a - b) ** 2 for a, b in zip(query_embedding, chunk_embedding)))
+def _semantic_distances_for_chunks(
+    query_embedding: list[float], chunk_ids: list[str]
+) -> dict[str, float]:
+    """Backfills real (not placeholder/guessed) semantic_distances for
+    BM25-only candidates that dense retrieval's overfetch window didn't
+    surface -- one batched fetch of every needed chunk's stored embedding,
+    not one round trip per chunk. p3m3 item #12's own default-wiring
+    comparison measured the per-chunk version at ~3.5s added latency for a
+    single query (12 of 15 BM25 hits typically miss the dense top-15, each
+    paying a full network round trip to the shared Postgres instance) --
+    this collapses that to one round trip regardless of how many chunks need
+    backfilling. Computes the same L2-squared metric Chroma uses by default
+    (see this module's RAG_RELEVANCE_THRESHOLD comment). A chunk_id missing
+    from the result (race with a concurrent upsert/delete) is simply absent
+    from the returned dict -- callers must handle that, not assume every
+    input id comes back."""
+    if not chunk_ids:
+        return {}
+    fetched = get_collection().get(ids=chunk_ids, include=["embeddings"])
+    return {
+        chunk_id: float(sum((a - b) ** 2 for a, b in zip(query_embedding, chunk_embedding)))
+        for chunk_id, chunk_embedding in zip(fetched["ids"], fetched["embeddings"])
+    }
 
 
 def reciprocal_rank_fusion(
@@ -480,6 +533,60 @@ def reciprocal_rank_fusion(
     return scores
 
 
+# 12.9 (R3): historical_score, populated from durable retrieval records
+# (internship.events, persisted since 12.5/item #17) -- not new persistence,
+# just the first reader of what already exists. p3m3 item #13.
+MIN_HISTORY_SAMPLES = 3
+
+
+def compute_historical_scores(chunk_ids: list[str]) -> dict[str, float | None]:
+    """For each chunk_id, the fraction of its past retrieval-event selections
+    whose eventual /ask response was status="supported" -- one batched query
+    for the whole candidate pool, not one per chunk_id (same batching
+    discipline as this module's other backfill fix,
+    _semantic_distances_for_chunks). Returns None (not 0.0) for a chunk_id
+    with fewer than MIN_HISTORY_SAMPLES past selections -- a thin sample
+    must not read as a confident signal; also None for a chunk_id with no
+    history at all (a brand-new or rarely-retrieved chunk).
+
+    Deliberately read-only/diagnostic: nothing in this module or main.py
+    feeds this back into select_context_chunks, RAG_RELEVANCE_THRESHOLD, or
+    fused_rank. Real literature (Mansoury et al., "Feedback Loop and Bias
+    Amplification in Recommender Systems", CIKM 2020, arXiv:2007.13019,
+    ingested into this corpus under provenance_type="design_reference")
+    documents exactly the risk of doing otherwise: a "selected before ->
+    selected more" signal fed back into ranking without an
+    exploration/regularization mechanism amplifies popularity bias rather
+    than measuring true relevance -- this project has no such mechanism, so
+    this stays a surfaced signal, not a ranking input, until it does."""
+    if not chunk_ids:
+        return {}
+    with get_engine().connect() as conn:
+        rows = conn.execute(
+            sql_text("""
+                WITH hist AS (
+                    SELECT payload->>'request_id' AS request_id,
+                           jsonb_array_elements_text(payload->'selected_ids') AS chunk_id
+                    FROM internship.events
+                    WHERE kind = 'retrieval' AND payload->'selected_ids' ?| :chunk_ids
+                )
+                SELECT hist.chunk_id AS chunk_id,
+                       count(*) AS n_selected,
+                       count(*) FILTER (WHERE e2.payload->'response'->>'status' = 'supported') AS n_supported
+                FROM hist
+                JOIN internship.events e2
+                    ON e2.payload->>'request_id' = hist.request_id AND e2.kind = 'http_completed'
+                WHERE hist.chunk_id = ANY(:chunk_ids)
+                GROUP BY hist.chunk_id
+            """),
+            {"chunk_ids": chunk_ids},
+        ).fetchall()
+    return {
+        row.chunk_id: (row.n_supported / row.n_selected if row.n_selected >= MIN_HISTORY_SAMPLES else None)
+        for row in rows
+    }
+
+
 def hybrid_retrieve(
     query_embedding: list[float], query_text: str, top_k: int = OVERFETCH_K
 ) -> list[RetrievalCandidate]:
@@ -490,11 +597,13 @@ def hybrid_retrieve(
     12.7/12.9's job respectively).
 
     A BM25-only hit outside the dense top-`top_k` still gets a real
-    semantic_distance via _semantic_distance_for_chunk rather than being
-    left with a missing/guessed value -- RetrievalCandidate.semantic_distance
-    is a required field (12.5's own model), and backfilling the true number
-    is only a handful of extra point lookups per query, not a full
-    re-retrieval."""
+    semantic_distance via a single batched _semantic_distances_for_chunks
+    call rather than being left with a missing/guessed value --
+    RetrievalCandidate.semantic_distance is a required field (12.5's own
+    model). Originally one point lookup per missing chunk (~3.5s added
+    latency for a real query, measured 2026-09-23 -- 12 of 15 BM25 hits
+    typically miss the dense top-15 against this corpus); batched into one
+    round trip, cutting added latency to ~0.9s."""
     dense_raw = query_store(get_collection(), query_embedding, top_k=top_k)
     dense_candidates = {c.chunk_id: c for c in build_candidates(dense_raw)}
     dense_ranked_ids = dense_raw["ids"]  # already distance-sorted by Chroma
@@ -506,11 +615,13 @@ def hybrid_retrieve(
 
     fused_scores = reciprocal_rank_fusion([dense_ranked_ids, lexical_ranked_ids])
 
+    backfill_ids = [cid for cid in lexical_scores if cid not in dense_candidates]
+    backfilled_distances = _semantic_distances_for_chunks(query_embedding, backfill_ids)
     for chunk_id, lex_score in lexical_scores.items():
         if chunk_id in dense_candidates:
             dense_candidates[chunk_id].lexical_score = lex_score
             continue
-        distance = _semantic_distance_for_chunk(query_embedding, chunk_id)
+        distance = backfilled_distances.get(chunk_id)
         if distance is None:
             continue
         dense_candidates[chunk_id] = RetrievalCandidate(
@@ -527,6 +638,30 @@ def hybrid_retrieve(
         dense_candidates[chunk_id].fused_rank = rank
 
     return [dense_candidates[cid] for cid in fused_order]
+
+
+def candidates_to_pool(candidates: list[RetrievalCandidate]) -> dict:
+    """Turns hybrid_retrieve's fused candidate list back into the
+    query_store-shaped dict select_context_chunks/rerank_candidates take, so
+    the hybrid path reuses the same downstream selection unchanged.
+    The list ORDER is the fused order; "distances" carries each candidate's
+    real semantic distance, so the relevance gate and the retrieval event log
+    keep meaning what they mean on the dense path. Callers must pass
+    preserve_order=True to select_context_chunks to keep the fused order
+    (changed for item #41 -- #40's first version put fused_rank in the
+    distance slot, which would have broken the gate). Extracted from
+    scripts/hybrid_default_comparison.py when item #40's retrieval eval
+    became a second caller."""
+    ids = [c.chunk_id for c in candidates]
+    fetched = get_collection().get(ids=ids, include=["documents", "metadatas"])
+    by_id = {i: (d, m) for i, d, m in zip(fetched["ids"], fetched["documents"], fetched["metadatas"])}
+    kept = [c for c in candidates if c.chunk_id in by_id]
+    return {
+        "ids": [c.chunk_id for c in kept],
+        "documents": [by_id[c.chunk_id][0] for c in kept],
+        "metadatas": [by_id[c.chunk_id][1] for c in kept],
+        "distances": [c.semantic_distance for c in kept],
+    }
 
 
 def compute_candidate_metrics(retrieved: dict) -> dict:
@@ -590,8 +725,129 @@ def compute_candidate_metrics(retrieved: dict) -> dict:
     }
 
 
+class _RerankResult(BaseModel):
+    ranked_chunk_numbers: list[int]
+
+
+_RERANK_PROMPT = """Question: {question}
+
+Below are {n} numbered passages, unordered. Rank them by how relevant \
+each is to answering the question, most relevant first. Return every \
+number exactly once in ranked_chunk_numbers -- do not skip, repeat, or \
+invent numbers.
+
+Passages:
+{passages}"""
+
+
+def rerank_candidates(
+    retrieved: dict, question: str, rerank_k: int = RERANK_K, model: str | None = None
+) -> dict:
+    """p3m3 item #9 (12.7/R6) -- the retrieve_k/rerank_k/context_k
+    three-stage split RERANK_K was defined for in 2026-09-18 but never
+    implemented until now. Sits between query_store (retrieve_k=
+    OVERFETCH_K) and select_context_chunks (context_k=CONTEXT_K): narrows
+    the overfetched pool to rerank_k by relevance, which select_context_
+    chunks then diversity-caps and dedups exactly as it already does for
+    any dict of this same shape.
+
+    Listwise LLM reranking, not a dedicated cross-encoder model: research
+    checked before choosing (not guessed) -- pointwise LLM reranking is
+    "almost never worth it, 10x the cost and lower accuracy than
+    specialized rerankers"; listwise is viable specifically for small
+    candidate lists, which OVERFETCH_K=15 already is. A specialized
+    cross-encoder (BGE, ms-marco-MiniLM) runs efficiently on CPU per the
+    same research, but needs sentence-transformers + torch -- hundreds of
+    MB to GB, directly conflicting with this project's own established
+    discipline against exactly this kind of dependency bloat (the
+    Dockerfile explicitly excludes Playwright/Chromium for image size).
+    Listwise reuses ask_service.call_structured, the same multi-provider
+    fallback chain /ask already calls -- zero new dependencies.
+
+    Fails open to the original dense-distance order (not an exception) if
+    the model returns something unusable -- reranking is meant to improve
+    ordering, never to be a new way retrieval can fail outright."""
+    from ask_service import call_structured
+
+    ids, documents, metadatas, distances = (
+        retrieved["ids"], retrieved["documents"], retrieved["metadatas"], retrieved["distances"],
+    )
+    if len(ids) <= rerank_k:
+        return retrieved  # nothing to narrow -- reranking a full-sized pool buys nothing
+    passages = "\n\n".join(f"[{i}] {doc}" for i, doc in enumerate(documents, start=1))
+    prompt = _RERANK_PROMPT.format(question=question, n=len(ids), passages=passages)
+    try:
+        result, *_ = call_structured(model or rag_rerank_model(), [{"role": "user", "content": prompt}], _RerankResult)
+        order = [n for n in dict.fromkeys(result.ranked_chunk_numbers) if 1 <= n <= len(ids)]
+        order += [i for i in range(1, len(ids) + 1) if i not in order]  # backfill any dropped numbers
+    except Exception:
+        order = list(range(1, len(ids) + 1))  # fail open to the original dense order
+    kept = [n - 1 for n in order[:rerank_k]]
+    return {
+        "ids": [ids[i] for i in kept],
+        "documents": [documents[i] for i in kept],
+        "metadatas": [metadatas[i] for i in kept],
+        "distances": [distances[i] for i in kept],
+    }
+
+
+# Band defaults for rerank_confidence_band (item #42), from
+# scripts/rerank_gate_calibration.py on #40's 200 questions (chosen on the
+# even half, checked on the odd hold-out; output in
+# p3m3/rerank_gate_calibration_output.txt):
+# - HIGH: the reranker's doc_rr gain falls to ~0 as the cross-document gap
+#   grows (+0.083 in the smallest-gap quartile vs +0.000 in the largest).
+#   Skipping above 0.20 cut 45% of reranker calls with no hold-out loss
+#   (doc_rr@8: dense 0.842, always-rerank 0.873, gated 0.873).
+# - No low-confidence skip (user decision 2026-09-24, after calibration
+#   showed the reranker helps MOST when dense is weakest: +0.057 in the
+#   top-d1 quartile). Off-topic questions are still never reranked, because
+#   the relevance gate runs first.
+# Corpus- and embedding-model-specific: re-run the calibration if either changes.
+RERANK_HIGH_GAP_DEFAULT = 0.20
+
+
+def confidence_signals(ids: list[str], distances: list[float]) -> tuple[float, float]:
+    """(d1, gap) from a distance-sorted dense pool, p3m3 item #42. d1 = top-1
+    distance (high = weak retrieval = LOW confidence). gap = distance of the
+    best chunk from a DIFFERENT document minus d1 (large = one document
+    clearly ahead = HIGH confidence). The top-score gap is the confidence
+    signal arXiv:2609.15578 found strongest. Pure arithmetic, no calls."""
+    d1 = distances[0]
+    top_doc = ids[0].rsplit("::", 1)[0]
+    other = next((d for cid, d in zip(ids, distances) if cid.rsplit("::", 1)[0] != top_doc), distances[-1])
+    return d1, other - d1
+
+
+def rerank_confidence_band(ids: list[str], distances: list[float]) -> str:
+    """"high" | "mid" (item #42, user policy 2026-09-24: skip reranking only
+    when confidence is high, i.e. one document clearly ahead). The threshold
+    is env-overridable (RAG_RERANK_HIGH_GAP); the default
+    (RERANK_HIGH_GAP_DEFAULT) comes from scripts/rerank_gate_calibration.py
+    on item #40's 200-question set, not a guess. Expects a DENSE
+    (distance-sorted) pool."""
+    _, gap = confidence_signals(ids, distances)
+    if gap > float(os.getenv("RAG_RERANK_HIGH_GAP", RERANK_HIGH_GAP_DEFAULT)):
+        return "high"
+    return "mid"
+
+
+def build_candidate_pool(question: str, query_embedding: list[float]) -> tuple[dict, bool]:
+    """The candidate pool /ask's relevance gate and selection run on (item
+    #41): hybrid (dense + BM25, RRF-fused) when rag_hybrid_enabled(), else
+    today's dense overfetch. Returns (pool, ordered): `ordered` tells
+    select_context_chunks whether the list order is a ranker's order to keep.
+    Distances are real semantic distances either way."""
+    if rag_hybrid_enabled():
+        return candidates_to_pool(hybrid_retrieve(query_embedding, question, top_k=OVERFETCH_K)), True
+    return query_store(get_collection(), query_embedding, top_k=OVERFETCH_K), False
+
+
 def select_context_chunks(
-    retrieved: dict, context_k: int = CONTEXT_K, max_per_document: int = MAX_CHUNKS_PER_DOCUMENT
+    retrieved: dict,
+    context_k: int = CONTEXT_K,
+    max_per_document: int = MAX_CHUNKS_PER_DOCUMENT,
+    preserve_order: bool = False,
 ) -> dict:
     """Narrows an overfetched query_store result (top_k=OVERFETCH_K) down to
     at most context_k chunks for the generator, applying two things
@@ -641,7 +897,11 @@ def select_context_chunks(
         # this function should depend on implicitly. document_id then
         # chunk_index makes tie-breaking deterministic and legible instead of
         # an accident of collection internals.
-        return (distances[i], document_ids[i], chunk_indices[i])
+        # preserve_order (item #41): rank by list position instead of
+        # distance, for pools a ranker already ordered (hybrid's fused order,
+        # the reranker's order). Found by item #40: sorting a reranked pool
+        # by its original dense distance silently discarded the reranker.
+        return (float(i) if preserve_order else distances[i], document_ids[i], chunk_indices[i])
 
     by_document: dict[str, list[int]] = {}
     for i in range(len(ids)):

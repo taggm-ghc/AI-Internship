@@ -1,0 +1,1505 @@
+{
+  "meta": {
+    "item": "p3m3 #40",
+    "created_at": "2026-09-24T07:27:44+00:00",
+    "corpus_revision": 167,
+    "seed": 40,
+    "generator_model": "gpt-4.1-mini",
+    "generator_model_snapshots": [
+      "gpt-4.1-mini-2025-04-14"
+    ],
+    "prompt_version": "2",
+    "targets": {
+      "paraphrase": 80,
+      "short": 50,
+      "exact_term": 40,
+      "hard_distractor": 30
+    },
+    "max_words": {
+      "paraphrase": 15,
+      "short": 8,
+      "exact_term": 15,
+      "hard_distractor": 15
+    },
+    "filter_counts": {
+      "exact_term:judge_rejected": 3,
+      "exact_term:kept": 40,
+      "exact_term:too_long": 5,
+      "hard_distractor:judge_rejected": 3,
+      "hard_distractor:kept": 47,
+      "hard_distractor:leaked_reference": 2,
+      "hard_distractor:no_close_distractor": 102,
+      "hard_distractor:too_long": 6,
+      "paraphrase:judge_rejected": 2,
+      "paraphrase:kept": 89,
+      "paraphrase:lexical_overlap": 11,
+      "paraphrase:too_long": 26,
+      "short:judge_rejected": 140,
+      "short:kept": 50,
+      "short:too_long": 2
+    },
+    "note": "Ground truth = source chunk/document. Chunk IDs are only valid for corpus_revision; retrieval_eval.py warns if the corpus has changed since."
+  },
+  "entries": [
+    {
+      "question": "How does the iterative method enforce bipartite structure in estimating graph connections?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.20676-epidemiological-causal-graph-identification-challenges-ident::17",
+      "expected_document_id": "arxiv-2609.20676-epidemiological-causal-graph-identification-challenges-ident",
+      "id": "r000"
+    },
+    {
+      "question": "How does training on top-ranked data segments affect subliminal learning rates compared to full training?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.20027-can-data-attribution-filter-out-subliminal-learning-not-reli::23",
+      "expected_document_id": "arxiv-2609.20027-can-data-attribution-filter-out-subliminal-learning-not-reli",
+      "id": "r001"
+    },
+    {
+      "question": "How does balancing partition size affect error in local randomization methods?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "pmlr-v235-asi24a-private-vector-mean-estimation-in-the-shuffle-model-optimal-rates-requ::54",
+      "expected_document_id": "pmlr-v235-asi24a-private-vector-mean-estimation-in-the-shuffle-model-optimal-rates-requ",
+      "id": "r002"
+    },
+    {
+      "question": "How is the error from using partial model parameters during client updates quantified?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.19559-fedfibos-fisher-importance-based-optimal-submodelling-for-he::14",
+      "expected_document_id": "arxiv-2609.19559-fedfibos-fisher-importance-based-optimal-submodelling-for-he",
+      "id": "r003"
+    },
+    {
+      "question": "How does zero-filling missing entries affect stochastic gradient predictor accuracy in varying feature dimensions?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "pmlr-v235-ayme24a-random-features-models-a-way-to-study-the-success-of-naive-imputation::1",
+      "expected_document_id": "pmlr-v235-ayme24a-random-features-models-a-way-to-study-the-success-of-naive-imputation",
+      "id": "r004"
+    },
+    {
+      "question": "How does grounding AI conversational agents in external documents improve their performance?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "techcrunch-2026-08-25-keenable-web-index-ai-agents::1",
+      "expected_document_id": "techcrunch-2026-08-25-keenable-web-index-ai-agents",
+      "id": "r005"
+    },
+    {
+      "question": "How does the information bottleneck method balance data compression and relevance preservation?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "acl-2024.acl-long.59-an-information-bottleneck-perspective-for-effective-noise-filtering-on::18",
+      "expected_document_id": "acl-2024.acl-long.59-an-information-bottleneck-perspective-for-effective-noise-filtering-on",
+      "id": "r006"
+    },
+    {
+      "question": "How does the evaluation method ensure argument structure accuracy over language quality?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.18644-fallacy-benchmarks-measure-scheme-recognition-not-fallacy-de::28",
+      "expected_document_id": "arxiv-2609.18644-fallacy-benchmarks-measure-scheme-recognition-not-fallacy-de",
+      "id": "r007"
+    },
+    {
+      "question": "What technique creates compact summaries to approximate large datasets for scalable computation?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "pmlr-v235-afshani24a-optimal-coresets-for-low-dimensional-geometric-median::1",
+      "expected_document_id": "pmlr-v235-afshani24a-optimal-coresets-for-low-dimensional-geometric-median",
+      "id": "r008"
+    },
+    {
+      "question": "How does converting costly initial computations into quick memory accesses improve GPU efficiency?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.19657-prefixbench-h100-characterizing-prefix-reuse-and-time-to-fir::72",
+      "expected_document_id": "arxiv-2609.19657-prefixbench-h100-characterizing-prefix-reuse-and-time-to-fir",
+      "id": "r009"
+    },
+    {
+      "question": "How does the described method optimize multiple decision strategies using gradient-based updates?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "pmlr-v238-alizadeh24a-pessimistic-off-policy-multi-objective-optimization::33",
+      "expected_document_id": "pmlr-v238-alizadeh24a-pessimistic-off-policy-multi-objective-optimization",
+      "id": "r010"
+    },
+    {
+      "question": "What are the limitations of existing federated learning platforms regarding model variety and network flexibility?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.19972-efficiently-distributed-federated-learning::6",
+      "expected_document_id": "arxiv-2609.19972-efficiently-distributed-federated-learning",
+      "id": "r011"
+    },
+    {
+      "question": "How does the GTV method perform compared to local training on synthetic data clustering tasks?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.19202-federated-soft-clustering-via-generalized-total-variation-mi::22",
+      "expected_document_id": "arxiv-2609.19202-federated-soft-clustering-via-generalized-total-variation-mi",
+      "id": "r012"
+    },
+    {
+      "question": "How does the method approximate gradients for iterative parameter updates in a robust optimization framework?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "neurips2023-047397849f-zero-regret-performative-prediction-under-inequality-constraints::26",
+      "expected_document_id": "neurips2023-047397849f-zero-regret-performative-prediction-under-inequality-constraints",
+      "id": "r013"
+    },
+    {
+      "question": "How can knowledge from rich data types be adapted to scenarios lacking some data forms?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "acl-2024.acl-long.94-multimodal-prompt-learning-with-missing-modalities-for-sentiment-analy::5",
+      "expected_document_id": "acl-2024.acl-long.94-multimodal-prompt-learning-with-missing-modalities-for-sentiment-analy",
+      "id": "r014"
+    },
+    {
+      "question": "How does the described method improve code retrieval by modifying stored code snippets?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "acl-2024.acl-long.75-rewriting-the-code-a-simple-method-for-large-language-model-augmented::22",
+      "expected_document_id": "acl-2024.acl-long.75-rewriting-the-code-a-simple-method-for-large-language-model-augmented",
+      "id": "r015"
+    },
+    {
+      "question": "What challenges arise when using non-Euclidean methods for complex hierarchical graph structures?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.18481-hyperbolic-graph-differential-diagnosis::15",
+      "expected_document_id": "arxiv-2609.18481-hyperbolic-graph-differential-diagnosis",
+      "id": "r016"
+    },
+    {
+      "question": "How does the discussed approach address limitations in evaluating model updates and statistical inference?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.20045-correct-now-insufficient-later-auditing-update-sufficiency-i::66",
+      "expected_document_id": "arxiv-2609.20045-correct-now-insufficient-later-auditing-update-sufficiency-i",
+      "id": "r017"
+    },
+    {
+      "question": "What transparency issue arises when AI suggestions lack clear verification sources in healthcare?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.18341-understanding-ai-provider-recommendations-in-local-service-m::11",
+      "expected_document_id": "arxiv-2609.18341-understanding-ai-provider-recommendations-in-local-service-m",
+      "id": "r018"
+    },
+    {
+      "question": "How does using NF4 instead of FP4 affect accuracy in a large language model benchmark?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "acl-2024.acl-long.1-quantized-side-tuning-fast-and-memory-efficient-tuning-of-quantized-la::52",
+      "expected_document_id": "acl-2024.acl-long.1-quantized-side-tuning-fast-and-memory-efficient-tuning-of-quantized-la",
+      "id": "r019"
+    },
+    {
+      "question": "How does the Multiplicative Weights method ensure near-optimal average error across multiple categories?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "pmlr-v238-ahmadi24a-agnostic-multi-robust-learning-using-erm::45",
+      "expected_document_id": "pmlr-v238-ahmadi24a-agnostic-multi-robust-learning-using-erm",
+      "id": "r020"
+    },
+    {
+      "question": "How does the system ensure correctness while integrating verified code with unverified components?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.19391-mags-multi-agent-auto-formalization-guarantees-safety-for-ag::23",
+      "expected_document_id": "arxiv-2609.19391-mags-multi-agent-auto-formalization-guarantees-safety-for-ag",
+      "id": "r021"
+    },
+    {
+      "question": "How does the method ensure recovery of nearly all unaltered elements despite adversarial interference?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "pmlr-v235-ameen24a-robust-graph-matching-when-nodes-are-corrupt::36",
+      "expected_document_id": "pmlr-v235-ameen24a-robust-graph-matching-when-nodes-are-corrupt",
+      "id": "r022"
+    },
+    {
+      "question": "How can round-trip accuracy be used to assess bidirectional translation models between two data types?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "pmlr-v235-allamanis24a-unsupervised-evaluation-of-code-llms-with-round-trip-correctness::9",
+      "expected_document_id": "pmlr-v235-allamanis24a-unsupervised-evaluation-of-code-llms-with-round-trip-correctness",
+      "id": "r023"
+    },
+    {
+      "question": "Why must verification of fabricated tools occur prior to the gating mechanism to ensure correctness?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.19425-closed-world-resolution-against-tool-hallucination-in-llm-ag::23",
+      "expected_document_id": "arxiv-2609.19425-closed-world-resolution-against-tool-hallucination-in-llm-ag",
+      "id": "r024"
+    },
+    {
+      "question": "How does the method model changes in outcome distributions across groups and time points?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "pmlr-v235-akbari24a-triple-changes-estimator-for-targeted-policies::20",
+      "expected_document_id": "pmlr-v235-akbari24a-triple-changes-estimator-for-targeted-policies",
+      "id": "r025"
+    },
+    {
+      "question": "How does the method generate and classify potential mediating variables between two factors?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.19944-mascod-a-multi-agent-framework-for-structural-context-guided::94",
+      "expected_document_id": "arxiv-2609.19944-mascod-a-multi-agent-framework-for-structural-context-guided",
+      "id": "r026"
+    },
+    {
+      "question": "How do two different methods compare in identifying connections among variables in a time series?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.18346-faithful-yet-collusive-cot-monitoring-collusion::25",
+      "expected_document_id": "arxiv-2609.18346-faithful-yet-collusive-cot-monitoring-collusion",
+      "id": "r027"
+    },
+    {
+      "question": "What mathematical tools help optimize the selection of vectors to maximize a matrix's determinant?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "neurips2023-02a92b5267-tight-bounds-for-volumetric-spanners-and-applications::21",
+      "expected_document_id": "neurips2023-02a92b5267-tight-bounds-for-volumetric-spanners-and-applications",
+      "id": "r028"
+    },
+    {
+      "question": "How often do top AI assistants fail compliance checks in regulated environments?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.18605-pact-can-enterprise-ai-assistants-be-trusted-under-pressure::53",
+      "expected_document_id": "arxiv-2609.18605-pact-can-enterprise-ai-assistants-be-trusted-under-pressure",
+      "id": "r029"
+    },
+    {
+      "question": "What questions assess users' reasons for selecting specific AI tasks and their sense of control?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.20658-ownership-in-ai-assisted-everyday-tasks::66",
+      "expected_document_id": "arxiv-2609.20658-ownership-in-ai-assisted-everyday-tasks",
+      "id": "r030"
+    },
+    {
+      "question": "How does the proposed approach differ in training and inference from traditional tactic generation methods?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "acl-2024.acl-long.45-learn-from-failure-fine-tuning::16",
+      "expected_document_id": "acl-2024.acl-long.45-learn-from-failure-fine-tuning",
+      "id": "r031"
+    },
+    {
+      "question": "Which recent studies address learning contracts considering hidden information and effort issues?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.20404-learning-principal-agent-contracts-for-equitable-smallholder::13",
+      "expected_document_id": "arxiv-2609.20404-learning-principal-agent-contracts-for-equitable-smallholder",
+      "id": "r032"
+    },
+    {
+      "question": "How can large language models be improved to better integrate and refine retrieved data?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "acl-2024.acl-long.9-unsupervised-information-refinement-training-of-large-language-models::1",
+      "expected_document_id": "acl-2024.acl-long.9-unsupervised-information-refinement-training-of-large-language-models",
+      "id": "r033"
+    },
+    {
+      "question": "How does the method improve generated data quality before retraining the model?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "acl-2024.acl-long.77-mitigating-catastrophic-forgetting-in-large-language-models-with-self::17",
+      "expected_document_id": "acl-2024.acl-long.77-mitigating-catastrophic-forgetting-in-large-language-models-with-self",
+      "id": "r034"
+    },
+    {
+      "question": "What are different methods to combine node information in graph-based neural models?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "pmlr-v235-aminian24a-generalization-error-of-graph-neural-networks-in-the-mean-field-regime::12",
+      "expected_document_id": "pmlr-v235-aminian24a-generalization-error-of-graph-neural-networks-in-the-mean-field-regime",
+      "id": "r035"
+    },
+    {
+      "question": "What resampling method better accounts for dependencies within sequential data in off-policy evaluation?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.20389-model-based-bootstrap-for-offline-policy-evaluation-in-tabul::22",
+      "expected_document_id": "arxiv-2609.20389-model-based-bootstrap-for-offline-policy-evaluation-in-tabul",
+      "id": "r036"
+    },
+    {
+      "question": "How does limiting the amount of information returned affect privacy risk in model interactions?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.18864-asleval-measuring-privacy-exposure-displacement-in-llm-agent::9",
+      "expected_document_id": "arxiv-2609.18864-asleval-measuring-privacy-exposure-displacement-in-llm-agent",
+      "id": "r037"
+    },
+    {
+      "question": "How can studies combining diverse functions be categorized beyond a single framework?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.18286-what-counts-as-strategic-reasoning-chess::81",
+      "expected_document_id": "arxiv-2609.18286-what-counts-as-strategic-reasoning-chess",
+      "id": "r038"
+    },
+    {
+      "question": "How does the proposed method improve detection of uncommon future links between unrelated concepts?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.18163-time-aligned-evolving-concept-graphs-scientific-relation::23",
+      "expected_document_id": "arxiv-2609.18163-time-aligned-evolving-concept-graphs-scientific-relation",
+      "id": "r039"
+    },
+    {
+      "question": "What are the percentages of input reuse in prompt caching across various language models?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.19814-long-horizon-autoformalization-of-a-core-theorem-underlying::252",
+      "expected_document_id": "arxiv-2609.19814-long-horizon-autoformalization-of-a-core-theorem-underlying",
+      "id": "r040"
+    },
+    {
+      "question": "How can customer feedback narratives be used to identify specific service issues?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "jmlr-v24-21-1518-hiclass-a-python-library-for-local-hierarchical-classification-compati::23",
+      "expected_document_id": "jmlr-v24-21-1518-hiclass-a-python-library-for-local-hierarchical-classification-compati",
+      "id": "r041"
+    },
+    {
+      "question": "Which work discusses identifying the optimal choice in sequential decision problems?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "pmlr-v235-agarwal24e-the-non-linear-f-design-and-applications-to-interactive-learning::67",
+      "expected_document_id": "pmlr-v235-agarwal24e-the-non-linear-f-design-and-applications-to-interactive-learning",
+      "id": "r042"
+    },
+    {
+      "question": "Which methods address risk-sensitive optimization in sequential decision models?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "pmlr-v235-agrawal24a-policy-evaluation-for-variance-in-average-reward-reinforcement-learnin::67",
+      "expected_document_id": "pmlr-v235-agrawal24a-policy-evaluation-for-variance-in-average-reward-reinforcement-learnin",
+      "id": "r043"
+    },
+    {
+      "question": "Who financially supported the development of this fairness criteria framework?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "pmlr-v235-alamdari24a-remembering-to-be-fair-non-markovian-fairness-in-sequential-decision-m::68",
+      "expected_document_id": "pmlr-v235-alamdari24a-remembering-to-be-fair-non-markovian-fairness-in-sequential-decision-m",
+      "id": "r044"
+    },
+    {
+      "question": "How does modifying survival probability estimates with a censoring indicator affect the IPCW Brier score?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "jmlr-v24-19-1030-the-brier-score-under-administrative-censoring-problems-and-a-solution::35",
+      "expected_document_id": "jmlr-v24-19-1030-the-brier-score-under-administrative-censoring-problems-and-a-solution",
+      "id": "r045"
+    },
+    {
+      "question": "How can participants collaboratively compute an average without a central authority while protecting individual inputs?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "pmlr-v235-allouah24b-the-privacy-power-of-correlated-noise-in-decentralized-learning::14",
+      "expected_document_id": "pmlr-v235-allouah24b-the-privacy-power-of-correlated-noise-in-decentralized-learning",
+      "id": "r046"
+    },
+    {
+      "question": "What are the defined constants ensuring sufficient exploration and identifiability in a sequential decision process?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.19135-exponential-hardness-of-off-policy-evaluation-under-history::13",
+      "expected_document_id": "arxiv-2609.19135-exponential-hardness-of-off-policy-evaluation-under-history",
+      "id": "r047"
+    },
+    {
+      "question": "How does a structured embedding enable efficient dimension reduction in large neural network models?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.19539-compressed-active-subspaces-for-scalable-bayesian-inference::6",
+      "expected_document_id": "arxiv-2609.19539-compressed-active-subspaces-for-scalable-bayesian-inference",
+      "id": "r048"
+    },
+    {
+      "question": "How can artificially created text improve small language model training for limited-resource devices?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.19513-qvac-genesis-iii-a-large-scale-high-quality-open-synthetic-s::10",
+      "expected_document_id": "arxiv-2609.19513-qvac-genesis-iii-a-large-scale-high-quality-open-synthetic-s",
+      "id": "r049"
+    },
+    {
+      "question": "How does the described model incorporate frequency-based normalization within its transformer layers?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.20535-freqcondnorm-towards-cross-domain-predictive-maintenance-thr::21",
+      "expected_document_id": "arxiv-2609.20535-freqcondnorm-towards-cross-domain-predictive-maintenance-thr",
+      "id": "r050"
+    },
+    {
+      "question": "How can one model optimal paths on a network using learned corrections to stochastic dynamics?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.18759-stable-filters-for-generative-modeling-of-graph-signals::12",
+      "expected_document_id": "arxiv-2609.18759-stable-filters-for-generative-modeling-of-graph-signals",
+      "id": "r051"
+    },
+    {
+      "question": "How does the research evaluate the predictive improvement of different network configurations?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.20808-unifying-models-of-intergroup-hostility-in-online-discourse::37",
+      "expected_document_id": "arxiv-2609.20808-unifying-models-of-intergroup-hostility-in-online-discourse",
+      "id": "r052"
+    },
+    {
+      "question": "How does the detector respond when the current data distribution differs from the reference?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.20538-refuse-decompose-refresh-a-claim-safe-protocol-for-closed-lo::32",
+      "expected_document_id": "arxiv-2609.20538-refuse-decompose-refresh-a-claim-safe-protocol-for-closed-lo",
+      "id": "r053"
+    },
+    {
+      "question": "How does the model define equivalence between decision contexts based on belief mappings?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.18357-market-signal-injection-adversarial-pricing-agents::98",
+      "expected_document_id": "arxiv-2609.18357-market-signal-injection-adversarial-pricing-agents",
+      "id": "r054"
+    },
+    {
+      "question": "How does the method reduce interference between different reward components during training?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.20124-multi-dimensional-prosody-judgment-for-live-streaming-speech::15",
+      "expected_document_id": "arxiv-2609.20124-multi-dimensional-prosody-judgment-for-live-streaming-speech",
+      "id": "r055"
+    },
+    {
+      "question": "How do specific mass distributions achieve optimal propagation rates in near-unit-discount deterministic models?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.18782-a-convergence-framework-for-deep-v-learning-error-propagatio::51",
+      "expected_document_id": "arxiv-2609.18782-a-convergence-framework-for-deep-v-learning-error-propagatio",
+      "id": "r056"
+    },
+    {
+      "question": "How can iterative methods improve efficiency and numerical stability in solving large linear systems?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "pmlr-v235-alder24a-energy-efficient-gaussian-processes-using-low-precision-arithmetic::17",
+      "expected_document_id": "pmlr-v235-alder24a-energy-efficient-gaussian-processes-using-low-precision-arithmetic",
+      "id": "r057"
+    },
+    {
+      "question": "How is the added predictive value of a new variable assessed using paired statistical tests?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.19374-machine-learning-assessment-of-the-predictive-value-of-infla::18",
+      "expected_document_id": "arxiv-2609.19374-machine-learning-assessment-of-the-predictive-value-of-infla",
+      "id": "r058"
+    },
+    {
+      "question": "How does a specific HDL-based design method improve FPGA deployment of deep learning models?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.20677-risc-v-and-machine-learning-a-survey::95",
+      "expected_document_id": "arxiv-2609.20677-risc-v-and-machine-learning-a-survey",
+      "id": "r059"
+    },
+    {
+      "question": "How does AutoData evaluate and categorize documents for selecting training materials?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.19754-autodata-agentic-search-for-pre-training-data-selection::15",
+      "expected_document_id": "arxiv-2609.19754-autodata-agentic-search-for-pre-training-data-selection",
+      "id": "r060"
+    },
+    {
+      "question": "How does group fairness prevent preference-based envy between individuals differing only in protected attributes?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.19234-the-ar-fairness-metamodel-a-structured-framework-for-fairnes::44",
+      "expected_document_id": "arxiv-2609.19234-the-ar-fairness-metamodel-a-structured-framework-for-fairnes",
+      "id": "r061"
+    },
+    {
+      "question": "How do inclusive discussion methods impact community trust and acceptance of decisions?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.20059-ai-should-facilitate-democratic-deliberation-at-scale::10",
+      "expected_document_id": "arxiv-2609.20059-ai-should-facilitate-democratic-deliberation-at-scale",
+      "id": "r062"
+    },
+    {
+      "question": "How does increasing the reading budget affect performance gaps between ideal and practical reading methods?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.18842-infinite-parameter-llms-live-weights::105",
+      "expected_document_id": "arxiv-2609.18842-infinite-parameter-llms-live-weights",
+      "id": "r063"
+    },
+    {
+      "question": "How does the Frank-Wolfe method with step size 1/t perform convergence-wise on smooth functions?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "pmlr-v238-abernethy24a-lexicographic-optimization-algorithms-and-stability::55",
+      "expected_document_id": "pmlr-v238-abernethy24a-lexicographic-optimization-algorithms-and-stability",
+      "id": "r064"
+    },
+    {
+      "question": "How does the proposed method enhance candidate selection by reducing semantic overlap using similarity measures?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.18723-beyond-truncation-llm-decoding-ensemble-pruning::50",
+      "expected_document_id": "arxiv-2609.18723-beyond-truncation-llm-decoding-ensemble-pruning",
+      "id": "r065"
+    },
+    {
+      "question": "How does the Thai–Lao system represent tones compactly while allowing detailed phonetic notation?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.19736-a-phonemically-comprehensive-ascii-only-romanization-scheme::52",
+      "expected_document_id": "arxiv-2609.19736-a-phonemically-comprehensive-ascii-only-romanization-scheme",
+      "id": "r066"
+    },
+    {
+      "question": "What improvements are suggested to enhance large language models' handling of ambiguous and complex tasks?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.18731-best-llm-nl-goals-to-pddl::31",
+      "expected_document_id": "arxiv-2609.18731-best-llm-nl-goals-to-pddl",
+      "id": "r067"
+    },
+    {
+      "question": "What are the main differences among the three itinerary modification methods evaluated?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.19654-replan-repair-or-edit-a-unified-empirical-evaluation-of-trav::25",
+      "expected_document_id": "arxiv-2609.19654-replan-repair-or-edit-a-unified-empirical-evaluation-of-trav",
+      "id": "r068"
+    },
+    {
+      "question": "How do different selection methods compare in performance metrics across various datasets?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.19210-not-all-nodes-are-created-equal-homophily-aware-stratificati::117",
+      "expected_document_id": "arxiv-2609.19210-not-all-nodes-are-created-equal-homophily-aware-stratificati",
+      "id": "r069"
+    },
+    {
+      "question": "How is the decoding process optimized to efficiently integrate with attention calculations in transformer models?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.19880-d-quant-driftable-entropy-coding-for-kv-cache-quantization::36",
+      "expected_document_id": "arxiv-2609.19880-d-quant-driftable-entropy-coding-for-kv-cache-quantization",
+      "id": "r070"
+    },
+    {
+      "question": "How does singular value decomposition provide the optimal low-rank matrix approximation?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "neurips2023-040ace837d-towards-higher-ranks-via-adversarial-weight-pruning::19",
+      "expected_document_id": "neurips2023-040ace837d-towards-higher-ranks-via-adversarial-weight-pruning",
+      "id": "r071"
+    },
+    {
+      "question": "How is the overall interpolation error measured when comparing optimization algorithms in regularized regression?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "neurips2023-00296c0e10-path-following-algorithms-for-ell-2-regularized-m-estimation-with-appr::45",
+      "expected_document_id": "neurips2023-00296c0e10-path-following-algorithms-for-ell-2-regularized-m-estimation-with-appr",
+      "id": "r072"
+    },
+    {
+      "question": "How does the discussed evaluation method handle temporal information and group comparisons in speech recognition?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.18533-a-probe-shift-is-not-a-fairness-fix-the-limits-of-representa::44",
+      "expected_document_id": "arxiv-2609.18533-a-probe-shift-is-not-a-fairness-fix-the-limits-of-representa",
+      "id": "r073"
+    },
+    {
+      "question": "How can verbalized certainty assist in prioritizing fact-checking for AI-generated responses?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.20541-an-analysis-of-training-free-self-reported-confidence-in-lan::2",
+      "expected_document_id": "arxiv-2609.20541-an-analysis-of-training-free-self-reported-confidence-in-lan",
+      "id": "r074"
+    },
+    {
+      "question": "Which statistical features best identify signal distortions in gravitational wave data?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.19416-deep-learning-detection-of-beyond-general-relativity-deviati::24",
+      "expected_document_id": "arxiv-2609.19416-deep-learning-detection-of-beyond-general-relativity-deviati",
+      "id": "r075"
+    },
+    {
+      "question": "Which confidence ordering fails to ensure independent position selection in the ScanAndAdd method?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.20581-limits-of-confidence-in-diffusion::30",
+      "expected_document_id": "arxiv-2609.20581-limits-of-confidence-in-diffusion",
+      "id": "r076"
+    },
+    {
+      "question": "How does ALIBI alter executable files to test model reasoning without hiding suspicious indicators?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.19722-alibi-adversarial-legitimacy-injection-in-binary-input-again::36",
+      "expected_document_id": "arxiv-2609.19722-alibi-adversarial-legitimacy-injection-in-binary-input-again",
+      "id": "r077"
+    },
+    {
+      "question": "How does reclassifying reasoning examples affect performance metrics in a specific benchmark?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.19589-form-over-content-in-gradient-based-data-attribution-methods::69",
+      "expected_document_id": "arxiv-2609.19589-form-over-content-in-gradient-based-data-attribution-methods",
+      "id": "r078"
+    },
+    {
+      "question": "What challenges do language-based AI systems face in long-term strategic decision-making tasks?",
+      "stratum": "paraphrase",
+      "expected_chunk_id": "arxiv-2609.18996-compiled-agency-coding-agents-game-players::4",
+      "expected_document_id": "arxiv-2609.18996-compiled-agency-coding-agents-game-players",
+      "id": "r079"
+    },
+    {
+      "question": "machine detection of materialized metaphor",
+      "stratum": "short",
+      "expected_chunk_id": "arxiv-2609.20712-summarization-bias-the-directional-collapse-of-objective-pro::15",
+      "expected_document_id": "arxiv-2609.20712-summarization-bias-the-directional-collapse-of-objective-pro",
+      "id": "r080"
+    },
+    {
+      "question": "greedy hypervolume optimization policy selection",
+      "stratum": "short",
+      "expected_chunk_id": "pmlr-v238-alizadeh24a-pessimistic-off-policy-multi-objective-optimization::32",
+      "expected_document_id": "pmlr-v238-alizadeh24a-pessimistic-off-policy-multi-objective-optimization",
+      "id": "r081"
+    },
+    {
+      "question": "robust MDP optimal policy worst-case transitions rewards",
+      "stratum": "short",
+      "expected_chunk_id": "arxiv-2609.18599-online-robust-reinforcement-learning-through-monte-carlo-pla::25",
+      "expected_document_id": "arxiv-2609.18599-online-robust-reinforcement-learning-through-monte-carlo-pla",
+      "id": "r082"
+    },
+    {
+      "question": "nonconvex optimization dual variable updates ALM",
+      "stratum": "short",
+      "expected_chunk_id": "pmlr-v238-alacaoglu24a-complexity-of-single-loop-algorithms-for-nonlinear-programming::46",
+      "expected_document_id": "pmlr-v238-alacaoglu24a-complexity-of-single-loop-algorithms-for-nonlinear-programming",
+      "id": "r083"
+    },
+    {
+      "question": "linear regression compression impossibility l2 loss",
+      "stratum": "short",
+      "expected_chunk_id": "pmlr-v235-attias24b-agnostic-sample-compression-schemes-for-regression::8",
+      "expected_document_id": "pmlr-v235-attias24b-agnostic-sample-compression-schemes-for-regression",
+      "id": "r084"
+    },
+    {
+      "question": "generalization error bounds over-parameterized GCN MPGNN",
+      "stratum": "short",
+      "expected_chunk_id": "pmlr-v235-aminian24a-generalization-error-of-graph-neural-networks-in-the-mean-field-regime::24",
+      "expected_document_id": "pmlr-v235-aminian24a-generalization-error-of-graph-neural-networks-in-the-mean-field-regime",
+      "id": "r085"
+    },
+    {
+      "question": "CosyVoice2-0.5B speech synthesis datasets details",
+      "stratum": "short",
+      "expected_chunk_id": "arxiv-2609.18680-hearincontext-a-benchmark-for-implicit-context-in-speech-rec::9",
+      "expected_document_id": "arxiv-2609.18680-hearincontext-a-benchmark-for-implicit-context-in-speech-rec",
+      "id": "r086"
+    },
+    {
+      "question": "parameter-free stochastic convex optimization methods",
+      "stratum": "short",
+      "expected_chunk_id": "pmlr-v235-attia24a-how-free-is-parameter-free-stochastic-optimization::41",
+      "expected_document_id": "pmlr-v235-attia24a-how-free-is-parameter-free-stochastic-optimization",
+      "id": "r087"
+    },
+    {
+      "question": "Mahalanobis distance and MMD for semantic shift detection",
+      "stratum": "short",
+      "expected_chunk_id": "arxiv-2609.18804-beyond-frequency-measures-can-contextual-embeddings-capture::8",
+      "expected_document_id": "arxiv-2609.18804-beyond-frequency-measures-can-contextual-embeddings-capture",
+      "id": "r088"
+    },
+    {
+      "question": "Zarya-0.6B evaluation results metrics",
+      "stratum": "short",
+      "expected_chunk_id": "arxiv-2609.19868-zarya-a-hybrid-autoregressive-masked-diffusion-language-mode::27",
+      "expected_document_id": "arxiv-2609.19868-zarya-a-hybrid-autoregressive-masked-diffusion-language-mode",
+      "id": "r089"
+    },
+    {
+      "question": "hierarchical clustering formal objective function",
+      "stratum": "short",
+      "expected_chunk_id": "jmlr-v24-18-080-approximation-bounds-for-hierarchical-clustering-average-linkage-bisec::7",
+      "expected_document_id": "jmlr-v24-18-080-approximation-bounds-for-hierarchical-clustering-average-linkage-bisec",
+      "id": "r090"
+    },
+    {
+      "question": "probability-based subset selection in decoding",
+      "stratum": "short",
+      "expected_chunk_id": "arxiv-2609.18723-beyond-truncation-llm-decoding-ensemble-pruning::11",
+      "expected_document_id": "arxiv-2609.18723-beyond-truncation-llm-decoding-ensemble-pruning",
+      "id": "r091"
+    },
+    {
+      "question": "ASR errors in agricultural Hindi word pairs",
+      "stratum": "short",
+      "expected_chunk_id": "arxiv-2609.20504-model-agnostic-and-language-agnostic-voice-pipeline-improvem::98",
+      "expected_document_id": "arxiv-2609.20504-model-agnostic-and-language-agnostic-voice-pipeline-improvem",
+      "id": "r092"
+    },
+    {
+      "question": "radial bump function partition of unity definition",
+      "stratum": "short",
+      "expected_chunk_id": "arxiv-2609.19937-error-bounds-in-sobolev-norms-for-approximations-with-norm-c::87",
+      "expected_document_id": "arxiv-2609.19937-error-bounds-in-sobolev-norms-for-approximations-with-norm-c",
+      "id": "r093"
+    },
+    {
+      "question": "federated learning asynchronous event-triggered update scheduling",
+      "stratum": "short",
+      "expected_chunk_id": "arxiv-2609.20123-qos-aware-federated-learning-for-multimodal-in-cabin-interac::17",
+      "expected_document_id": "arxiv-2609.20123-qos-aware-federated-learning-for-multimodal-in-cabin-interac",
+      "id": "r094"
+    },
+    {
+      "question": "cross-validation mean squared error bias estimation",
+      "stratum": "short",
+      "expected_chunk_id": "arxiv-2609.20758-prediction-powered-smoothing-and-validation-for-disaggregate::37",
+      "expected_document_id": "arxiv-2609.20758-prediction-powered-smoothing-and-validation-for-disaggregate",
+      "id": "r095"
+    },
+    {
+      "question": "AI medical imaging adoption Africa radiographers",
+      "stratum": "short",
+      "expected_chunk_id": "arxiv-2609.19096-prepared-or-unprepared-evaluating-healthcare-workforce-readi::41",
+      "expected_document_id": "arxiv-2609.19096-prepared-or-unprepared-evaluating-healthcare-workforce-readi",
+      "id": "r096"
+    },
+    {
+      "question": "TAKC vs RAG cost efficiency knowledge base queries",
+      "stratum": "short",
+      "expected_chunk_id": "aws-ml-blog-2026-07-27-task-aware-knowledge-compression-rag::7",
+      "expected_document_id": "aws-ml-blog-2026-07-27-task-aware-knowledge-compression-rag",
+      "id": "r097"
+    },
+    {
+      "question": "loss distribution by game size and model",
+      "stratum": "short",
+      "expected_chunk_id": "arxiv-2609.19113-playing-log-n-questions-over-wikipedia-abstracts-communicati::85",
+      "expected_document_id": "arxiv-2609.19113-playing-log-n-questions-over-wikipedia-abstracts-communicati",
+      "id": "r098"
+    },
+    {
+      "question": "ODRL JSON Schema operator decision rules",
+      "stratum": "short",
+      "expected_chunk_id": "arxiv-2609.19640-a-policy-profile-for-croissant-refusal-as-a-property-of-the::40",
+      "expected_document_id": "arxiv-2609.19640-a-policy-profile-for-croissant-refusal-as-a-property-of-the",
+      "id": "r099"
+    },
+    {
+      "question": "PDDL domain and problem file structure",
+      "stratum": "short",
+      "expected_chunk_id": "arxiv-2609.18731-best-llm-nl-goals-to-pddl::12",
+      "expected_document_id": "arxiv-2609.18731-best-llm-nl-goals-to-pddl",
+      "id": "r100"
+    },
+    {
+      "question": "K-means clustering effect on Llama-2-7b",
+      "stratum": "short",
+      "expected_chunk_id": "acl-2024.acl-long.77-mitigating-catastrophic-forgetting-in-large-language-models-with-self::45",
+      "expected_document_id": "acl-2024.acl-long.77-mitigating-catastrophic-forgetting-in-large-language-models-with-self",
+      "id": "r101"
+    },
+    {
+      "question": "Conformer ASR model speedup techniques",
+      "stratum": "short",
+      "expected_chunk_id": "arxiv-2609.20104-design-of-the-ibm-granite-5-0-turboctc-asr-model::26",
+      "expected_document_id": "arxiv-2609.20104-design-of-the-ibm-granite-5-0-turboctc-asr-model",
+      "id": "r102"
+    },
+    {
+      "question": "pilot traffic scalability issues in multi-agent systems",
+      "stratum": "short",
+      "expected_chunk_id": "venturebeat-2026-09-16-ai-agents-object-storage-batch-era::5",
+      "expected_document_id": "venturebeat-2026-09-16-ai-agents-object-storage-batch-era",
+      "id": "r103"
+    },
+    {
+      "question": "traditional name July full moon",
+      "stratum": "short",
+      "expected_chunk_id": "arxiv-2609.19513-qvac-genesis-iii-a-large-scale-high-quality-open-synthetic-s::78",
+      "expected_document_id": "arxiv-2609.19513-qvac-genesis-iii-a-large-scale-high-quality-open-synthetic-s",
+      "id": "r104"
+    },
+    {
+      "question": "low-dimensional median coreset size bounds",
+      "stratum": "short",
+      "expected_chunk_id": "pmlr-v235-afshani24a-optimal-coresets-for-low-dimensional-geometric-median::7",
+      "expected_document_id": "pmlr-v235-afshani24a-optimal-coresets-for-low-dimensional-geometric-median",
+      "id": "r105"
+    },
+    {
+      "question": "VoiceTrace-Bench hybrid speech retrieval benchmark",
+      "stratum": "short",
+      "expected_chunk_id": "arxiv-2609.18521-voicetrace-a-benchmark-and-retrieval-framework-for-who-said::1",
+      "expected_document_id": "arxiv-2609.18521-voicetrace-a-benchmark-and-retrieval-framework-for-who-said",
+      "id": "r106"
+    },
+    {
+      "question": "F-design simultaneous confidence bands regression",
+      "stratum": "short",
+      "expected_chunk_id": "pmlr-v235-agarwal24e-the-non-linear-f-design-and-applications-to-interactive-learning::38",
+      "expected_document_id": "pmlr-v235-agarwal24e-the-non-linear-f-design-and-applications-to-interactive-learning",
+      "id": "r107"
+    },
+    {
+      "question": "LLM agents tacit collusion antitrust concerns",
+      "stratum": "short",
+      "expected_chunk_id": "arxiv-2609.18346-faithful-yet-collusive-cot-monitoring-collusion::2",
+      "expected_document_id": "arxiv-2609.18346-faithful-yet-collusive-cot-monitoring-collusion",
+      "id": "r108"
+    },
+    {
+      "question": "complexity bounds strict saddle optimization",
+      "stratum": "short",
+      "expected_chunk_id": "jmlr-v24-20-608-a-line-search-descent-algorithm-for-strict-saddle-functions-with-compl::5",
+      "expected_document_id": "jmlr-v24-20-608-a-line-search-descent-algorithm-for-strict-saddle-functions-with-compl",
+      "id": "r109"
+    },
+    {
+      "question": "MPSC vs GPT-3.5-Turbo code generation Pass@k",
+      "stratum": "short",
+      "expected_chunk_id": "acl-2024.acl-long.78-enhancing-large-language-models-in-coding-through-multi-perspective-se::91",
+      "expected_document_id": "acl-2024.acl-long.78-enhancing-large-language-models-in-coding-through-multi-perspective-se",
+      "id": "r110"
+    },
+    {
+      "question": "ascii characters readability romanization schemes",
+      "stratum": "short",
+      "expected_chunk_id": "arxiv-2609.19736-a-phonemically-comprehensive-ascii-only-romanization-scheme::14",
+      "expected_document_id": "arxiv-2609.19736-a-phonemically-comprehensive-ascii-only-romanization-scheme",
+      "id": "r111"
+    },
+    {
+      "question": "SDFT impact on safety and helpfulness metrics",
+      "stratum": "short",
+      "expected_chunk_id": "acl-2024.acl-long.58-self-distillation-bridges-distribution-gap-in-language-model-fine-tuni::26",
+      "expected_document_id": "acl-2024.acl-long.58-self-distillation-bridges-distribution-gap-in-language-model-fine-tuni",
+      "id": "r112"
+    },
+    {
+      "question": "CoreSense episodic memory system architecture",
+      "stratum": "short",
+      "expected_chunk_id": "arxiv-2609.19512-coresense-traceable-failure-recall-and-conflict-aware-belief::10",
+      "expected_document_id": "arxiv-2609.19512-coresense-traceable-failure-recall-and-conflict-aware-belief",
+      "id": "r113"
+    },
+    {
+      "question": "variability in commercial genetic screening panels",
+      "stratum": "short",
+      "expected_chunk_id": "arxiv-2609.19569-large-language-model-agents-for-evidence-based-genetic-disea::33",
+      "expected_document_id": "arxiv-2609.19569-large-language-model-agents-for-evidence-based-genetic-disea",
+      "id": "r114"
+    },
+    {
+      "question": "quantile selection for conservative forecasting",
+      "stratum": "short",
+      "expected_chunk_id": "arxiv-2609.18588-peak-aware-short-term-load-forecasting-across-distribution-g::26",
+      "expected_document_id": "arxiv-2609.18588-peak-aware-short-term-load-forecasting-across-distribution-g",
+      "id": "r115"
+    },
+    {
+      "question": "accelerated bilevel optimization convergence bounds",
+      "stratum": "short",
+      "expected_chunk_id": "jmlr-v24-21-0949-lower-bounds-and-accelerated-algorithms-for-bilevel-optimization::11",
+      "expected_document_id": "jmlr-v24-21-0949-lower-bounds-and-accelerated-algorithms-for-bilevel-optimization",
+      "id": "r116"
+    },
+    {
+      "question": "NLL-based filtering impact on BERT privacy",
+      "stratum": "short",
+      "expected_chunk_id": "acl-2026.findings-acl.10-private-seeds-public-llms::127",
+      "expected_document_id": "acl-2026.findings-acl.10-private-seeds-public-llms",
+      "id": "r117"
+    },
+    {
+      "question": "CoReLoop component ablation EER results",
+      "stratum": "short",
+      "expected_chunk_id": "arxiv-2609.19818-coreloop-parameter-efficient-controlled-recurrent-refinement::22",
+      "expected_document_id": "arxiv-2609.19818-coreloop-parameter-efficient-controlled-recurrent-refinement",
+      "id": "r118"
+    },
+    {
+      "question": "message passing neural networks fixed graph",
+      "stratum": "short",
+      "expected_chunk_id": "pmlr-v235-attali24a-delaunay-graph-addressing-over-squashing-and-over-smoothing-using-dela::9",
+      "expected_document_id": "pmlr-v235-attali24a-delaunay-graph-addressing-over-squashing-and-over-smoothing-using-dela",
+      "id": "r119"
+    },
+    {
+      "question": "RTCpass vs pass@1 HumanEval code generation",
+      "stratum": "short",
+      "expected_chunk_id": "pmlr-v235-allamanis24a-unsupervised-evaluation-of-code-llms-with-round-trip-correctness::31",
+      "expected_document_id": "pmlr-v235-allamanis24a-unsupervised-evaluation-of-code-llms-with-round-trip-correctness",
+      "id": "r120"
+    },
+    {
+      "question": "entropy coding quantization levels fixed storage budget",
+      "stratum": "short",
+      "expected_chunk_id": "arxiv-2609.19880-d-quant-driftable-entropy-coding-for-kv-cache-quantization::26",
+      "expected_document_id": "arxiv-2609.19880-d-quant-driftable-entropy-coding-for-kv-cache-quantization",
+      "id": "r121"
+    },
+    {
+      "question": "AutoKeras deep learning AutoML library features",
+      "stratum": "short",
+      "expected_chunk_id": "jmlr-v24-20-1355-autokeras-an-automl-library-for-deep-learning::3",
+      "expected_document_id": "jmlr-v24-20-1355-autokeras-an-automl-library-for-deep-learning",
+      "id": "r122"
+    },
+    {
+      "question": "Gauss–Legendre quadrature for non-negative integrand",
+      "stratum": "short",
+      "expected_chunk_id": "arxiv-2609.19647-well-posedness-of-neural-turbulence-closures-and-tangent-dis::71",
+      "expected_document_id": "arxiv-2609.19647-well-posedness-of-neural-turbulence-closures-and-tangent-dis",
+      "id": "r123"
+    },
+    {
+      "question": "enterprise ai errors missing business context",
+      "stratum": "short",
+      "expected_chunk_id": "venturebeat-2026-09-09-databricks-adaptive-instructed-retriever::9",
+      "expected_document_id": "venturebeat-2026-09-09-databricks-adaptive-instructed-retriever",
+      "id": "r124"
+    },
+    {
+      "question": "machine-checkable safety guarantees program synthesis",
+      "stratum": "short",
+      "expected_chunk_id": "arxiv-2609.19391-mags-multi-agent-auto-formalization-guarantees-safety-for-ag::16",
+      "expected_document_id": "arxiv-2609.19391-mags-multi-agent-auto-formalization-guarantees-safety-for-ag",
+      "id": "r125"
+    },
+    {
+      "question": "weight pruning vs filter pruning cnn",
+      "stratum": "short",
+      "expected_chunk_id": "neurips2023-040ace837d-towards-higher-ranks-via-adversarial-weight-pruning::4",
+      "expected_document_id": "neurips2023-040ace837d-towards-higher-ranks-via-adversarial-weight-pruning",
+      "id": "r126"
+    },
+    {
+      "question": "local privacy minimax optimal estimation",
+      "stratum": "short",
+      "expected_chunk_id": "pmlr-v235-allouah24b-the-privacy-power-of-correlated-noise-in-decentralized-learning::64",
+      "expected_document_id": "pmlr-v235-allouah24b-the-privacy-power-of-correlated-noise-in-decentralized-learning",
+      "id": "r127"
+    },
+    {
+      "question": "STITCH-style supervision impact on GLM-4-Voice accuracy",
+      "stratum": "short",
+      "expected_chunk_id": "arxiv-2609.18677-voice-of-reason-reinforcement-learning-for-spoken-math::45",
+      "expected_document_id": "arxiv-2609.18677-voice-of-reason-reinforcement-learning-for-spoken-math",
+      "id": "r128"
+    },
+    {
+      "question": "held-out win rate ranges across difficulty tiers",
+      "stratum": "short",
+      "expected_chunk_id": "arxiv-2609.18996-compiled-agency-coding-agents-game-players::82",
+      "expected_document_id": "arxiv-2609.18996-compiled-agency-coding-agents-game-players",
+      "id": "r129"
+    },
+    {
+      "question": "How does the Realised Adoption Share (RAS) measure exclusion in pooled contracts?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "arxiv-2609.20404-learning-principal-agent-contracts-for-equitable-smallholder::49",
+      "expected_document_id": "arxiv-2609.20404-learning-principal-agent-contracts-for-equitable-smallholder",
+      "id": "r130"
+    },
+    {
+      "question": "How does AutoData (CORE) performance compare across model depths 8 to 24?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "arxiv-2609.19754-autodata-agentic-search-for-pre-training-data-selection::30",
+      "expected_document_id": "arxiv-2609.19754-autodata-agentic-search-for-pre-training-data-selection",
+      "id": "r131"
+    },
+    {
+      "question": "What does the probe accuracy Aprobe indicate about hidden state signals?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "arxiv-2609.18985-suppressed-not-erased-knowledge-editing::16",
+      "expected_document_id": "arxiv-2609.18985-suppressed-not-erased-knowledge-editing",
+      "id": "r132"
+    },
+    {
+      "question": "What is the context length used in the Zarya-4B model architecture?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "arxiv-2609.19868-zarya-a-hybrid-autoregressive-masked-diffusion-language-mode::10",
+      "expected_document_id": "arxiv-2609.19868-zarya-a-hybrid-autoregressive-masked-diffusion-language-mode",
+      "id": "r133"
+    },
+    {
+      "question": "How does TERN perform compared to Chronos-2 and TimesFM-3 on influenza datasets?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "arxiv-2609.18407-tern-a-delta-rule-memory-with-a-seasonal-reference-and-onlin::5",
+      "expected_document_id": "arxiv-2609.18407-tern-a-delta-rule-memory-with-a-seasonal-reference-and-onlin",
+      "id": "r134"
+    },
+    {
+      "question": "How does the DARKSIDE heterogeneous RISC-V compute cluster enhance extreme-edge DNN inference?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "arxiv-2609.20677-risc-v-and-machine-learning-a-survey::97",
+      "expected_document_id": "arxiv-2609.20677-risc-v-and-machine-learning-a-survey",
+      "id": "r135"
+    },
+    {
+      "question": "How does RAG's similarity search fail in task-aware knowledge compression for $500 million acquisitions?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "aws-ml-blog-2026-07-27-task-aware-knowledge-compression-rag::1",
+      "expected_document_id": "aws-ml-blog-2026-07-27-task-aware-knowledge-compression-rag",
+      "id": "r136"
+    },
+    {
+      "question": "What is the computational complexity of evaluating KDEX for a dataset of size n?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "pmlr-v235-alishahi24a-no-dimensional-sampling-coresets-for-classification::81",
+      "expected_document_id": "pmlr-v235-alishahi24a-no-dimensional-sampling-coresets-for-classification",
+      "id": "r137"
+    },
+    {
+      "question": "How does Proposition 5 utilize the QR decomposition to compute the average of ˆβi?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "jmlr-v24-21-0844-interpolating-classifiers-make-few-mistakes::32",
+      "expected_document_id": "jmlr-v24-21-0844-interpolating-classifiers-make-few-mistakes",
+      "id": "r138"
+    },
+    {
+      "question": "How does the CountSketch-like construction define the entries of matrix P?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "arxiv-2609.19539-compressed-active-subspaces-for-scalable-bayesian-inference::13",
+      "expected_document_id": "arxiv-2609.19539-compressed-active-subspaces-for-scalable-bayesian-inference",
+      "id": "r139"
+    },
+    {
+      "question": "How do category residuals contribute to safety-relevant behavior in LLMs?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "arxiv-2609.19366-the-role-of-fine-grained-harm-signals-in-llm-safety::3",
+      "expected_document_id": "arxiv-2609.19366-the-role-of-fine-grained-harm-signals-in-llm-safety",
+      "id": "r140"
+    },
+    {
+      "question": "What conditions define ValidSupport for block types HNI and HMI?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "arxiv-2609.20349-a-qualitative-model-for-reasoning-about-path-and-support::23",
+      "expected_document_id": "arxiv-2609.20349-a-qualitative-model-for-reasoning-about-path-and-support",
+      "id": "r141"
+    },
+    {
+      "question": "How does WiCleanData use generative AI in taxonomy refinement?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "arxiv-2609.20057-wicleandata-guaranteeing-the-type-consistency-of-wikidata-by::36",
+      "expected_document_id": "arxiv-2609.20057-wicleandata-guaranteeing-the-type-consistency-of-wikidata-by",
+      "id": "r142"
+    },
+    {
+      "question": "What does Theorem 11.2 state about non-monotone PCs combined with affine projections?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "pmlr-v235-agarwal24c-probabilistic-generating-circuits-demystified::19",
+      "expected_document_id": "pmlr-v235-agarwal24c-probabilistic-generating-circuits-demystified",
+      "id": "r143"
+    },
+    {
+      "question": "What role does the operator R(xk) play in the representations (14a) and (14b)?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "pmlr-v235-alacaoglu24a-revisiting-inexact-fixed-point-iterations-for-min-max-problems-stochas::89",
+      "expected_document_id": "pmlr-v235-alacaoglu24a-revisiting-inexact-fixed-point-iterations-for-min-max-problems-stochas",
+      "id": "r144"
+    },
+    {
+      "question": "How does SH-LSC encode thumb phonology differently from ASL-LEX in handshape features?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "arxiv-2609.18772-zero-shot-cross-lingual-recognition-of-sign-language-handsha::24",
+      "expected_document_id": "arxiv-2609.18772-zero-shot-cross-lingual-recognition-of-sign-language-handsha",
+      "id": "r145"
+    },
+    {
+      "question": "What does the rhyme-class metric measure in the context of steering interventions?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "arxiv-2609.18440-planning-or-improvisation-stress-testing-the-poetry-planning::75",
+      "expected_document_id": "arxiv-2609.18440-planning-or-improvisation-stress-testing-the-poetry-planning",
+      "id": "r146"
+    },
+    {
+      "question": "How does the LLM convert table regions into textual/HTML renderings?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "arxiv-2609.19680-finskillops-a-self-evolving-multi-agent-system-for-sec-filin::54",
+      "expected_document_id": "arxiv-2609.19680-finskillops-a-self-evolving-multi-agent-system-for-sec-filin",
+      "id": "r147"
+    },
+    {
+      "question": "How does Recursive QLSTM improve one-step temperature forecasting compared to QLSTM?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "arxiv-2609.20594-recursive-quantum-long-short-term-memory-for-stable-short-ho::23",
+      "expected_document_id": "arxiv-2609.20594-recursive-quantum-long-short-term-memory-for-stable-short-ho",
+      "id": "r148"
+    },
+    {
+      "question": "What is the significance of the 'harness' in the accumulation process described?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "arxiv-2609.19519-an-architecture-for-long-horizon-agents-levels-ticks-and-cas::22",
+      "expected_document_id": "arxiv-2609.19519-an-architecture-for-long-horizon-agents-levels-ticks-and-cas",
+      "id": "r149"
+    },
+    {
+      "question": "What is the performance percentage of GPT-5.6-sol in the generation gap ladder?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "arxiv-2609.18996-compiled-agency-coding-agents-game-players::25",
+      "expected_document_id": "arxiv-2609.18996-compiled-agency-coding-agents-game-players",
+      "id": "r150"
+    },
+    {
+      "question": "How does BLOOMZ-176b perform on the DSE entity-to-entity stance detection task?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "acl-2024.acl-long.80-transitive-consistency-constrained-learning-for-entity-to-entity-stanc::38",
+      "expected_document_id": "acl-2024.acl-long.80-transitive-consistency-constrained-learning-for-entity-to-entity-stanc",
+      "id": "r151"
+    },
+    {
+      "question": "How does the online inference update the latent code belief in the FFN side?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "arxiv-2609.18842-infinite-parameter-llms-live-weights::70",
+      "expected_document_id": "arxiv-2609.18842-infinite-parameter-llms-live-weights",
+      "id": "r152"
+    },
+    {
+      "question": "What is the role of the Raw-40 threshold in controlling the unsafe-proceed rate?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "arxiv-2609.19512-coresense-traceable-failure-recall-and-conflict-aware-belief::21",
+      "expected_document_id": "arxiv-2609.19512-coresense-traceable-failure-recall-and-conflict-aware-belief",
+      "id": "r153"
+    },
+    {
+      "question": "How does the proposed feedback loop simulation method affect popularity bias in recommendation algorithms?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "arxiv-2007.13019-feedback-loop-bias-amplification-recommenders::1",
+      "expected_document_id": "arxiv-2007.13019-feedback-loop-bias-amplification-recommenders",
+      "id": "r154"
+    },
+    {
+      "question": "What is the parameter count formula P(E,D,V) for the q_eE_dD_vV model variants?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "arxiv-2609.18565-variational-quantum-transformer-architecture-for-synthetic-l::14",
+      "expected_document_id": "arxiv-2609.18565-variational-quantum-transformer-architecture-for-synthetic-l",
+      "id": "r155"
+    },
+    {
+      "question": "How does the control Koopman operator act on observable h in the semigroup example?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "arxiv-2609.19428-demystifying-linear-operator-learning-for-control-systems::34",
+      "expected_document_id": "arxiv-2609.19428-demystifying-linear-operator-learning-for-control-systems",
+      "id": "r156"
+    },
+    {
+      "question": "How does the local search algorithm perform for general ℓp norms in volumetric spanner size?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "neurips2023-02a92b5267-tight-bounds-for-volumetric-spanners-and-applications::11",
+      "expected_document_id": "neurips2023-02a92b5267-tight-bounds-for-volumetric-spanners-and-applications",
+      "id": "r157"
+    },
+    {
+      "question": "How does GS-MoE improve MCC compared to ExplicitMoE and DenseNet on ViT-T backbones?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "arxiv-2609.18688-generalist-specialist-mixture-of-experts-for-rare-pathology::32",
+      "expected_document_id": "arxiv-2609.18688-generalist-specialist-mixture-of-experts-for-rare-pathology",
+      "id": "r158"
+    },
+    {
+      "question": "What hyperparameters define the transformer used in quantum state learning?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "neurips2023-01772a8b04-antn-bridging-autoregressive-neural-networks-and-tensor-networks-for-q::116",
+      "expected_document_id": "neurips2023-01772a8b04-antn-bridging-autoregressive-neural-networks-and-tensor-networks-for-q",
+      "id": "r159"
+    },
+    {
+      "question": "What is the role of average linkage in agglomerative hierarchical clustering?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "jmlr-v24-18-080-approximation-bounds-for-hierarchical-clustering-average-linkage-bisec::4",
+      "expected_document_id": "jmlr-v24-18-080-approximation-bounds-for-hierarchical-clustering-average-linkage-bisec",
+      "id": "r160"
+    },
+    {
+      "question": "How does the IPCW Brier score handle administrative censoring times compared to BSA(t,π)?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "jmlr-v24-19-1030-the-brier-score-under-administrative-censoring-problems-and-a-solution::94",
+      "expected_document_id": "jmlr-v24-19-1030-the-brier-score-under-administrative-censoring-problems-and-a-solution",
+      "id": "r161"
+    },
+    {
+      "question": "What does HSCIC measure in terms of conditional independence?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "jmlr-v24-20-238-on-distance-and-kernel-measures-of-conditional-dependence::35",
+      "expected_document_id": "jmlr-v24-20-238-on-distance-and-kernel-measures-of-conditional-dependence",
+      "id": "r162"
+    },
+    {
+      "question": "What does the Jacobian-based estimate 1/𝜎 min( ˜𝐽) bound in error amplification?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "arxiv-2609.19647-well-posedness-of-neural-turbulence-closures-and-tangent-dis::37",
+      "expected_document_id": "arxiv-2609.19647-well-posedness-of-neural-turbulence-closures-and-tangent-dis",
+      "id": "r163"
+    },
+    {
+      "question": "What are the economic costs and computational demands of training on trillions of tokens?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "arxiv-2609.18878-preventing-model-collapse-a-fisher-rao-perspective-on-the-dy::3",
+      "expected_document_id": "arxiv-2609.18878-preventing-model-collapse-a-fisher-rao-perspective-on-the-dy",
+      "id": "r164"
+    },
+    {
+      "question": "What is the input length in frames for Whisper-medium 1 model?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "arxiv-2609.18533-a-probe-shift-is-not-a-fairness-fix-the-limits-of-representa::13",
+      "expected_document_id": "arxiv-2609.18533-a-probe-shift-is-not-a-fairness-fix-the-limits-of-representa",
+      "id": "r165"
+    },
+    {
+      "question": "What does the noise rate ν represent in the multi-distribution objective?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "neurips2023-03b1043052-agnostic-multi-group-active-learning::20",
+      "expected_document_id": "neurips2023-03b1043052-agnostic-multi-group-active-learning",
+      "id": "r166"
+    },
+    {
+      "question": "How does Deep Noir's accuracy improvement on SMS compare across Llama, OLMo, and Gemma?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "arxiv-2609.20722-deep-noir-autonomous-steering-discovery-via-architectural-ch::23",
+      "expected_document_id": "arxiv-2609.20722-deep-noir-autonomous-steering-discovery-via-architectural-ch",
+      "id": "r167"
+    },
+    {
+      "question": "What is the definition of input-specific certificate complexity C(y) in the context of the decision?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "arxiv-2609.18622-how-many-labels-does-model-choice-need-certificates-and-budg::16",
+      "expected_document_id": "arxiv-2609.18622-how-many-labels-does-model-choice-need-certificates-and-budg",
+      "id": "r168"
+    },
+    {
+      "question": "How does greedy search utilize ROUGE scores in extractive summarization?",
+      "stratum": "exact_term",
+      "expected_chunk_id": "acl-2024.acl-long.59-an-information-bottleneck-perspective-for-effective-noise-filtering-on::49",
+      "expected_document_id": "acl-2024.acl-long.59-an-information-bottleneck-perspective-for-effective-noise-filtering-on",
+      "id": "r169"
+    },
+    {
+      "question": "What is the log-Sobolev inequality constant for Gibbs distributions with strongly convex potentials?",
+      "stratum": "hard_distractor",
+      "expected_chunk_id": "pmlr-v235-agarwal24d-improved-differentially-private-and-lazy-online-convex-optimization-lo::22",
+      "expected_document_id": "pmlr-v235-agarwal24d-improved-differentially-private-and-lazy-online-convex-optimization-lo",
+      "distractor_chunk_id": "jmlr-v24-21-0505-learning-mean-field-games-with-discounted-and-average-costs::92",
+      "distractor_distance": 0.6779,
+      "id": "r170"
+    },
+    {
+      "question": "Which work analyzes model memorization of popular tabular records and its impact on student learning?",
+      "stratum": "hard_distractor",
+      "expected_chunk_id": "arxiv-2609.19617-datacanvas-edu-an-agentic-framework-for-instructor-guided-sy::15",
+      "expected_document_id": "arxiv-2609.19617-datacanvas-edu-an-agentic-framework-for-instructor-guided-sy",
+      "distractor_chunk_id": "arxiv-2609.18587-label-free-steering-compressing-test-time-reinforcement-lear::51",
+      "distractor_distance": 0.7047,
+      "id": "r171"
+    },
+    {
+      "question": "How does win rate decline with set size and per-round failure independence in model comparisons?",
+      "stratum": "hard_distractor",
+      "expected_chunk_id": "arxiv-2609.19113-playing-log-n-questions-over-wikipedia-abstracts-communicati::1",
+      "expected_document_id": "arxiv-2609.19113-playing-log-n-questions-over-wikipedia-abstracts-communicati",
+      "distractor_chunk_id": "arxiv-2609.18996-compiled-agency-coding-agents-game-players::25",
+      "distractor_distance": 0.7171,
+      "id": "r172"
+    },
+    {
+      "question": "What assumption does the boosting algorithm make about weak classifiers' error rates?",
+      "stratum": "hard_distractor",
+      "expected_chunk_id": "neurips2023-050f8591be-multiclass-boosting-simple-and-intuitive-weak-learning-criteria::2",
+      "expected_document_id": "neurips2023-050f8591be-multiclass-boosting-simple-and-intuitive-weak-learning-criteria",
+      "distractor_chunk_id": "pmlr-v235-attias24b-agnostic-sample-compression-schemes-for-regression::33",
+      "distractor_distance": 0.6786,
+      "id": "r173"
+    },
+    {
+      "question": "How does prefix reuse impact energy consumption per request on H100 NVL GPUs?",
+      "stratum": "hard_distractor",
+      "expected_chunk_id": "arxiv-2609.19657-prefixbench-h100-characterizing-prefix-reuse-and-time-to-fir::55",
+      "expected_document_id": "arxiv-2609.19657-prefixbench-h100-characterizing-prefix-reuse-and-time-to-fir",
+      "distractor_chunk_id": "arxiv-2609.18283-where-should-agents-live-edge-cloud::57",
+      "distractor_distance": 0.7476,
+      "id": "r174"
+    },
+    {
+      "question": "How does sequential fat-shattering grow logarithmically after ordinary shattering saturates?",
+      "stratum": "hard_distractor",
+      "expected_chunk_id": "arxiv-2609.20687-the-first-order-oracle-complexity-of-lipschitz-convex-optimi::32",
+      "expected_document_id": "arxiv-2609.20687-the-first-order-oracle-complexity-of-lipschitz-convex-optimi",
+      "distractor_chunk_id": "arxiv-2609.20701-stable-movement-for-nondual-lipschitz-convex-optimization-ef::110",
+      "distractor_distance": 0.6212,
+      "id": "r175"
+    },
+    {
+      "question": "What is the explicit form of the 1-Lipschitz map reconstructing exactly with affine isometry encoder?",
+      "stratum": "hard_distractor",
+      "expected_chunk_id": "arxiv-2609.20333-sharp-reconstruction-bounds-for-autoencoders-using-the-same::20",
+      "expected_document_id": "arxiv-2609.20333-sharp-reconstruction-bounds-for-autoencoders-using-the-same",
+      "distractor_chunk_id": "arxiv-2609.20159-special-lagrangian-cones-in-deep-learning::17",
+      "distractor_distance": 0.666,
+      "id": "r176"
+    },
+    {
+      "question": "What is the scalar entropy gap function hp(q) comparing in the ridge estimator analysis?",
+      "stratum": "hard_distractor",
+      "expected_chunk_id": "arxiv-2609.20577-tap-accuracy-below-the-fluctuation-scale-and-universal-poste::48",
+      "expected_document_id": "arxiv-2609.20577-tap-accuracy-below-the-fluctuation-scale-and-universal-poste",
+      "distractor_chunk_id": "arxiv-2609.20701-stable-movement-for-nondual-lipschitz-convex-optimization-ef::72",
+      "distractor_distance": 0.7281,
+      "id": "r177"
+    },
+    {
+      "question": "What training protocol and metrics are used for one-step-ahead temperature prediction?",
+      "stratum": "hard_distractor",
+      "expected_chunk_id": "arxiv-2609.20594-recursive-quantum-long-short-term-memory-for-stable-short-ho::9",
+      "expected_document_id": "arxiv-2609.20594-recursive-quantum-long-short-term-memory-for-stable-short-ho",
+      "distractor_chunk_id": "arxiv-2609.18407-tern-a-delta-rule-memory-with-a-seasonal-reference-and-onlin::28",
+      "distractor_distance": 0.6972,
+      "id": "r178"
+    },
+    {
+      "question": "How does the proof in A utilize a filtration differently than in B?",
+      "stratum": "hard_distractor",
+      "expected_chunk_id": "pmlr-v235-agarwal24e-the-non-linear-f-design-and-applications-to-interactive-learning::136",
+      "expected_document_id": "pmlr-v235-agarwal24e-the-non-linear-f-design-and-applications-to-interactive-learning",
+      "distractor_chunk_id": "arxiv-2609.20701-stable-movement-for-nondual-lipschitz-convex-optimization-ef::85",
+      "distractor_distance": 0.5768,
+      "id": "r179"
+    },
+    {
+      "question": "How does a 600-token reference budget limit GSM8K accuracy in DeepSeek-R1-Distill-Qwen-7B?",
+      "stratum": "hard_distractor",
+      "expected_chunk_id": "arxiv-2609.19606-chain-of-thought-entropy-as-a-reliability-signal-a-preregist::44",
+      "expected_document_id": "arxiv-2609.19606-chain-of-thought-entropy-as-a-reliability-signal-a-preregist",
+      "distractor_chunk_id": "arxiv-2609.18677-voice-of-reason-reinforcement-learning-for-spoken-math::41",
+      "distractor_distance": 0.688,
+      "id": "r180"
+    },
+    {
+      "question": "What are the detailed numerical results for HpStrat strategy across multiple datasets?",
+      "stratum": "hard_distractor",
+      "expected_chunk_id": "arxiv-2609.19210-not-all-nodes-are-created-equal-homophily-aware-stratificati::106",
+      "expected_document_id": "arxiv-2609.19210-not-all-nodes-are-created-equal-homophily-aware-stratificati",
+      "distractor_chunk_id": "acl-2024.acl-long.78-enhancing-large-language-models-in-coding-through-multi-perspective-se::38",
+      "distractor_distance": 0.7421,
+      "id": "r181"
+    },
+    {
+      "question": "What defines Agentic AI as continuous reasoning, action, and observation loops?",
+      "stratum": "hard_distractor",
+      "expected_chunk_id": "arxiv-2609.20080-a-proposal-for-an-agentic-ai-architecture-to-support-multi-d::3",
+      "expected_document_id": "arxiv-2609.20080-a-proposal-for-an-agentic-ai-architecture-to-support-multi-d",
+      "distractor_chunk_id": "arxiv-2609.20095-a-scalable-trust-discovery-architecture-for-the-internet-of::4",
+      "distractor_distance": 0.7109,
+      "id": "r182"
+    },
+    {
+      "question": "How does the model implement layer-wise trainable curvature in hyperbolic graph convolutional networks?",
+      "stratum": "hard_distractor",
+      "expected_chunk_id": "arxiv-2609.18481-hyperbolic-graph-differential-diagnosis::24",
+      "expected_document_id": "arxiv-2609.18481-hyperbolic-graph-differential-diagnosis",
+      "distractor_chunk_id": "pmlr-v235-alvarado24a-hyperbolic-optimizer-as-a-dynamical-system::4",
+      "distractor_distance": 0.6267,
+      "id": "r183"
+    },
+    {
+      "question": "What is the full-gradient complexity bound for the single-loop damped extragradient method?",
+      "stratum": "hard_distractor",
+      "expected_chunk_id": "arxiv-2609.20327-near-optimal-pure-single-loop-extragradient-method-for-stron::36",
+      "expected_document_id": "arxiv-2609.20327-near-optimal-pure-single-loop-extragradient-method-for-stron",
+      "distractor_chunk_id": "pmlr-v235-attia24a-how-free-is-parameter-free-stochastic-optimization::58",
+      "distractor_distance": 0.6469,
+      "id": "r184"
+    },
+    {
+      "question": "Which model's confidence calibration metrics are detailed for TriviaQA questions?",
+      "stratum": "hard_distractor",
+      "expected_chunk_id": "arxiv-2609.20541-an-analysis-of-training-free-self-reported-confidence-in-lan::18",
+      "expected_document_id": "arxiv-2609.20541-an-analysis-of-training-free-self-reported-confidence-in-lan",
+      "distractor_chunk_id": "arxiv-2609.18270-benchcompass-payment-domain-llms::52",
+      "distractor_distance": 0.6323,
+      "id": "r185"
+    },
+    {
+      "question": "What assumption ensures agents use optimal actions at every state, including zero-probability states?",
+      "stratum": "hard_distractor",
+      "expected_chunk_id": "arxiv-2609.18929-social-laws-for-multi-agent-coordination-in-stochastic-envir::36",
+      "expected_document_id": "arxiv-2609.18929-social-laws-for-multi-agent-coordination-in-stochastic-envir",
+      "distractor_chunk_id": "jmlr-v24-21-0505-learning-mean-field-games-with-discounted-and-average-costs::24",
+      "distractor_distance": 0.6328,
+      "id": "r186"
+    },
+    {
+      "question": "Which method achieves highest Micro and Macro F1 scores on the DSE dataset?",
+      "stratum": "hard_distractor",
+      "expected_chunk_id": "acl-2024.acl-long.80-transitive-consistency-constrained-learning-for-entity-to-entity-stanc::32",
+      "expected_document_id": "acl-2024.acl-long.80-transitive-consistency-constrained-learning-for-entity-to-entity-stanc",
+      "distractor_chunk_id": "arxiv-2609.19680-finskillops-a-self-evolving-multi-agent-system-for-sec-filin::28",
+      "distractor_distance": 0.749,
+      "id": "r187"
+    },
+    {
+      "question": "Which funding sources supported the research including specific grant DOIs?",
+      "stratum": "hard_distractor",
+      "expected_chunk_id": "pmlr-v235-axiotis24a-data-efficient-learning-via-clustering-based-sensitivity-sampling-foun::61",
+      "expected_document_id": "pmlr-v235-axiotis24a-data-efficient-learning-via-clustering-based-sensitivity-sampling-foun",
+      "distractor_chunk_id": "pmlr-v235-abhyankar24a-infercept-efficient-intercept-support-for-augmented-large-language-mod::67",
+      "distractor_distance": 0.5995,
+      "id": "r188"
+    },
+    {
+      "question": "What percentage of enterprises lack an agentic context layer according to the data?",
+      "stratum": "hard_distractor",
+      "expected_chunk_id": "venturebeat-2026-07-10-enterprises-confidently-wrong-context-layer::1",
+      "expected_document_id": "venturebeat-2026-07-10-enterprises-confidently-wrong-context-layer",
+      "distractor_chunk_id": "venturebeat-2026-09-09-databricks-adaptive-instructed-retriever::9",
+      "distractor_distance": 0.5489,
+      "id": "r189"
+    },
+    {
+      "question": "What conditions on learning rates ensure FairQCM's Q-function convergence to optimality?",
+      "stratum": "hard_distractor",
+      "expected_chunk_id": "pmlr-v235-alamdari24a-remembering-to-be-fair-non-markovian-fairness-in-sequential-decision-m::51",
+      "expected_document_id": "pmlr-v235-alamdari24a-remembering-to-be-fair-non-markovian-fairness-in-sequential-decision-m",
+      "distractor_chunk_id": "jmlr-v24-21-0505-learning-mean-field-games-with-discounted-and-average-costs::49",
+      "distractor_distance": 0.7156,
+      "id": "r190"
+    },
+    {
+      "question": "How do category residuals beyond shared harmfulness affect LLM safety representations?",
+      "stratum": "hard_distractor",
+      "expected_chunk_id": "arxiv-2609.19366-the-role-of-fine-grained-harm-signals-in-llm-safety::2",
+      "expected_document_id": "arxiv-2609.19366-the-role-of-fine-grained-harm-signals-in-llm-safety",
+      "distractor_chunk_id": "acl-2024.acl-long.58-self-distillation-bridges-distribution-gap-in-language-model-fine-tuni::12",
+      "distractor_distance": 0.7036,
+      "id": "r191"
+    },
+    {
+      "question": "How does the multi-turn tool call data in A simulate realistic speech interactions?",
+      "stratum": "hard_distractor",
+      "expected_chunk_id": "arxiv-2609.19334-a-frontend-backend-architecture-for-tool-calls-in-full-duple::18",
+      "expected_document_id": "arxiv-2609.19334-a-frontend-backend-architecture-for-tool-calls-in-full-duple",
+      "distractor_chunk_id": "arxiv-2609.20152-mtva-bench-evaluating-the-language-model-inside-cascaded-voi::1",
+      "distractor_distance": 0.6199,
+      "id": "r192"
+    },
+    {
+      "question": "How does MESHKV improve link utilization compared to SHARED at T=32K?",
+      "stratum": "hard_distractor",
+      "expected_chunk_id": "arxiv-2609.19207-meshkv-a-network-on-chip-kv-cache-fabric-for-scalable-transf::21",
+      "expected_document_id": "arxiv-2609.19207-meshkv-a-network-on-chip-kv-cache-fabric-for-scalable-transf",
+      "distractor_chunk_id": "arxiv-2609.18283-where-should-agents-live-edge-cloud::80",
+      "distractor_distance": 0.6669,
+      "id": "r193"
+    },
+    {
+      "question": "How does Adam's update rule differ by using only the most recent gradient?",
+      "stratum": "hard_distractor",
+      "expected_chunk_id": "pmlr-v235-ahn24b-understanding-adam-optimizer-via-online-learning-of-updates-adam-is-ft::36",
+      "expected_document_id": "pmlr-v235-ahn24b-understanding-adam-optimizer-via-online-learning-of-updates-adam-is-ft",
+      "distractor_chunk_id": "pmlr-v235-attia24a-how-free-is-parameter-free-stochastic-optimization::45",
+      "distractor_distance": 0.7283,
+      "id": "r194"
+    },
+    {
+      "question": "What regret bound allows for an adaptive label-collection procedure?",
+      "stratum": "hard_distractor",
+      "expected_chunk_id": "neurips2023-00b67df240-adaptive-selective-sampling-for-online-prediction-with-experts::24",
+      "expected_document_id": "neurips2023-00b67df240-adaptive-selective-sampling-for-online-prediction-with-experts",
+      "distractor_chunk_id": "pmlr-v235-agarwal24d-improved-differentially-private-and-lazy-online-convex-optimization-lo::37",
+      "distractor_distance": 0.6975,
+      "id": "r195"
+    },
+    {
+      "question": "What are the runtime comparisons of RLF-KG versus brute-force search on FB15k-237, WN18RR, and DBpedia50?",
+      "stratum": "hard_distractor",
+      "expected_chunk_id": "acl-2024.acl-long.72-advancing-abductive-reasoning-in-knowledge-graphs-through-complex-logi::45",
+      "expected_document_id": "acl-2024.acl-long.72-advancing-abductive-reasoning-in-knowledge-graphs-through-complex-logi",
+      "distractor_chunk_id": "arxiv-2609.19944-mascod-a-multi-agent-framework-for-structural-context-guided::164",
+      "distractor_distance": 0.7368,
+      "id": "r196"
+    },
+    {
+      "question": "Does the log-likelihood ratio become affine in the sufficient statistic T(y) for any parameters?",
+      "stratum": "hard_distractor",
+      "expected_chunk_id": "arxiv-2609.20676-epidemiological-causal-graph-identification-challenges-ident::13",
+      "expected_document_id": "arxiv-2609.20676-epidemiological-causal-graph-identification-challenges-ident",
+      "distractor_chunk_id": "neurips2023-02763667a5-smoothing-the-landscape-boosts-the-signal-for-sgd-optimal-sample-compl::95",
+      "distractor_distance": 0.7056,
+      "id": "r197"
+    },
+    {
+      "question": "How does INFO-RAG improve LLaMA-2-13B-chat's performance across diverse QA datasets?",
+      "stratum": "hard_distractor",
+      "expected_chunk_id": "acl-2024.acl-long.9-unsupervised-information-refinement-training-of-large-language-models::50",
+      "expected_document_id": "acl-2024.acl-long.9-unsupervised-information-refinement-training-of-large-language-models",
+      "distractor_chunk_id": "acl-2024.acl-long.1-quantized-side-tuning-fast-and-memory-efficient-tuning-of-quantized-la::54",
+      "distractor_distance": 0.6637,
+      "id": "r198"
+    },
+    {
+      "question": "How does parameter interpolation improve robustness during fine-tuning with paired clean and distorted speech?",
+      "stratum": "hard_distractor",
+      "expected_chunk_id": "arxiv-2609.20104-design-of-the-ibm-granite-5-0-turboctc-asr-model::20",
+      "expected_document_id": "arxiv-2609.20104-design-of-the-ibm-granite-5-0-turboctc-asr-model",
+      "distractor_chunk_id": "arxiv-2609.18680-hearincontext-a-benchmark-for-implicit-context-in-speech-rec::12",
+      "distractor_distance": 0.6157,
+      "id": "r199"
+    }
+  ]
+}

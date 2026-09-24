@@ -46,6 +46,8 @@ from pricing_config import (
 from rag_service import (
     OVERFETCH_K,
     RAG_RELEVANCE_THRESHOLD,
+    build_candidate_pool,
+    build_candidates,
     build_grounded_messages,
     detect_adversarial_content,
     embed_query,
@@ -53,6 +55,11 @@ from rag_service import (
     get_collection,
     get_document_collection,
     query_store,
+    rag_hybrid_enabled,
+    rag_rerank_enabled,
+    rag_rerank_model,
+    rerank_candidates,
+    rerank_confidence_band,
     select_context_chunks,
     upsert_chunks,
 )
@@ -1194,6 +1201,7 @@ class RetrieveResult(BaseModel):
     document_id: str
     text: str
     distance: float
+    historical_score: float | None = None
 
 
 @app.get("/debug/retrieve")
@@ -1219,12 +1227,17 @@ def debug_retrieve(query: str, top_k: int = 5, document_id: str | None = None) -
         raise _map_openai_error(exc) from exc
     where = {"document_id": document_id} if document_id else None
     retrieved = query_store(get_collection(), query_embedding, top_k=top_k, where=where)
+    # historical_score (12.9/R3, item #13) is populated via build_candidates,
+    # keyed by chunk_id -- diagnostic only, read here for visibility, never
+    # fed back into retrieval/selection.
+    historical_by_chunk = {c.chunk_id: c.historical_score for c in build_candidates(retrieved)}
     return [
         RetrieveResult(
             chunk_id=chunk_id,
             document_id=meta["document_id"],
             text=text,
             distance=distance,
+            historical_score=historical_by_chunk.get(chunk_id),
         )
         for chunk_id, text, meta, distance in zip(
             retrieved["ids"], retrieved["documents"], retrieved["metadatas"], retrieved["distances"]
@@ -1332,22 +1345,38 @@ def _run_rag_retrieval(
         # rag_service.OVERFETCH_K's docstring) so select_context_chunks
         # has real alternatives to backfill from when applying its
         # per-document diversity cap — retrieving and grounding-on the
-        # same fixed top-5 would leave nothing to substitute in.
-        candidates = query_store(get_collection(), query_embedding, top_k=OVERFETCH_K)
+        # same fixed top-5 would leave nothing to substitute in. Hybrid
+        # (dense + BM25) when the RAG_HYBRID switch is on, dense-only otherwise
+        # (p3m3 item #41); distances are real semantic distances either way.
+        candidates, ordered = build_candidate_pool(question, query_embedding)
+        reranked = False
+        rerank_band = None
         # rag_mode="force_rag" bypasses the distance gate and grounds on
         # whatever came back, even if the gate would normally judge it too
         # far off-topic to trust — a deliberate demo override, not a claim
         # that the forced context is actually relevant.
         if candidates["distances"] and (
-            rag_mode == "force_rag" or candidates["distances"][0] <= RAG_RELEVANCE_THRESHOLD
+            rag_mode == "force_rag" or min(candidates["distances"]) <= RAG_RELEVANCE_THRESHOLD
         ):
-            retrieved = select_context_chunks(candidates)
+            # Rerank only AFTER the gate passes, so an off-topic question
+            # never pays for the reranker's LLM call (item #41).
+            # rerank_candidates fails open to the incoming order.
+            # Confidence-gated (p3m3 item #42): skip the reranker only when
+            # confidence is high (one document clearly ahead); that keeps the
+            # dense order and saves the LLM call. The band needs a
+            # distance-sorted pool, i.e. the dense path (hybrid is off by default).
+            rerank_band = rerank_confidence_band(candidates["ids"], candidates["distances"]) if not ordered else "mid"
+            reranked = rag_rerank_enabled() and rerank_band == "mid"
+            pool = rerank_candidates(candidates, question) if reranked else candidates
+            retrieved = select_context_chunks(pool, preserve_order=ordered or reranked)
             retrieved_ids = retrieved["ids"]
             grounded_messages = build_grounded_messages(question, retrieved)
         record_event("retrieval", {
             "request_id": getattr(request.state, "operational_request_id", None),
             "question": question, "candidate_ids": candidates["ids"],
             "distances": candidates["distances"], "selected_ids": retrieved_ids,
+            "pipeline": {"hybrid": ordered, "rerank": reranked, "rerank_band": rerank_band,
+                         "rerank_model": rag_rerank_model() if reranked else None},
             "collection_revision": get_collection().revision(),
             "embedding_tokens": embed_tokens, "embedding_cost_usd": embedding_cost_usd,
         })
