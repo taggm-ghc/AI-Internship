@@ -11,7 +11,7 @@ import streamlit as st
 
 from api_client import call_json
 from ui_theme import apply_custom_css
-from ui_widgets import base_url_sidebar_widget
+from ui_widgets import base_url_sidebar_widget, references_widget
 
 st.set_page_config(page_title="Agent", layout="wide")
 apply_custom_css()
@@ -57,6 +57,7 @@ if run_clicked:
         st.warning("Grounding: the corpus search found nothing relevant, so this answer is NOT from the corpus.")
     elif grounding == "no_tool_call":
         st.info("Grounding: answered from the model's general knowledge. The corpus was not searched.")
+    references_widget(data.get("references", []))
 
     trace = data.get("trace", [])
     tool_calls_made = sum(1 for step in trace if step.get("role") == "assistant_tool_call")

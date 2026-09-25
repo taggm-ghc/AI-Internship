@@ -16,7 +16,7 @@ from api_client import (
     render_curl,
 )
 from ui_theme import apply_custom_css
-from ui_widgets import base_url_sidebar_widget
+from ui_widgets import base_url_sidebar_widget, references_widget
 from pricing_config import load_model_selection
 
 # Read from config/model-selection.json (the same file main.py reads)
@@ -113,6 +113,7 @@ def render_response_summary(data: dict | str) -> None:
     if rag_status == "supported":
         st.success(f"Grounded in retrieved context — {len(data.get('citations', []))} citation(s)")
         st.caption("Citations (chunk IDs): " + ", ".join(data.get("citations", [])))
+        references_widget(data.get("references", []))
     elif rag_status == "insufficient":
         st.warning("Question was topically relevant, but the retrieved context didn't cover it — refused rather than guessed.")
     elif rag_status == "not_applicable":

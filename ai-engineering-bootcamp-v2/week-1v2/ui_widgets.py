@@ -6,6 +6,9 @@ free per that module's own docstring) and ui_theme.py (CSS only): this
 one is Streamlit-aware by design, same three-module split rag_service.py/
 operational_store.py already model for server-side code.
 """
+import html
+import re
+
 import streamlit as st
 
 from api_client import default_api_base_url
@@ -37,3 +40,17 @@ def base_url_sidebar_widget() -> str:
         ),
     )
     return typed.strip() or default_api_base_url()
+
+
+def references_widget(references: list[str]) -> None:
+    """APA 7 reference list (p3m3 item #48), shared by the Ask and Agent
+    pages. Entries arrive as Markdown (*italics*) from citations.py; each is
+    HTML-escaped, then its italics are converted, and it is rendered with
+    APA's hanging indent, which plain Markdown can't express."""
+    if not references:
+        return
+    st.markdown("**References**")
+    for entry in references:
+        safe = re.sub(r"\*([^*]+)\*", r"<i>\1</i>", html.escape(entry))
+        st.markdown(f'<div style="padding-left:2em;text-indent:-2em;margin-bottom:0.4em">{safe}</div>',
+                    unsafe_allow_html=True)

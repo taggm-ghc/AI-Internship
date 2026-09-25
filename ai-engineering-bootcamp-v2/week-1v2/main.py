@@ -36,6 +36,7 @@ from ask_service import (
 )
 from openai import OpenAI
 from openai_key_check import OPENAI_KEY_ERROR_DETAIL, classify_openai_api_key
+from citations import render_numbered
 from pdf_extract import extract_pdf_text
 from pricing_config import (
     latest_pricing_for,
@@ -318,6 +319,10 @@ class AskResponse(BaseModel):
     # the "supported" case (see ask()'s retrieval-gate logic below) — never
     # omitted, so a caller can rely on the field's presence unconditionally.
     citations: list[str] = []
+    # p3m3 item #48: APA 7 reference list for the works cited in-text in
+    # answer.answer. Rendered by citations.py from verified metadata, never
+    # model-written. Empty whenever the answer cites nothing.
+    references: list[str] = []
     status: Literal["supported", "insufficient", "not_applicable"] = "not_applicable"
     # None only when retrieval didn't run at all (force_bad's first attempt)
     # or text-embedding-3-small has no pricing record — see
@@ -1320,7 +1325,8 @@ def debug_corpus_summary(sample_size: int = 10) -> CorpusSummary:
 
 
 def _run_rag_retrieval(
-    request: Request, question: str, rag_mode: Literal["auto", "force_rag", "no_rag"], skip: bool
+    request: Request, question: str, rag_mode: Literal["auto", "force_rag", "no_rag"], skip: bool,
+    inline_citations: bool = False,
 ) -> tuple[list[dict] | None, list[str], float | None]:
     """Shared retrieval step behind both /ask and /ask/stream, so grounding
     behaves identically on both — extracted 2026-09-22 when /ask/stream
@@ -1370,7 +1376,7 @@ def _run_rag_retrieval(
             pool = rerank_candidates(candidates, question) if reranked else candidates
             retrieved = select_context_chunks(pool, preserve_order=ordered or reranked)
             retrieved_ids = retrieved["ids"]
-            grounded_messages = build_grounded_messages(question, retrieved)
+            grounded_messages = build_grounded_messages(question, retrieved, inline_citations=inline_citations)
         record_event("retrieval", {
             "request_id": getattr(request.state, "operational_request_id", None),
             "question": question, "candidate_ids": candidates["ids"],
@@ -1418,7 +1424,7 @@ def ask(request: Request, body: AskRequest) -> AskResponse:
     # deterministic and doesn't need that loop's validation-retry
     # semantics.
     grounded_messages, retrieved_ids, embedding_cost_usd = _run_rag_retrieval(
-        request, body.question, body.rag_mode, skip=body.force_bad
+        request, body.question, body.rag_mode, skip=body.force_bad, inline_citations=True
     )
 
     start = time.perf_counter()
@@ -1530,6 +1536,22 @@ def ask(request: Request, body: AskRequest) -> AskResponse:
                     # rather than silently under-citing a real grounded
                     # answer because of one imperfectly-followed field.
                     citations = retrieved_ids
+            # p3m3 item #48: [n] markers -> APA 7 in-text citations +
+            # reference list, from verified metadata. If the model marked the
+            # answer supported but placed no markers, cite the passages it
+            # declared (or the fallback set above) in one closing
+            # parenthetical rather than leave a supported answer uncited.
+            references: list[str] = []
+            passage_documents = [cid.rsplit("::", 1)[0] for cid in retrieved_ids]
+            if rag_status == "supported":
+                text, references = render_numbered(answer.answer, passage_documents)
+                if not references:
+                    declared = [retrieved_ids.index(cid) + 1 for cid in citations]
+                    text, references = render_numbered(
+                        answer.answer.rstrip() + " " + "".join(f"[{n}]" for n in declared), passage_documents)
+            else:
+                text, _ = render_numbered(answer.answer, [])  # strips stray markers, cites nothing
+            answer = answer.model_copy(update={"answer": text})
             return AskResponse(
                 answer=answer,
                 tokens_used=total_tokens_used,
@@ -1543,6 +1565,7 @@ def ask(request: Request, body: AskRequest) -> AskResponse:
                 free_tier_note=free_tier_note(served_provider),
                 attempts=attempts,
                 citations=citations,
+                references=references,
                 status=rag_status,
                 embedding_cost_usd=round(embedding_cost_usd, 6) if embedding_cost_usd is not None else None,
                 rag_mode=body.rag_mode,
@@ -1608,6 +1631,7 @@ class AgentResponse(BaseModel):
     # model's own claim -- see agent_service.grounding_from_trace.
     grounding: Literal["no_tool_call", "tool_found_nothing", "tool_sources"]
     sources: list[str] = []
+    references: list[str] = []  # item #48: APA 7 entries for works cited in-text
 
 
 @app.post("/agent")
@@ -1632,5 +1656,5 @@ def agent(request: Request, body: AgentRequest) -> AgentResponse:
         raise _map_openai_error(exc) from exc
     return AgentResponse(
         answer=result["answer"], trace=[AgentStep(**step) for step in result["trace"]],
-        grounding=result["grounding"], sources=result["sources"],
+        grounding=result["grounding"], sources=result["sources"], references=result["references"],
     )
