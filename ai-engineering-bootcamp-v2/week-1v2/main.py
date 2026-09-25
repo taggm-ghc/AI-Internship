@@ -1604,6 +1604,10 @@ class AgentStep(BaseModel):
 class AgentResponse(BaseModel):
     answer: str
     trace: list[AgentStep]
+    # p3m3 item #47 (OWASP ASI09): grounding derived from the trace, not the
+    # model's own claim -- see agent_service.grounding_from_trace.
+    grounding: Literal["no_tool_call", "tool_found_nothing", "tool_sources"]
+    sources: list[str] = []
 
 
 @app.post("/agent")
@@ -1626,4 +1630,7 @@ def agent(request: Request, body: AgentRequest) -> AgentResponse:
         result = run_agent(body.question)
     except (AuthenticationError, RateLimitError, OpenAIError) as exc:
         raise _map_openai_error(exc) from exc
-    return AgentResponse(answer=result["answer"], trace=[AgentStep(**step) for step in result["trace"]])
+    return AgentResponse(
+        answer=result["answer"], trace=[AgentStep(**step) for step in result["trace"]],
+        grounding=result["grounding"], sources=result["sources"],
+    )

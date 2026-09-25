@@ -43,6 +43,21 @@ if run_clicked:
     st.subheader("Answer")
     st.write(data.get("answer", "(no answer field)"))
 
+    # p3m3 item #47 (OWASP ASI09): say where the answer came from, from the
+    # trace itself, so a confident answer isn't mistaken for a grounded one.
+    grounding = data.get("grounding")
+    sources = data.get("sources") or []
+    if grounding == "tool_sources":
+        st.caption(
+            "Grounding: the corpus was searched and returned passages from "
+            + ", ".join(f"`{s}`" for s in sources)
+            + ". Whether the answer actually relies on them isn't verified; check the trace."
+        )
+    elif grounding == "tool_found_nothing":
+        st.warning("Grounding: the corpus search found nothing relevant, so this answer is NOT from the corpus.")
+    elif grounding == "no_tool_call":
+        st.info("Grounding: answered from the model's general knowledge. The corpus was not searched.")
+
     trace = data.get("trace", [])
     tool_calls_made = sum(1 for step in trace if step.get("role") == "assistant_tool_call")
     st.caption(

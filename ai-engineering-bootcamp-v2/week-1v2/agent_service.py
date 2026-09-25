@@ -15,6 +15,8 @@ research this design is reconciled against (LangGraph's own tools_condition
 router; the "misclassified tool miss -> retry-replan loop" production
 failure mode).
 """
+import re
+
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
@@ -30,7 +32,8 @@ from rag_service import (
     select_context_chunks,
 )
 
-AGENT_MODEL = "gpt-4.1-nano"  # matches config/model-selection.json's selected_model
+AGENT_MODEL = "gpt-4.1-nano"
+NO_RESULTS_MESSAGE = "No sufficiently relevant passages found in the corpus."  # matches config/model-selection.json's selected_model
 MAX_ITERATIONS = 10  # syllabus's own 8-12 guidance (module-3.1.md)
 
 # p3m3 item #39, module 3.5 evidence: real gap found while writing that
@@ -75,7 +78,7 @@ def search_corpus(question: str) -> str:
     query_embedding, _ = embed_query(client, question)
     candidates = query_store(get_collection(), query_embedding, top_k=OVERFETCH_K)
     if not candidates["distances"] or candidates["distances"][0] > RAG_RELEVANCE_THRESHOLD:
-        return "No sufficiently relevant passages found in the corpus."
+        return NO_RESULTS_MESSAGE
     retrieved = select_context_chunks(candidates)
     return _format_cited_passages(retrieved)
 
@@ -114,6 +117,36 @@ def _summarize_message(message) -> dict:
     return {"role": type(message).__name__, "content": str(getattr(message, "content", message))}
 
 
+_PASSAGE_HEADER = re.compile(r"\[([A-Za-z0-9][\w.]*(?:-[\w.]+)+)\] ")
+
+
+def grounding_from_trace(trace: list[dict]) -> tuple[str, list[str]]:
+    """p3m3 item #47 (OWASP ASI09): where the answer came from, derived only
+    from what the trace proves -- never from the model's own claim. Returns
+    (grounding, sources): "no_tool_call" (answered without searching),
+    "tool_found_nothing" (searched, nothing relevant), or "tool_sources"
+    (searched and got passages; sources = their document IDs, in first-seen
+    order). Deliberately not /ask's status/citations: those mean the model
+    cited a passage; this only says what the tool returned. "tool_sources"
+    does NOT mean the answer is supported: an off-corpus question (OpenAI's
+    Q2 2026 revenue) still got passages from unrelated papers past the
+    relevance threshold, verified 2026-09-25."""
+    results = [step["content"] for step in trace if step["role"] == "tool_result"]
+    if not any(step["role"] == "assistant_tool_call" for step in trace):
+        return "no_tool_call", []
+    # Only a passage header counts: "[document_id] " at the start of a
+    # "\n\n"-separated block, where a document ID has no spaces and contains
+    # a hyphen. That excludes citation markers inside the paper text
+    # ("[45] Smith et al."), which the first version wrongly picked up.
+    sources = list(dict.fromkeys(
+        m.group(1) for text in results for block in text.split("\n\n")
+        if (m := _PASSAGE_HEADER.match(block))
+    ))
+    if not sources:
+        return "tool_found_nothing", []
+    return "tool_sources", sources
+
+
 def run_agent(question: str) -> dict:
     """Runs one agent task end-to-end. Returns {"answer": str, "trace": [...]}
     -- trace is the Think/Act/Observe proof the assignment requires, read
@@ -123,7 +156,6 @@ def run_agent(question: str) -> dict:
         {"messages": [AGENT_SYSTEM_PROMPT, HumanMessage(content=question)]},
         config={"recursion_limit": MAX_ITERATIONS * 2},
     )
-    return {
-        "answer": result["messages"][-1].content,
-        "trace": [_summarize_message(m) for m in result["messages"]],
-    }
+    trace = [_summarize_message(m) for m in result["messages"]]
+    grounding, sources = grounding_from_trace(trace)
+    return {"answer": result["messages"][-1].content, "trace": trace, "grounding": grounding, "sources": sources}
