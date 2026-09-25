@@ -5,10 +5,10 @@ This repository contains code snippets, notebooks, and exercises for various AI 
 ## 📚 Available Courses
 
 ### AI Engineering Bootcamp v2
-Build typed LLM APIs with FastAPI, OpenAI structured output, guardrails, and cost visibility.
+Build a typed LLM service step by step: FastAPI + structured output and guardrails (Session 1), RAG with PostgreSQL/pgvector and APA 7 citations (Session 2), and a LangGraph agent (Session 3).
 
 - **Location:** `ai-engineering-bootcamp-v2/`
-- **Status:** Week 1, Week 1 v2, and Week 2 available
+- **Status:** Sessions 1–3 available; the capstone service is `ai-engineering-bootcamp-v2/week-1v2/`
 - **Get Started:** See [ai-engineering-bootcamp-v2/README.md](ai-engineering-bootcamp-v2/README.md)
 
 ### AI Builders Bootcamp
@@ -37,7 +37,7 @@ AI-Internship/
 ├── README.md                         # This file
 ├── ai-engineering-bootcamp-v2/       # AI Engineering Bootcamp v2
 │   ├── week-1/                       # Original FastAPI /ask demo
-│   ├── week-1v2/                     # Simplified class-ready /ask demo
+│   ├── week-1v2/                     # Capstone service (Sessions 1–3: /ask, RAG, /agent)
 │   └── week-2/                       # RAG and vector databases
 ├── ai-builders-bootcamp/             # AI Builders sessions
 │   ├── ai-evals-session/             # LLM tracing and eval tooling
@@ -56,7 +56,7 @@ AI-Internship/
 
 ## 📋 General Prerequisites
 
-- Python 3.8 or higher
+- Python 3.12 for the AI Engineering Bootcamp v2 capstone (`week-1v2/`); other courses list their own requirements
 - pip (Python package manager)
 - Jupyter Notebook or JupyterLab
 - Git (for cloning this repository)

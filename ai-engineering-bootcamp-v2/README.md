@@ -1,14 +1,14 @@
 # AI Engineering Bootcamp v2
 
-Hands-on course materials for building production-style LLM APIs with **FastAPI**, **OpenAI**, **Pydantic**, and **Streamlit**.
+Hands-on course materials for building production-style LLM services with **FastAPI**, **OpenAI**, **Pydantic**, **PostgreSQL + pgvector**, **LangGraph**, and **Streamlit**.
 
 ## Weeks
 
 | Week | Topic | Location |
 |------|-------|----------|
 | 1 | `/ask` endpoint — typed I/O, structured output, guardrails, model selection, cost | [`week-1/`](week-1/) |
-| 1 v2 | Simplified class-ready `/ask` demo with one final API and optional stage references | [`week-1v2/`](week-1v2/) |
-| 2 | RAG and vector databases | [`week-2/`](week-2/) |
+| 1–3 (capstone) | **The capstone service**: Session 1 typed `/ask` with guardrails, Session 2 RAG (`/ingest`, `/debug/retrieve`, grounded + cited `/ask`, APA 7 references), Session 3 LangGraph agent (`/agent`) | [`week-1v2/`](week-1v2/) |
+| 2 | RAG and vector databases (standalone class materials; the capstone's RAG lives in `week-1v2/`) | [`week-2/`](week-2/) |
 
 ## Tech stack
 
@@ -16,18 +16,20 @@ Hands-on course materials for building production-style LLM APIs with **FastAPI*
 - **OpenAI Python SDK** — chat completions and structured output (`response_format`)
 - **Pydantic** — request/response schemas and validation guardrails
 - **python-dotenv** — load `OPENAI_API_KEY` from `.env`
-- **Streamlit** — interactive demo runner (`demo_page.py`)
+- **PostgreSQL + pgvector** — documents, embeddings, events and provenance
+- **LangGraph** — the Session 3 agent loop
+- **Streamlit** — the UI (`MVP_Layered_Ask.py` plus pages, including the Agent page)
 - **httpx** — HTTP client for tests and the Streamlit UI
 
 ## Quick start
 
 ```bash
 cd week-1v2
-cp .env.example .env          # add your OPENAI_API_KEY
+cp .env.example .env          # add OPENAI_API_KEY and EXTERNAL_DB_URL (Postgres is required)
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-See [week-1v2/README.md](week-1v2/README.md) for the simplified class demo, or
+Requires Python 3.12. See [week-1v2/README.md](week-1v2/README.md) for the full capstone guide (setup, database, endpoints, deploy), or
 [week-1/README.md](week-1/README.md) for the original five-stage version.
