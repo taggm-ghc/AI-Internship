@@ -17,8 +17,9 @@ that chunk's document). Strata aim at what each variant is supposed to fix:
 
 Read-only against the corpus: one bulk get(), per-chunk embedding reads and
 query_store() for distractors. No /ask, no record_event, no writes. The
-generator/judge model is pinned (GEN_MODEL) and the resolved snapshot is
-recorded, so scores stay comparable across runs.
+generator/judge model is pinned (GEN_MODEL, default gpt-4.1-nano, the lowest
+cost; --model to override) and the resolved snapshot is recorded, so
+scores stay comparable across runs.
 
 Run with: python scripts/build_retrieval_eval_set.py [--out config/retrieval_eval_set.json]
 """
@@ -43,7 +44,12 @@ from openai import OpenAI
 
 from rag_service import get_collection, query_store
 
-GEN_MODEL = "gpt-4.1-mini"
+# Lowest-cost model by default (project rule, 2026-09-25): gpt-4.1-nano is 4x
+# cheaper than gpt-4.1-mini. The committed set (config/retrieval_eval_set.json,
+# corpus revision 167) was generated with mini on a judge-quality hunch that
+# was never measured. Use --model to escalate only for a demonstrated gap,
+# e.g. nano's judge passing leaked or vague questions in a spot-check.
+GEN_MODEL = "gpt-4.1-nano"
 # v2 (2026-09-23): v1 spot-check found prompt vocabulary leaking into questions ("How does PASSAGE A...",
 # "...in the passage?") past the judge, and paraphrase questions too vague to have one right document
 # ("Which method shows better performance during training evaluations on two test sets?"). Added
@@ -196,7 +202,9 @@ def make_item(client, collection, stratum, chunk):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=str(BASE / "config" / "retrieval_eval_set.json"))
+    ap.add_argument("--model", default=GEN_MODEL, help="generator + judge model (default: lowest cost)")
     args = ap.parse_args()
+    globals()["GEN_MODEL"] = args.model
     faulthandler.register(signal.SIGUSR1, all_threads=True)  # `kill -USR1 <pid>` dumps every thread's stack
     partial_path = Path(args.out + ".partial")
     checkpoint = json.loads(partial_path.read_text()) if partial_path.exists() else None
