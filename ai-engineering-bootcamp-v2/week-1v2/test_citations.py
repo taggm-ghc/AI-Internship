@@ -101,6 +101,19 @@ class Rendering(unittest.TestCase):
         self.assertEqual(text, "Claim one (Walker, 2007). Claim two (Bradley et al., 1999; Walker & Allen, 2004).")
         self.assertEqual([r.split(" (")[0] for r in refs], ["Bradley, C., Ramirez, D., & Soo, E.", "Walker, A.", "Walker, A., & Allen, B."])
 
+    def test_exactly_one_reference_per_distinct_cited_work(self):
+        # User requirement 2026-09-25: one reference entry for each source
+        # cited in-line. Three distinct works, one cited twice, plus a fourth
+        # returned-but-uncited passage; two of the cited works share a first
+        # author's surname (Walker), so a name-only check could wrongly merge them.
+        text, refs = c.render_numbered("A [1]. B [2][3]. C [1].", ["w", "wa", "b", "acl-2024.acl-long.118-x"])
+        self.assertEqual(text, "A (Walker, 2007). B (Bradley et al., 1999; Walker & Allen, 2004). C (Walker, 2007).")
+        self.assertEqual(len(refs), 3)
+        self.assertEqual(len(set(refs)), 3)
+        self.assertEqual([r.split(" (")[0] for r in refs],
+                         ["Bradley, C., Ramirez, D., & Soo, E.", "Walker, A.", "Walker, A., & Allen, B."])
+        self.assertFalse(any(r.startswith("Chen") for r in refs), "an uncited passage must not get a reference")
+
     def test_out_of_range_marker_dropped_not_guessed(self):
         text, refs = c.render_numbered("Claim [9].", ["w"])
         self.assertEqual(text, "Claim.")

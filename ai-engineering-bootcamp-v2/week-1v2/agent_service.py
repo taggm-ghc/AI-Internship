@@ -161,7 +161,10 @@ def run_agent(question: str) -> dict:
         {"messages": [AGENT_SYSTEM_PROMPT, HumanMessage(content=question)]},
         config={"recursion_limit": MAX_ITERATIONS * 2},
     )
-    trace = [_summarize_message(m) for m in result["messages"]]
+    # The system prompt stays out of the returned trace: it's served to every
+    # /agent caller, and exposing it is OWASP LLM07 (system prompt leakage).
+    # Found 2026-09-25 in the live Agent page output (p3m3 item #47).
+    trace = [_summarize_message(m) for m in result["messages"] if not isinstance(m, SystemMessage)]
     grounding, sources = grounding_from_trace(trace)
     # p3m3 item #48: [document_id] markers -> APA 7 in-text citations +
     # reference list, accepted only for documents the trace proves the tool
