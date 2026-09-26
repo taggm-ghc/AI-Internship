@@ -20,6 +20,7 @@ from dotenv import load_dotenv
 load_dotenv(BASE / ".env")
 from openai import OpenAI
 
+from agent_service import tool_error_observation
 from rag_service import OVERFETCH_K, RAG_RELEVANCE_THRESHOLD, embed_query, get_collection, query_store, select_context_chunks
 
 MAX_ITERATIONS = 10  # module-3.1.md's own "cap iterations, e.g. 8 to 12" guidance
@@ -80,9 +81,16 @@ def run_raw_loop(question: str) -> None:
             return
         messages.append(message.model_dump(exclude_none=True))
         for tool_call in message.tool_calls:
-            args = json.loads(tool_call.function.arguments)
-            print(f"THINK: call {tool_call.function.name}({args})")
-            result = search_corpus(client, **args)  # Act
+            # A failing tool is an observation the model sees, not a crashed
+            # loop (module 3.1's "common mistakes"; p3m3 D4). Malformed
+            # arguments and a failed search both become the same shared
+            # error text agent_service uses.
+            try:
+                args = json.loads(tool_call.function.arguments)
+                print(f"THINK: call {tool_call.function.name}({args})")
+                result = search_corpus(client, **args)  # Act
+            except Exception as exc:
+                result = tool_error_observation(exc)
             print(f"OBSERVE: {result[:200]}...")
             messages.append({
                 "role": "tool", "tool_call_id": tool_call.id, "content": result,

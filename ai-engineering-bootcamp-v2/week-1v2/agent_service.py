@@ -15,16 +15,20 @@ research this design is reconciled against (LangGraph's own tools_condition
 router; the "misclassified tool miss -> retry-replan loop" production
 failure mode).
 """
+import logging
 import re
+import time
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
+from langgraph.errors import GraphRecursionError
 from langgraph.graph import END, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
 from citations import render_document_ids
 from rag_service import (
+    _strip_invisible_unicode,
     OVERFETCH_K,
     RAG_RELEVANCE_THRESHOLD,
     embed_query,
@@ -33,8 +37,11 @@ from rag_service import (
     select_context_chunks,
 )
 
-AGENT_MODEL = "gpt-4.1-nano"
-NO_RESULTS_MESSAGE = "No sufficiently relevant passages found in the corpus."  # matches config/model-selection.json's selected_model
+AGENT_MODEL = "gpt-4.1-nano"  # matches config/model-selection.json's selected_model
+NO_RESULTS_MESSAGE = "No sufficiently relevant passages found in the corpus."
+TOOL_ERROR_PREFIX = "Tool error:"
+TOOL_ERROR_DISCLOSURE = ("Note: the corpus search failed, so this answer could not be checked against the "
+                         "corpus and comes from general knowledge only.\n\n")
 MAX_ITERATIONS = 10  # syllabus's own 8-12 guidance (module-3.1.md)
 
 # p3m3 item #39, module 3.5 evidence: real gap found while writing that
@@ -65,7 +72,7 @@ def _format_cited_passages(retrieved: dict) -> str:
     lines = []
     for chunk_id, document in zip(retrieved["ids"], retrieved["documents"]):
         document_id = chunk_id.rsplit("::", 1)[0]
-        lines.append(f"[{document_id}] {document[:600]}")
+        lines.append(f"[{document_id}] {_strip_invisible_unicode(document)[:600]}")
     return "\n\n".join(lines)
 
 
@@ -88,6 +95,33 @@ def search_corpus(question: str) -> str:
     return _format_cited_passages(retrieved)
 
 
+logger = logging.getLogger(__name__)
+
+
+class AgentStepLimitError(RuntimeError):
+    """The agent hit its step cap without a final answer (p3m3 D4). /agent
+    turns this into an explicit HTTP 503 -- fail closed, never a 200 that
+    reads as success, never an unexplained 500."""
+
+
+def tool_error_observation(e: Exception) -> str:
+    """ToolNode's handle_tool_errors (p3m3 D4, module 3.1/3.11): a failing
+    tool becomes an observation the model can act on, not a crashed run.
+    LangGraph's default re-raises every execution error, so a simulated DB
+    outage used to become HTTP 500. Carries only the exception TYPE, never
+    str(e), which for a DB error can include host or connection details.
+    The detail goes to the server log. Says not to retry: the embedding
+    client already retried transient failures (max_retries=2), so a model
+    retry would only repeat the failure (the retry-loop failure mode).
+    Typed Exception so ToolNode catches every tool failure."""
+    logger.warning("agent tool failed: %s: %s", type(e).__name__, e)
+    return (
+        f"{TOOL_ERROR_PREFIX} the corpus search failed ({type(e).__name__}); transient-error retries "
+        "were already attempted. Do not call the tool again. Answer from general knowledge if you "
+        "can, and state clearly that the corpus could not be checked."
+    )
+
+
 TOOLS = [search_corpus]
 _llm_with_tools = ChatOpenAI(model=AGENT_MODEL, timeout=20.0).bind_tools(TOOLS)
 
@@ -98,7 +132,7 @@ def _agent_node(state: MessagesState) -> dict:
 
 _graph = StateGraph(MessagesState)
 _graph.add_node("agent", _agent_node)
-_graph.add_node("tools", ToolNode(TOOLS))
+_graph.add_node("tools", ToolNode(TOOLS, handle_tool_errors=tool_error_observation))
 _graph.set_entry_point("agent")
 _graph.add_conditional_edges("agent", tools_condition)
 _graph.add_edge("tools", "agent")
@@ -129,7 +163,8 @@ def grounding_from_trace(trace: list[dict]) -> tuple[str, list[str]]:
     """p3m3 item #47 (OWASP ASI09): where the answer came from, derived only
     from what the trace proves -- never from the model's own claim. Returns
     (grounding, sources): "no_tool_call" (answered without searching),
-    "tool_found_nothing" (searched, nothing relevant), or "tool_sources"
+    "tool_found_nothing" (searched, nothing relevant), "tool_error" (the
+    search failed; see tool_error_observation), or "tool_sources"
     (searched and got passages; sources = their document IDs, in first-seen
     order). Deliberately not /ask's status/citations: those mean the model
     cited a passage; this only says what the tool returned. "tool_sources"
@@ -148,6 +183,10 @@ def grounding_from_trace(trace: list[dict]) -> tuple[str, list[str]]:
         if (m := _PASSAGE_HEADER.match(block))
     ))
     if not sources:
+        # p3m3 D4: a failed search is not an empty one. Report "tool_error"
+        # when every tool result was an error observation.
+        if results and all(r.startswith(TOOL_ERROR_PREFIX) for r in results):
+            return "tool_error", []
         return "tool_found_nothing", []
     return "tool_sources", sources
 
@@ -157,17 +196,52 @@ def run_agent(question: str) -> dict:
     -- trace is the Think/Act/Observe proof the assignment requires, read
     directly off the real LangGraph message state, not manufactured
     separately from what the agent actually did."""
-    result = COMPILED_AGENT.invoke(
-        {"messages": [AGENT_SYSTEM_PROMPT, HumanMessage(content=question)]},
-        config={"recursion_limit": MAX_ITERATIONS * 2},
-    )
-    # The system prompt stays out of the returned trace: it's served to every
-    # /agent caller, and exposing it is OWASP LLM07 (system prompt leakage).
-    # Found 2026-09-25 in the live Agent page output (p3m3 item #47).
+    started = time.perf_counter()
+    try:
+        result = COMPILED_AGENT.invoke(
+            {"messages": [AGENT_SYSTEM_PROMPT, HumanMessage(content=question)]},
+            config={"recursion_limit": MAX_ITERATIONS * 2},
+        )
+    except GraphRecursionError as exc:
+        raise AgentStepLimitError(f"stopped at its step limit ({MAX_ITERATIONS * 2}) without a final answer") from exc
     trace = [_summarize_message(m) for m in result["messages"] if not isinstance(m, SystemMessage)]
     grounding, sources = grounding_from_trace(trace)
     # p3m3 item #48: [document_id] markers -> APA 7 in-text citations +
     # reference list, accepted only for documents the trace proves the tool
     # returned (an invented ID is dropped, never cited).
     answer, references = render_document_ids(result["messages"][-1].content, sources)
-    return {"answer": answer, "trace": trace, "grounding": grounding, "sources": sources, "references": references}
+    if grounding == "tool_error":
+        # Deterministic disclosure (p3m3 D4): the error observation asks the
+        # model to say the corpus couldn't be checked, but in testing it
+        # sometimes answered from general knowledge without saying so. Code
+        # guarantees the disclosure, as it does for citations.
+        answer = TOOL_ERROR_DISCLOSURE + answer
+    return {"answer": answer, "trace": trace, "grounding": grounding, "sources": sources, "references": references,
+            "tool_calls": tool_call_summary(result["messages"]),
+            "model_turns": sum(isinstance(m, AIMessage) for m in result["messages"]),
+            "duration_ms": round((time.perf_counter() - started) * 1000)}
+
+
+def tool_call_summary(messages: list) -> list[dict]:
+    """Per tool call, for the agent_run audit event (p3m3 D4): OTel-style
+    gen_ai.* metadata plus outcome, and the call's arguments and result
+    text kept separately so the caller can drop them. Content logging is
+    opt-in (OpenTelemetry GenAI's default)."""
+    results = {m.tool_call_id: m.content for m in messages if isinstance(m, ToolMessage)}
+    out = []
+    for m in messages:
+        if isinstance(m, AIMessage):
+            for call in m.tool_calls:
+                content = results.get(call["id"], "")
+                if content.startswith(TOOL_ERROR_PREFIX):
+                    outcome, err = "error", (re.search(r"\(([A-Za-z_][\w.]*)\)", content) or [None, None])[1]
+                elif content == NO_RESULTS_MESSAGE:
+                    outcome, err = "no_results", None
+                else:
+                    outcome, err = "results", None
+                out.append({
+                    "gen_ai.tool.name": call["name"], "gen_ai.tool.call.id": call["id"], "outcome": outcome,
+                    "error.type": err, "document_ids": grounding_from_trace([{"role": "assistant_tool_call"}, {"role": "tool_result", "content": content}])[1],
+                    "_arguments": call["args"], "_result": content,
+                })
+    return out

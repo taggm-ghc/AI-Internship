@@ -53,6 +53,8 @@ if run_clicked:
             + ", ".join(f"`{s}`" for s in sources)
             + ". Whether the answer actually relies on them isn't verified; check the trace."
         )
+    elif grounding == "tool_error":
+        st.error("Grounding: the corpus search FAILED (see the trace), so this answer is NOT from the corpus.")
     elif grounding == "tool_found_nothing":
         st.warning("Grounding: the corpus search found nothing relevant, so this answer is NOT from the corpus.")
     elif grounding == "no_tool_call":

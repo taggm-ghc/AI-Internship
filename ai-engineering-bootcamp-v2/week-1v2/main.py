@@ -1640,9 +1640,42 @@ class AgentResponse(BaseModel):
     trace: list[AgentStep]
     # p3m3 item #47 (OWASP ASI09): grounding derived from the trace, not the
     # model's own claim -- see agent_service.grounding_from_trace.
-    grounding: Literal["no_tool_call", "tool_found_nothing", "tool_sources"]
+    grounding: Literal["no_tool_call", "tool_found_nothing", "tool_error", "tool_sources"]
     sources: list[str] = []
     references: list[str] = []  # item #48: APA 7 entries for works cited in-text
+
+
+def _record_agent_run(request: Request, question: str, result: dict | None, stopped: bool) -> None:
+    """One durable audit event per /agent run (p3m3 D4 / item #43; module
+    3.1's "log every tool call"; the Week 3 overview's "full audit trail").
+    Metadata only by default, OpenTelemetry GenAI style: tool name, call ID,
+    outcome, error type, returned document IDs, plus the run's grounding,
+    model turns, duration and whether it stopped at the step limit. Tool
+    arguments and results (and the question) are content, logged only when
+    AGENT_LOG_TOOL_CONTENT=1, because they can hold sensitive text. Never
+    lets a logging failure break the response."""
+    from agent_service import AGENT_MODEL
+
+    with_content = os.getenv("AGENT_LOG_TOOL_CONTENT", "").strip().lower() in ("1", "true", "yes", "on")
+    calls = []
+    for call in (result or {}).get("tool_calls", []):
+        entry = {k: v for k, v in call.items() if not k.startswith("_")}
+        if with_content:
+            entry["gen_ai.tool.call.arguments"], entry["gen_ai.tool.call.result"] = call["_arguments"], call["_result"]
+        calls.append(entry)
+    payload = {
+        "request_id": getattr(request.state, "operational_request_id", None),
+        "gen_ai.operation.name": "invoke_agent", "gen_ai.request.model": AGENT_MODEL,
+        "tool_calls": calls, "stopped_at_limit": stopped,
+        "grounding": (result or {}).get("grounding"), "model_turns": (result or {}).get("model_turns"),
+        "duration_ms": (result or {}).get("duration_ms"),
+    }
+    if with_content:
+        payload["question"] = question
+    try:
+        record_event("agent_run", payload)
+    except Exception:
+        logger.exception("agent_run audit event failed to write; response unaffected")
 
 
 @app.post("/agent")
@@ -1659,12 +1692,18 @@ def agent(request: Request, body: AgentRequest) -> AgentResponse:
     the same as /ask (real LLM calls, potentially several per request)."""
     if not body.question.strip():
         raise HTTPException(status_code=400, detail="question must not be empty or whitespace-only")
-    from agent_service import run_agent
+    from agent_service import AgentStepLimitError, run_agent
 
     try:
         result = run_agent(body.question)
+    except AgentStepLimitError as exc:
+        # Fail closed, explicitly (p3m3 D4): a 200 would read as success,
+        # and this used to surface as an unexplained 500.
+        _record_agent_run(request, body.question, None, stopped=True)
+        raise HTTPException(status_code=503, detail=f"The agent {exc}; try a narrower question.") from exc
     except (AuthenticationError, RateLimitError, OpenAIError) as exc:
         raise _map_openai_error(exc) from exc
+    _record_agent_run(request, body.question, result, stopped=False)
     return AgentResponse(
         answer=result["answer"], trace=[AgentStep(**step) for step in result["trace"]],
         grounding=result["grounding"], sources=result["sources"], references=result["references"],
