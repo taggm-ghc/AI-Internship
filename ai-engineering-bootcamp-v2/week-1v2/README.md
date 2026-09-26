@@ -40,8 +40,8 @@ are traceable.
 `latency_ms`, `cost_usd`, `attempts` (the guardrail's validation/retry log),
 and the RAG fields `status` (`supported` / `insufficient` /
 `not_applicable`), `citations` (chunk IDs), `references` (APA 7 entries) and
-`embedding_cost_usd`. `/agent` returns `answer`, `trace`, `grounding`,
-`sources` and `references`.
+`embedding_cost_usd`. `/agent` returns `answer`, `trace`, `grounding` (including `tool_error`
+when its search failed), `sources` and `references`.
 
 ## Quick Start
 
@@ -429,7 +429,14 @@ hardcoded, and covers two cases:
   always-available last entry. Unconfigured providers are skipped —
   `GET /providers/status` shows what's live, and every response's
   `model` field reports who actually served it (e.g.
-  `"groq:openai/gpt-oss-20b"`).
+  `"groq:openai/gpt-oss-20b"`). The chain falls back on availability
+  errors (auth, rate limit, timeout, 5xx) and on one kind of 400: a model
+  whose own structured output failed validation (`json_validate_failed`).
+  Any other 400 means the request itself was wrong and stops the chain
+  rather than being masked. Groq's `gpt-oss-20b` runs at
+  `reasoning_effort: "low"` (per-provider, in `config/model-selection.json`):
+  its hidden reasoning shares the 1,000-token completion budget, and low
+  effort measured about 4× fewer completion tokens on `/ask`.
 
 A free tier is a rate/volume allowance, not a $0 price — `cost_usd`
 always reflects the provider's real per-token rate.
@@ -578,18 +585,31 @@ to search: a corpus question makes one tool call, `"What is 2 + 2?"` makes
 none. That's the agent-vs-workflow distinction. `/ask` is a workflow (it
 always retrieves); `/agent` is an agent.
 
-- **Bounded:** `recursion_limit` caps the loop; the tool never raises on a
-  miss, so "nothing found" is an observation, not a retry trigger.
+- **Bounded, and fails closed:** `recursion_limit` caps the loop. Hitting
+  it returns **HTTP 503** "stopped at its step limit… try a narrower
+  question", never a 200 that reads as success.
+- **Tool errors are observations, not crashes:** a failing search (e.g. the
+  database is unreachable) is returned to the model as an error message
+  (type only, never connection details) telling it not to retry, because
+  the client already retried transient errors. The answer then starts with
+  a fixed note that the corpus couldn't be checked, and `grounding` is
+  `tool_error`. "Nothing found" is a normal observation too.
 - **Trust boundary:** the system prompt treats tool results as data, never
   instructions (tested against a corpus passage containing an embedded
   "you are now…" prompt). The system prompt itself is kept out of the
   returned trace.
-- **`grounding`** (`no_tool_call` / `tool_found_nothing` / `tool_sources`)
+- **`grounding`** (`no_tool_call` / `tool_found_nothing` / `tool_error` / `tool_sources`)
   and **`sources`** are derived from the trace, not from the model's claim.
   `tool_sources` means the search returned passages, not that the answer is
   verified to rely on them.
 - **`trace`** is the Think → Act → Observe record, rendered on the
   Streamlit **Agent** page.
+- **Audit log:** every run writes one `agent_run` event (OpenTelemetry-style
+  `gen_ai.*` fields: tool name, call ID, outcome, error type, returned
+  document IDs, model turns, duration, whether it stopped at the limit).
+  The question and the tool's arguments and results are logged only when
+  `AGENT_LOG_TOOL_CONTENT=1`, since they can contain sensitive text. A
+  failed audit write never breaks the response.
 
 Curriculum demos (dev-only, not deployed): `scripts/raw_agent_loop_demo.py`
 (the same loop by hand with the raw OpenAI SDK), `scripts/mcp_corpus_server.py`
@@ -631,7 +651,8 @@ work cited in the text.
   unset, every caller counts as authenticated.**
 - **Retrieved text is data, never instructions**, in both `/ask`'s grounded
   prompt and `/agent`'s system prompt. `/ask` also strips invisible
-  Unicode from every retrieved chunk (`/agent` does not yet; tracked).
+  Unicode from every retrieved chunk, and `/agent` does the same for the
+  passages its tool returns.
 - **Rate limits** (`10/minute; 30/hour; 300/day`) on the model-calling
   endpoints; input and output caps bound per-call cost.
 
@@ -650,6 +671,7 @@ work cited in the text.
 | `RAG_RERANK_MODEL` | no | `gpt-4.1-nano` | Reranker model (pinned) |
 | `RAG_RERANK_HIGH_GAP` | no | `0.20` | Skip the reranker when the top document leads by more than this |
 | `RAG_HYBRID` | no | off | Hybrid BM25 + dense retrieval; adds about 232 MB of memory |
+| `AGENT_LOG_TOOL_CONTENT` | no | off | Also log the question and tool arguments/results in `/agent`'s `agent_run` audit events (metadata only by default) |
 
 The `RAG_*` switches are read at request time, so changing one in the host's
 dashboard and restarting is enough; no redeploy is needed.
@@ -691,3 +713,5 @@ week-1v2/
 - `Address already in use`: another server is already using port `8000`; stop it or use a different port.
 - Streamlit opens but requests fail: confirm the sidebar's Custom API base URL is blank or correct (or, on a deployed Streamlit service, that `API_BASE_URL` is set correctly).
 - A push didn't redeploy on Render: check the service's auto-deploy setting, or use Manual Deploy.
+- `/agent` returns `503 … stopped at its step limit`: the agent looped without reaching an answer; ask a narrower question. (This is the intended fail-closed response, not a crash.)
+- An `/agent` answer starts with "Note: the corpus search failed…": the search tool errored (see server logs for the error type); the answer is from general knowledge, and `grounding` is `tool_error`.
