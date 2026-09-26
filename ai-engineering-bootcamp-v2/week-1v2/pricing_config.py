@@ -57,6 +57,11 @@ class ProviderConfig(BaseModel):
     # credential) without a provider-specific field.
     extra_env: dict[str, str] | None = None
     base_url: str | None = None  # None = OpenAI's own default endpoint
+    # p3m3 item #50: for reasoning models whose hidden reasoning shares the
+    # completion budget (Groq's gpt-oss). "low" measured ~4x fewer
+    # completion tokens on the real /ask prompt with no visible quality
+    # loss. None = the provider's default, and the parameter isn't sent.
+    reasoning_effort: Literal["low", "medium", "high"] | None = None
     # Every entry in this project — cloud config here and LAN-local's
     # runtime-discovered entries alike — is called through one client
     # construction (providers._build_client(), a plain OpenAI SDK client

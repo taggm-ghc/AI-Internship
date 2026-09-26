@@ -31,6 +31,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from openai import (
+    BadRequestError,
     APIConnectionError,
     APITimeoutError,
     AuthenticationError,
@@ -284,6 +285,24 @@ DEFAULT_COOLDOWN_SECONDS = 60.0
 # — not something to hide by trying five more providers and quietly
 # spending the paid key to mask it.
 _RETRYABLE_EXCEPTIONS = (AuthenticationError, RateLimitError, APIConnectionError, APITimeoutError, InternalServerError)
+
+
+def _is_model_output_failure(exc: BadRequestError) -> bool:
+    """The one 400 that falls back (p3m3 item #50): the provider validated
+    the model's OWN output and rejected it (Groq: code
+    "json_validate_failed", e.g. "max completion tokens reached before
+    generating a valid JSON", or schema-invalid output). The request was
+    fine; the same request succeeds on the next provider. That's the class
+    /ask's own validation-retry guardrail covers, not the malformed-request
+    or capability-mismatch 400 the comment above rules out, which still
+    fails fast. Seen live in 1 of 6 /ask runs, 2026-09-25."""
+    body = exc.body if isinstance(exc.body, dict) else {}
+    err = body.get("error", body) if isinstance(body.get("error", body), dict) else {}
+    return err.get("code") == "json_validate_failed"
+
+
+def _reasoning_kwargs(provider: ProviderConfig) -> dict:
+    return {"reasoning_effort": provider.reasoning_effort} if provider.reasoning_effort else {}
 
 _unavailable_until: dict[str, datetime] = {}
 
@@ -667,7 +686,15 @@ def call_structured_with_fallback(
                 messages=messages,
                 response_format=response_format,
                 max_completion_tokens=MAX_COMPLETION_TOKENS,
+                **_reasoning_kwargs(provider),
             )
+        except BadRequestError as exc:
+            if not _is_model_output_failure(exc):
+                raise
+            # No cooldown: a per-request output failure, not an outage.
+            logger.warning("Provider %s returned invalid structured output (json_validate_failed), trying next.", provider.provider)
+            last_exc = exc
+            continue
         except _RETRYABLE_EXCEPTIONS as exc:
             logger.warning("Provider %s unavailable (%s), trying next.", provider.provider, type(exc).__name__)
             if isinstance(exc, RateLimitError):
@@ -732,6 +759,7 @@ def stream_with_fallback(messages: list[dict], forced_provider: str | None = Non
                 messages=messages,
                 stream=True,
                 max_completion_tokens=MAX_COMPLETION_TOKENS,
+                **_reasoning_kwargs(provider),
             )
             first_chunk = next(stream)
         except StopIteration:
