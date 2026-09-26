@@ -73,8 +73,13 @@ def get_session() -> Session:
 # Admin connection (p3m3 item #47): schema changes only (install_schema,
 # create_vector_indexes, the one-off migration). The app itself never uses it.
 # No account name is hardcoded: DB_ADMIN_ROLE is tried first and
-# DB_ADMIN_ROLE_RETRY if that login is rejected (the pending Render rename of
-# the admin account), both with DB_ADMIN_PASSWORD and the same host/database.
+# DB_ADMIN_ROLE_RETRY if that login is rejected, both with DB_ADMIN_PASSWORD
+# and the same host/database.
+# Best practice: the admin account is named for its privilege (*_dbadmin).
+# Current state (unintended, accepted): the admin is Render's original
+# `<db>_user` account, which holds CREATEROLE/CREATEDB and owns every object.
+# Render can't rename roles, and a non-superuser can't rename itself, so the
+# retry (meant for a rename to *_dbadmin) is dormant.
 _AUTH_FAILURES = ("password authentication failed", "does not exist")
 _admin_engine = None
 
