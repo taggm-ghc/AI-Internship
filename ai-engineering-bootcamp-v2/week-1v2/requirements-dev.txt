@@ -29,6 +29,13 @@
 #   playwright install chromium     # the actual browser binary
 playwright==1.62.0
 
+# --- MCP (Model Context Protocol): p3m3 item #53 (module 3.7) ---
+# Build and run an MCP agent host demo: scripts/mcp_agent_host_demo.py
+# (connects to scripts/mcp_corpus_server.py, which uses the `mcp` library).
+# Install mcp separately (it's in the `scripts/` docstring but not here);
+# this installs the LangChain adapter.
+langchain-mcp-adapters==0.3.2
+
 # --- LAN-local inference (optional) ---
 # No additional Python package is needed here to USE a LAN-local inference
 # server from this app. providers.py talks to it purely over HTTP via the
