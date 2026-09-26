@@ -25,7 +25,7 @@ Hands-on course materials for building production-style LLM services with **Fast
 
 ```bash
 cd week-1v2
-cp .env.example .env          # add OPENAI_API_KEY and EXTERNAL_DB_URL (Postgres is required)
+cp .env.example .env          # add OPENAI_API_KEY; put the DB_* settings in .env.db-accounts (Postgres is required)
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt

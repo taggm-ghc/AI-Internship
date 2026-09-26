@@ -63,28 +63,54 @@ screenshot OpenAI's live pricing page for an occasional human sanity-check
 of that pipeline's assumptions; see that file's comments for the one-time
 Chromium setup it requires.
 
-Open `.env` and add your key **and a PostgreSQL connection string**. The app
-connects to Postgres at startup and won't boot without it:
+Open `.env` and add your key. Database settings go in a **separate file,
+`.env.db-accounts`** (gitignored, keep it readable only by you: `chmod 600`),
+which `db.py` loads itself. The app connects to Postgres at startup and won't
+boot without it. The connection URL is built from parts, so no account name is
+hardcoded anywhere:
 
 ```bash
+# .env
 OPENAI_API_KEY=sk-...
-EXTERNAL_DB_URL=postgresql://user:password@host:5432/dbname
+
+# .env.db-accounts
+DB_HOST=your-db-host                 # on Render: the bare internal host (dpg-…-a)
+DB_HOST_EXTERNAL_SUFFIX=             # on Render: .<region>-postgres.render.com (used off-Render)
+DB_NAME=your_db
+DB_ACCOUNT=your_least_privilege_rw_account
+DB_PASSWORD=...
+DB_ADMIN_ROLE=your_db_owner_account  # schema changes and account setup only
+DB_ADMIN_PASSWORD=...
 ```
 
-Create the schema once. This runs `migrations/001_operational_store.sql`,
-which also enables the `pgvector` extension (your Postgres must have it
-available):
+(A single full URL in `EXTERNAL_DB_URL` still works as a fallback when
+`DB_ACCOUNT` is unset. See [Database accounts](#database-accounts-least-privilege).)
+
+Create the schema once, **as the admin account** (`install_schema()` uses the
+admin connection). This runs `migrations/001_operational_store.sql`, which also
+enables the `pgvector` extension (your Postgres must have it available):
 
 ```bash
 python -c "from dotenv import load_dotenv; load_dotenv(); from operational_store import install_schema; install_schema()"
+```
+
+Then create the least-privilege accounts the app runs as (a dry run by default;
+see [Database accounts](#database-accounts-least-privilege)):
+
+```bash
+python scripts/provision_db_accounts.py            # prints the SQL, runs nothing
+python scripts/provision_db_accounts.py --apply    # creates groups + accounts
+python scripts/provision_db_accounts.py --verify   # privilege matrix + logins
+python scripts/test_db_connection.py               # confirms the app's own connection
 ```
 
 A fresh database starts with an empty corpus; add documents with
 [`/ingest`](#ingesting-documents). (`scripts/migrate_operational_store.py`
 is the one-off migration from the legacy local Chroma store, and needs
 `chroma_store/`, which a fresh clone doesn't have.)
-**Caution:** if your `EXTERNAL_DB_URL` points at the same database your
+**Caution:** if your local settings point at the same database your
 deployed service uses, every local run reads and writes production data.
+Running locally as a least-privilege account limits what a mistake can do.
 
 Leave values bare, no quotes — `python-dotenv` treats quoting as
 meaningful (single-quoted is literal, double-quoted processes `\n`
@@ -274,7 +300,9 @@ uvicorn stages.stage_3_guardrails_and_observability:app --host 127.0.0.1 --port 
 | Command | What it checks | Cost / side effects |
 |---|---|---|
 | `python smoke_test.py` | Starts the API, checks `/health` and `/docs` | No tokens |
-| `python -m unittest test_citations test_pdf_extract` | APA formatter and marker rendering; PDF extraction | No network, no DB |
+| `python -m unittest test_citations test_pdf_extract test_db_admin_fallback` | APA formatter and marker rendering; PDF extraction; DB URL built from parts + admin-login retry (32 tests) | No network, no DB |
+| `python scripts/test_db_connection.py` | The app's own DB connection (which account, which host) | One `select 1` |
+| `python scripts/provision_db_accounts.py --verify` | Least-privilege accounts: privilege matrix, no admin rights, logins work | Read-only |
 | `python test_all_stages.py` | Live `/ask` contract: structured answer, guardrail retry, model override, cost scaling | Real calls, well under a cent (5 calls ≈ $0.0006) |
 | `python golden_eval.py [--base-url URL]` | 10 golden questions: retrieval hit, supported/refusal correctness, content overlap | Real calls via `/ask`; writes request, retrieval and `golden_eval` events to the DB |
 | `python scripts/retrieval_eval.py` | 200-question retrieval eval (`config/retrieval_eval_set.json`): dense vs. hybrid vs. reranked, paired t-test + permutation test, per-stratum | Real embedding + reranker calls; read-only against the DB |
@@ -311,13 +339,16 @@ comments) and runs `uvicorn main:app --host 0.0.0.0 --port 8000`.
    want the free-tier fallback chain, any of `GROQ_API_KEY`,
    `GEMINI_API_KEY`, `MISTRAL_API_KEY`, `OPENROUTER_API_KEY`,
    `SAMBANOVA_API_KEY`, `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID`
-   — see `.env.example` for what each one does. **Also required as of the
-   Session 2 RAG layer:** `INTERNAL_DB_URL` — the app now needs Postgres
-   at startup (`db.py`) and will fail to boot without it. Render sets
-   `RENDER=true` itself in every one of its environments, which makes the
-   app read `INTERNAL_DB_URL` rather than `EXTERNAL_DB_URL` — copy the
-   **Internal Database URL** from your Render Postgres instance's own page
-   (not the external one; it won't resolve from inside Render's network).
+   — see `.env.example` for what each one does. **Also required:** the database
+   settings, `DB_ACCOUNT`, `DB_PASSWORD`, `DB_HOST` and `DB_NAME`. The app
+   needs Postgres at startup (`db.py`) and won't boot without it. Use the
+   **least-privilege API account** (created by
+   `scripts/provision_db_accounts.py`), never the database owner, and set
+   `DB_HOST` to the **bare internal host** (`dpg-…-a`). Render sets
+   `RENDER=true` itself, which makes the app use the internal host; no
+   suffix is needed there. **Never put the admin credentials
+   (`DB_ADMIN_*`) on Render.** A full `INTERNAL_DB_URL` still works as a
+   fallback when `DB_ACCOUNT` is unset.
    Optional: `INGEST_API_KEY` (see [Security](#security)) and the
    retrieval switches under [Configuration](#configuration); the defaults
    are the tested ones. Set these directly in Render's dashboard; never
@@ -339,7 +370,34 @@ session (nothing committed anywhere), or see below to deploy the
 Streamlit UI itself as a second Render service with that URL wired in
 via an env var.
 
-### PostgreSQL runtime and recovery (p3m3 item #2.g)
+### Database accounts (least privilege)
+
+The running app never connects as the database owner. `scripts/provision_db_accounts.py`
+(run as the admin/owner account) creates:
+
+| Account or group | Rights | Used by |
+|---|---|---|
+| `internship_ro` (group, no login) | `SELECT` on the `internship` schema | read-only accounts |
+| `internship_rw` (group, no login) | `internship_ro` + writes derived from the app's own SQL: `events` and `provider_observations` **insert-only** (the audit log is append-only), `vectors` the only table with `DELETE`; no `TRUNCATE`, no schema changes | read/write accounts |
+| API account (e.g. `internship_api_rw`) | `internship_rw` | the deployed service |
+| Local agent account (e.g. `internship_claude_code_rw`) | `internship_rw` | local runs and scripts |
+| Backup account (optional, `DB_BACKUP_RO_USER`) | `internship_ro` | `pg_dump` backups |
+
+All names come from `.env.db-accounts` (`DB_RO_GROUP`, `DB_RW_GROUP`,
+`DB_API_RW_USER`, `DB_LOCAL_AGENT_RW_USER`, `DB_BACKUP_RO_USER`). Generated
+passwords are written only to that file (`DB_ACCOUNT_PASSWORD_<account>`),
+never printed. New accounts use SCRAM-SHA-256 password hashing.
+
+**Admin work** (`install_schema`, `create_vector_indexes`, account setup) goes
+through `db.get_admin_engine()`, which logs in as `DB_ADMIN_ROLE` and, only if
+that login is rejected, retries once as `DB_ADMIN_ROLE_RETRY` with the same
+password. That covers a renamed admin account; it doesn't retry network errors.
+
+**Best practice, not run by this project:** back up before any production
+change and on a schedule, with `pg_dump` running as its own read-only account.
+`pg_dump`'s major version must be at least the server's.
+
+### PostgreSQL runtime and recovery
 
 All durable state lives in one Postgres database, `internship` schema,
 eight tables: `documents` (source text + provenance), `document_versions`
@@ -655,14 +713,26 @@ work cited in the text.
   passages its tool returns.
 - **Rate limits** (`10/minute; 30/hour; 300/day`) on the model-calling
   endpoints; input and output caps bound per-call cost.
+- **Least-privilege database access**: the deployed API and local runs use
+  read/write accounts that can't change the schema, create accounts, or
+  alter or delete the `events` audit log. Only admin tasks use the owner
+  account, and its credentials are kept off the deployed service. See
+  [Database accounts](#database-accounts-least-privilege).
 
 ## Configuration
 
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
 | `OPENAI_API_KEY` | yes | — | OpenAI calls (embeddings; paid fallback) |
-| `EXTERNAL_DB_URL` | yes, off Render | — | Postgres URL used locally |
-| `INTERNAL_DB_URL` | yes, on Render | — | Render's internal Postgres URL (`RENDER=true` selects it) |
+| `DB_HOST`, `DB_NAME` | yes | — | Postgres host (bare; on Render the internal `dpg-…-a` host) and database |
+| `DB_HOST_EXTERNAL_SUFFIX` | yes, off Render | — | Appended to `DB_HOST` off-Render (e.g. `.oregon-postgres.render.com`) |
+| `DB_ACCOUNT`, `DB_PASSWORD` | yes | — | The least-privilege account the app connects as |
+| `DB_ADMIN_ROLE`, `DB_ADMIN_PASSWORD`, `DB_ADMIN_ROLE_RETRY` | admin tasks only | — | Owner account for schema changes and account setup; never on the deployed service |
+| `DB_RO_GROUP`, `DB_RW_GROUP`, `DB_API_RW_USER`, `DB_LOCAL_AGENT_RW_USER`, `DB_BACKUP_RO_USER` | for `provision_db_accounts.py` | — | Account and group names (no names are hardcoded) |
+| `EXTERNAL_DB_URL` / `INTERNAL_DB_URL` | fallback | — | Full URL, used only when `DB_ACCOUNT` is unset (`RENDER=true` selects internal) |
+
+Locally, keep every `DB_*` setting in `.env.db-accounts` (loaded by `db.py`),
+not `.env`. On Render, set them as service environment variables.
 | `GROQ_API_KEY`, `GEMINI_API_KEY`, `MISTRAL_API_KEY`, `OPENROUTER_API_KEY`, `SAMBANOVA_API_KEY`, `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` | no | — | Free-tier providers tried first; see `.env.example` |
 | `LOCAL_INFERENCE_HOST` / `_PORT` / `_SERVERS` / `_API_KEY` | no | — | Optional LAN inference servers |
 | `INGEST_API_KEY` | no | unset (everyone authenticated) | See [Security](#security) |
@@ -681,6 +751,7 @@ dashboard and restarting is enough; no redeploy is needed.
 ```text
 week-1v2/
 ├── README.md, CLAUDE.md, .env.example, Dockerfile, run.sh
+├── .env, .env.db-accounts      # local secrets and DB settings (gitignored, never committed)
 ├── requirements.txt / requirements-dev.txt
 ├── main.py                     # FastAPI app: every endpoint above
 ├── ask_service.py              # Structured-output calls, guardrail, ungrounded fallback
@@ -690,14 +761,14 @@ week-1v2/
 ├── pdf_extract.py              # PDF → text
 ├── citations.py                # APA 7 in-text citations + reference lists
 ├── agent_service.py            # Session 3 LangGraph agent
-├── db.py, operational_store.py, operational_audit.py   # Postgres access, events, audit middleware
+├── db.py, operational_store.py, operational_audit.py   # Postgres access (URL from parts, admin engine), events, audit middleware
 ├── pricing_config.py           # Cost calculation from config/model-pricing.json
 ├── MVP_Layered_Ask.py          # Streamlit entry page
 ├── pages/                      # Observability Dashboard, Health, Setup, Agent
 ├── api_client.py, ui_theme.py, ui_widgets.py            # Shared Streamlit helpers
 ├── config/                     # model selection/pricing, golden set, retrieval eval set, citation metadata
 ├── migrations/                 # Postgres schema (001_operational_store.sql)
-├── scripts/                    # evals, calibration, metadata builder, curriculum demos, pricing tools
+├── scripts/                    # evals, calibration, metadata builder, DB account provisioning, curriculum demos, pricing tools
 ├── stages/                     # Session 1 teaching references
 ├── smoke_test.py, golden_eval.py, test_*.py
 ├── .claude/skills/             # Project Claude Code skills (rag-scaffold, research-informed-planning)
@@ -709,7 +780,9 @@ week-1v2/
 
 - `Cannot reach http://127.0.0.1:8000`: start the API server in another terminal.
 - `OPENAI_API_KEY` error: make sure `.env` exists and contains a real key.
-- `EXTERNAL_DB_URL is not set` / `INTERNAL_DB_URL is not set` at startup: add the Postgres URL (see [Quick Start](#quick-start)); on Render, set `INTERNAL_DB_URL`.
+- `DB_ACCOUNT and EXTERNAL_DB_URL are both unset` at startup: add the `DB_*` settings to `.env.db-accounts` (see [Quick Start](#quick-start)); on Render, set `DB_ACCOUNT`, `DB_PASSWORD`, `DB_HOST`, `DB_NAME`.
+- `DB_ADMIN_ROLE and DB_ADMIN_PASSWORD must be set for admin work`: schema setup (`install_schema`) and account provisioning run as the owner account; add those settings locally (never on Render).
+- `could not translate host name` locally: `DB_HOST_EXTERNAL_SUFFIX` is missing, so the bare internal host was used off-Render.
 - `Address already in use`: another server is already using port `8000`; stop it or use a different port.
 - Streamlit opens but requests fail: confirm the sidebar's Custom API base URL is blank or correct (or, on a deployed Streamlit service, that `API_BASE_URL` is set correctly).
 - A push didn't redeploy on Render: check the service's auto-deploy setting, or use Manual Deploy.

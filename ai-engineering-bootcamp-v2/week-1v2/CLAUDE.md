@@ -1,12 +1,12 @@
 # Working in this repo
 
-This repo isn't a sandbox. `.env` holds real API keys and a real Postgres
-connection string (`EXTERNAL_DB_URL` / `INTERNAL_DB_URL`) to a shared
-instance a deployed service also uses — reads, writes, and deletes here
-are real, not simulated. p3m3 item #31 covers why this file exists: this
-session's own attack surface (this development environment, not just the
-deployed API) is a real, distinct risk surface from the app's own
-ingestion/retrieval defenses (see item #30).
+This repo isn't a sandbox. `.env` holds real API keys, and `.env.db-accounts`
+holds real Postgres credentials (a least-privilege local account plus the
+admin account; `EXTERNAL_DB_URL`/`INTERNAL_DB_URL` only as fallbacks) for a
+shared instance a deployed service also uses — reads, writes, and deletes here
+are real, not simulated. This file documents why: this session's own attack
+surface (this development environment, not just the deployed API) is a real,
+distinct risk surface from the app's own ingestion/retrieval defenses.
 
 ## Rules, not suggestions
 
@@ -30,8 +30,7 @@ ingestion/retrieval defenses (see item #30).
   same session.
 - **A supply-chain risk exists and isn't fully closed**: dependencies in
   `requirements.txt` are pinned to exact versions (good baseline hygiene),
-  but no vulnerability scan (`pip-audit` or equivalent) runs automatically —
-  see p3m3 item #31.
+  but no vulnerability scan (`pip-audit` or equivalent) runs automatically.
 
 ## Where the real planning record lives
 
