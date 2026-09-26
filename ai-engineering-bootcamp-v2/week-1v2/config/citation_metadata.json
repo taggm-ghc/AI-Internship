@@ -3,12 +3,13 @@
   "item": "p3m3 #48",
   "format": "CSL-JSON items keyed by document_id",
   "built_at": "2026-09-25T10:52:14-0700",
-  "documents": 261,
-  "covered": 259,
+  "documents": 263,
+  "covered": 261,
   "failures": {
    "Spicy hot pickels": "no authoritative record (source=None)",
    "synthetic": "no authoritative record (source=None)"
-  }
+  },
+  "updated_at": "2026-09-26T09:28:19-0700 (+2 via p3m3/ingest_item56_sources.py)"
  },
  "items": {
   "acl-2024.acl-long.118-open-set-semi-supervised-text-classification-via-adversarial-disagreem": {
@@ -9718,6 +9719,64 @@
    "container-title": "VentureBeat",
    "URL": "https://venturebeat.com/infrastructure/ai-agents-are-breaking-the-batch-era-assumptions-behind-object-storage",
    "_source": "provenance record (original fetch)"
+  },
+  "arxiv-2606.08919-oversight-has-a-capacity-agent-guards": {
+   "id": "arxiv-2606.08919-oversight-has-a-capacity-agent-guards",
+   "type": "article",
+   "title": "Oversight Has a Capacity: Calibrating Agent Guards to a Subjective, Fatiguing Human",
+   "author": [
+    {
+     "family": "Turan",
+     "given": "Emre"
+    }
+   ],
+   "issued": {
+    "date-parts": [
+     [
+      2026,
+      6,
+      8
+     ]
+    ]
+   },
+   "URL": "https://arxiv.org/abs/2606.08919",
+   "_source": "https://arxiv.org/abs/2606.08919",
+   "genre": "Preprint",
+   "publisher": "arXiv",
+   "DOI": "10.48550/arXiv.2606.08919"
+  },
+  "arxiv-2608.23642-ai-agents-push-humans-out-of-the-loop": {
+   "id": "arxiv-2608.23642-ai-agents-push-humans-out-of-the-loop",
+   "type": "article",
+   "title": "AI Agents Push Humans Out of the Loop",
+   "author": [
+    {
+     "family": "Mitchell",
+     "given": "Margaret"
+    },
+    {
+     "family": "Ghosh",
+     "given": "Avijit"
+    },
+    {
+     "family": "Passi",
+     "given": "Samir"
+    }
+   ],
+   "issued": {
+    "date-parts": [
+     [
+      2026,
+      8,
+      24
+     ]
+    ]
+   },
+   "URL": "https://arxiv.org/abs/2608.23642",
+   "_source": "https://arxiv.org/abs/2608.23642",
+   "genre": "Preprint",
+   "publisher": "arXiv",
+   "DOI": "10.48550/arXiv.2608.23642"
   }
  }
 }
