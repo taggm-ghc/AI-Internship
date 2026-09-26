@@ -12,7 +12,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from sqlalchemy import text
-from db import get_engine
+from db import get_admin_engine, get_engine
 
 DIMENSIONS = 1536
 
@@ -25,7 +25,7 @@ def vector_literal(values):
 
 
 def install_schema(engine=None):
-    engine = engine or get_engine()
+    engine = engine or get_admin_engine()  # DDL: admin account only (item #47)
     sql = (Path(__file__).parent / 'migrations/001_operational_store.sql').read_text()
     with engine.begin() as conn:
         conn.exec_driver_sql(sql)
@@ -340,7 +340,7 @@ class PgCollection:
 
 
 def create_vector_indexes(engine=None):
-    with (engine or get_engine()).begin() as conn:
+    with (engine or get_admin_engine()).begin() as conn:  # DDL: admin account only (item #47)
         # Partial indexes separate chunk and centroid search spaces.
         for suffix,name in [('chunks','week2_rag_corpus'),('documents','week2_rag_documents')]:
             conn.exec_driver_sql(f"CREATE INDEX IF NOT EXISTS vectors_{suffix}_hnsw ON internship.vectors USING hnsw (embedding vector_l2_ops) WHERE collection_name='{name}'")

@@ -1,5 +1,11 @@
-# Environment - never commit real keys
+# Environment - never commit real keys (.env.db-accounts holds generated
+# database passwords; p3m3 item #47)
 .env
+.env.*
+!.env.example
+# Generated DB account passwords (scripts/provision_db_accounts.py); also
+# matched by .env.* above, listed by name so it's unmistakable.
+.env.db-accounts
 
 # Python
 __pycache__/

@@ -14,7 +14,7 @@ sys.path.insert(0, str(BASE))
 from dotenv import load_dotenv
 load_dotenv(BASE / '.env')
 from sqlalchemy import text
-from db import get_engine
+from db import get_admin_engine
 from operational_store import PgCollection, install_schema, put_artifact, record_event, create_vector_indexes
 
 
@@ -22,7 +22,7 @@ def migrate():
     import chromadb
     from pdf_extract import extract_pdf_text
     install_schema()
-    engine = get_engine()
+    engine = get_admin_engine()  # one-off migration runs as the admin account (item #47)
     source = chromadb.PersistentClient(path=str(BASE / 'chroma_store'))
     report = {'collections':{}, 'artifacts':0, 'documents':0}
     for name in ['week2_rag_corpus','week2_rag_documents']:
