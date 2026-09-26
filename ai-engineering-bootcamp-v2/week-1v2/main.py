@@ -1650,7 +1650,8 @@ def _record_agent_run(request: Request, question: str, result: dict | None, stop
     3.1's "log every tool call"; the Week 3 overview's "full audit trail").
     Metadata only by default, OpenTelemetry GenAI style: tool name, call ID,
     outcome, error type, returned document IDs, plus the run's grounding,
-    model turns, duration and whether it stopped at the step limit. Tool
+    model turns, duration and whether it stopped at the step limit. p3m3 item
+    #52 (3.6): also includes per-turn and aggregate token usage. Tool
     arguments and results (and the question) are content, logged only when
     AGENT_LOG_TOOL_CONTENT=1, because they can hold sensitive text. Never
     lets a logging failure break the response."""
@@ -1669,7 +1670,12 @@ def _record_agent_run(request: Request, question: str, result: dict | None, stop
         "tool_calls": calls, "stopped_at_limit": stopped,
         "grounding": (result or {}).get("grounding"), "model_turns": (result or {}).get("model_turns"),
         "duration_ms": (result or {}).get("duration_ms"),
+        "gen_ai.usage.input_tokens": (result or {}).get("gen_ai.usage.input_tokens", 0),
+        "gen_ai.usage.output_tokens": (result or {}).get("gen_ai.usage.output_tokens", 0),
     }
+    # p3m3 item #52 (3.6): per-turn token breakdown for token accounting and cost optimization (W4 #44).
+    if (result or {}).get("model_turn_usage"):
+        payload["model_turn_usage"] = result["model_turn_usage"]
     if with_content:
         payload["question"] = question
     try:

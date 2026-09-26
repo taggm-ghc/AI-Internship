@@ -195,7 +195,8 @@ def run_agent(question: str) -> dict:
     """Runs one agent task end-to-end. Returns {"answer": str, "trace": [...]}
     -- trace is the Think/Act/Observe proof the assignment requires, read
     directly off the real LangGraph message state, not manufactured
-    separately from what the agent actually did."""
+    separately from what the agent actually did. p3m3 item #52 (3.6): also
+    extracts usage_metadata from each AIMessage for token accounting."""
     started = time.perf_counter()
     try:
         result = COMPILED_AGENT.invoke(
@@ -216,10 +217,31 @@ def run_agent(question: str) -> dict:
         # sometimes answered from general knowledge without saying so. Code
         # guarantees the disclosure, as it does for citations.
         answer = TOOL_ERROR_DISCLOSURE + answer
+
+    # p3m3 item #52 (module 3.6): extract per-turn token usage from AIMessages.
+    # LangChain's ChatOpenAI populates usage_metadata on each AIMessage; this
+    # enables token accounting and cost tracking per step (W4 #44, governance).
+    model_turn_usage = []
+    total_input_tokens = 0
+    total_output_tokens = 0
+    for m in result["messages"]:
+        if isinstance(m, AIMessage) and hasattr(m, "usage_metadata") and m.usage_metadata:
+            input_tokens = m.usage_metadata.get("input_tokens", 0)
+            output_tokens = m.usage_metadata.get("output_tokens", 0)
+            model_turn_usage.append({
+                "gen_ai.usage.input_tokens": input_tokens,
+                "gen_ai.usage.output_tokens": output_tokens,
+            })
+            total_input_tokens += input_tokens
+            total_output_tokens += output_tokens
+
     return {"answer": answer, "trace": trace, "grounding": grounding, "sources": sources, "references": references,
             "tool_calls": tool_call_summary(result["messages"]),
             "model_turns": sum(isinstance(m, AIMessage) for m in result["messages"]),
-            "duration_ms": round((time.perf_counter() - started) * 1000)}
+            "duration_ms": round((time.perf_counter() - started) * 1000),
+            "model_turn_usage": model_turn_usage,
+            "gen_ai.usage.input_tokens": total_input_tokens,
+            "gen_ai.usage.output_tokens": total_output_tokens}
 
 
 def tool_call_summary(messages: list) -> list[dict]:
