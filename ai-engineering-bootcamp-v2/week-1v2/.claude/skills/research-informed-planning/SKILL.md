@@ -34,7 +34,9 @@ Every other step here is mechanical; these two are why skipping or rubber-stampi
 
 2. **Propose the plan, recorded in p3m3 immediately.** A new permanent ID (or an extension of an existing item) in `p3m3/todo-digest.md`, with deliverables/dependencies/requisites in the format already established there -- before any code exists, not documented after the fact.
 
-3. **Logically flow it, including resource requirements.** A step-by-step flow (what calls what, data/control flow through the system, request/response shapes) plus what it actually costs to run: external API calls and roughly how many, new dependencies introduced, DB reads/writes added, and any other consumed resource -- qualitative and directional (per p3m3 item #28's decision against token/FLOP precision), not a fabricated number. Add a matching narrative subsection to `p3m3/week2-priority-checklist.md`, in the style of its existing "D7"/"D-N" sections. Mandatory for any multi-step build, not optional.
+3. **Logically flow it, including resource requirements.** A step-by-step flow (what calls what, data/control flow through the system, request/response shapes) plus what it actually costs to run: external API calls and roughly how many, new dependencies introduced, DB reads/writes added, and any other consumed resource -- qualitative and directional, not a fabricated number. Mandatory for any multi-step build, not optional.
+   
+   **Flow as a checkable graph.** Flows are recorded as Mermaid flowcharts using 7PMG conventions (one start and end, verb-object labels, ≤50 nodes before decomposition, structured joins/splits). Verify soundness: every node reachable from start (no dead activities), every node can reach end (no deadlock), every decision node has ≥2 labelled exits. At build time, compare the designed flow with the compiled agent's `get_graph().draw_mermaid()` to catch drift.
 
 4. **Generate pseudocode for the implementation**, in the same subsection, so the shape of the real code is settled on paper before it's settled in a file.
 
