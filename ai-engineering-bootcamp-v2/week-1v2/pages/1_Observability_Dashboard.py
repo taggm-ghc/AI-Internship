@@ -402,7 +402,160 @@ else:
         "total. Free-tier calls show real per-token value, not necessarily money actually billed."
     )
 
-st.markdown("## Panel 6 — raw events (forensics)")
+st.markdown("## Panel 5b — retrieval degradation signals")
+st.caption(
+    "Soft retrieval failures: when the tool runs but finds nothing relevant, or when source freshness "
+    "is declining. Early warning signs that the corpus is stale or retrieval quality is silently degrading."
+)
+if not df[df["kind"] == "agent_run"].empty:
+    agent_runs = df[df["kind"] == "agent_run"].copy()
+    agent_runs["created_at"] = pd.to_datetime(agent_runs["created_at"])
+
+    # Count tool_found_nothing outcomes (soft failures)
+    found_nothing = agent_runs["payload"].apply(lambda p: p.get("grounding") == "tool_found_nothing").sum()
+    total_agent_runs = len(agent_runs)
+    found_nothing_rate = (found_nothing / total_agent_runs * 100) if total_agent_runs else 0
+
+    # Status: amber if >15%, red if >25%
+    status_color = _STATUS_GOOD
+    status_text = "✅ Healthy"
+    if found_nothing_rate > 25:
+        status_color = _STATUS_CRITICAL
+        status_text = "🔴 Critical"
+    elif found_nothing_rate > 15:
+        status_color = _STATUS_WARNING
+        status_text = "⚠️ Warning"
+
+    cols = st.columns(3)
+    cols[0].metric("Tool found nothing rate", f"{found_nothing_rate:.1f}%")
+    cols[1].metric("Status", status_text)
+    cols[2].metric("Sample size (agent runs)", total_agent_runs)
+
+    if total_agent_runs > 0:
+        # Trend over time
+        found_nothing_by_hour = agent_runs.set_index("created_at").resample("1h").apply(
+            lambda window: (window["payload"].apply(lambda p: p.get("grounding") == "tool_found_nothing").sum() / len(window) * 100)
+            if len(window) > 0 else 0
+        )
+        trend_df = found_nothing_by_hour.reset_index()
+        trend_df.columns = ["time", "found_nothing_rate"]
+
+        if not trend_df.empty:
+            trend_chart = (
+                alt.Chart(trend_df)
+                .mark_line(point=True, color=_STATUS_WARNING)
+                .encode(
+                    x=alt.X("time:T", title="time"),
+                    y=alt.Y("found_nothing_rate:Q", title="tool_found_nothing rate (%)"),
+                    tooltip=[alt.Tooltip("time:T", title="time"), alt.Tooltip("found_nothing_rate:Q", title="rate (%)", format=".1f")],
+                )
+                .properties(height=200)
+            )
+            threshold_line = alt.Chart(pd.DataFrame({"threshold": [15]})).mark_rule(color=_STATUS_WARNING, strokeDash=[4, 4]).encode(y="threshold:Q")
+            st.altair_chart(trend_chart + threshold_line, width="stretch")
+            st.caption("Dashed line: 15% threshold (amber alert). Sustained >25% triggers critical alert.")
+else:
+    st.caption("No agent_run events in this window.")
+
+st.markdown("## Panel 5c — cost forecasting")
+st.caption(
+    "Project current spend forward. Detects cost drift early and enables capacity planning. Based on "
+    "per-run token costs from the past hour/day."
+)
+if not ask_responses or not completed.empty:
+    # Compute cost trajectory
+    recent_cost = sum(r.get("cost_usd") or 0 for r in ask_responses) if ask_responses else 0
+    recent_count = len(ask_responses) if ask_responses else 0
+    cost_per_call = (recent_cost / recent_count) if recent_count > 0 else 0
+
+    # Project forward
+    calls_per_day_estimate = (recent_count / (limit / 200)) if limit else 0  # Rough: scale by event window
+    projected_daily = cost_per_call * calls_per_day_estimate * 100 if calls_per_day_estimate else 0  # Scaled up
+    projected_weekly = projected_daily * 7
+    projected_monthly = projected_daily * 30
+
+    cols = st.columns(4)
+    cols[0].metric("Cost per call (mean)", f"${cost_per_call:.6f}")
+    cols[1].metric("Projected daily", f"${projected_daily:.4f}")
+    cols[2].metric("Projected weekly", f"${projected_weekly:.3f}")
+    cols[3].metric("Projected monthly", f"${projected_monthly:.2f}")
+
+    st.caption(
+        f"⚠️ Projection caveat: based on {limit} recent events. Accuracy depends on whether recent "
+        "traffic is representative. Use the raw Panel 5 totals, not this forecast, as ground truth."
+    )
+else:
+    st.caption("No cost data in this window.")
+
+st.markdown("## Panel 5d — SLO tracking")
+st.caption(
+    "Are we meeting our service-level objectives? Target latency p95 < 3000ms, error rate < 2%, "
+    "availability 99.0% (hourly windows account for cold-start bounces)."
+)
+if completed.empty:
+    st.caption("No http_completed events in this window.")
+else:
+    # SLO targets (configurable)
+    SLO_P95_LATENCY_MS = 3000
+    SLO_ERROR_RATE = 0.02
+    SLO_AVAILABILITY_PCT = 99.0
+
+    # Compute actual metrics
+    latencies = completed["payload"].apply(lambda p: p.get("latency_ms")).dropna()
+    actual_p95_latency = latencies.quantile(0.95) if len(latencies) > 0 else None
+
+    errors = completed["payload"].apply(
+        lambda p: p.get("http_status", 200) >= 400 or p.get("error") is not None
+    )
+    error_count = errors.sum()
+    total_count = len(completed)
+    actual_error_rate = (error_count / total_count) if total_count > 0 else 0
+
+    # Availability (hourly granularity: any hour with >1 error counts as a "failed hour")
+    completed_copy = completed.copy()
+    completed_copy["hour"] = pd.to_datetime(completed_copy["created_at"]).dt.floor("1h")
+    hours_with_errors = (
+        completed_copy.groupby("hour")
+        .apply(lambda g: (g["payload"].apply(lambda p: p.get("http_status", 200) >= 400 or p.get("error") is not None).sum() > 0))
+        .sum()
+    )
+    total_hours = completed_copy["hour"].nunique()
+    actual_availability = ((total_hours - hours_with_errors) / total_hours * 100) if total_hours > 0 else 100
+
+    # Status indicators
+    slo_cols = st.columns(3)
+
+    lat_status = "✅" if actual_p95_latency and actual_p95_latency < SLO_P95_LATENCY_MS else "🔴"
+    slo_cols[0].metric(
+        f"{lat_status} Latency (p95)",
+        f"{actual_p95_latency:.0f}ms" if actual_p95_latency else "N/A",
+        delta=f"target: {SLO_P95_LATENCY_MS}ms",
+        delta_color="inverse"
+    )
+
+    err_status = "✅" if actual_error_rate < SLO_ERROR_RATE else "🔴"
+    slo_cols[1].metric(
+        f"{err_status} Error rate",
+        f"{actual_error_rate:.1%}",
+        delta=f"target: <{SLO_ERROR_RATE:.1%}",
+        delta_color="inverse"
+    )
+
+    avail_status = "✅" if actual_availability >= SLO_AVAILABILITY_PCT else "🔴"
+    slo_cols[2].metric(
+        f"{avail_status} Availability (hourly)",
+        f"{actual_availability:.1f}%",
+        delta=f"target: ≥{SLO_AVAILABILITY_PCT}%",
+        delta_color="inverse"
+    )
+
+    st.caption(
+        "Latency: p95 (not average) captures tail risk. Availability: hourly windows "
+        "(hours with ≥1 error are \"failed\") to account for cold-start bounces. "
+        "Error rate includes any HTTP ≥400 or logged error."
+    )
+
+st.markdown("## Panel 7 — raw events (forensics)")
 st.dataframe(
     df[["created_at", "kind", "id"]].sort_values("created_at", ascending=False),
     width="stretch",
