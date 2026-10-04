@@ -11,7 +11,8 @@ Build a typed LLM service step by step: FastAPI + structured output (Session 1),
 **Session 4 (Week 4): TRACE evaluation system** — in progress; the Maven submission is due Oct 7, 2026.
 - Phases 1–4: discover failure patterns in 20 traces, codify them as three deterministic checks, run the baseline, and design a targeted fix.
 - Measured baseline (2026-10-01): 6 of 20 traces pass all three checks (30%), which is below the 85% ship threshold, so the decision is BLOCK. The per-check results are 8/20, 17/20 and 18/20.
-- The designed grounding gate is a proposal. An earlier projection of 85% after the fix was a simulation, not a measurement, and is withdrawn.
+- Fix: a deterministic post-generation grounding gate (`grounding_gate.py`). Measured re-run (2026-10-04): 20/20 by the same three checks, "SHIP by checks, see caveats". Caveats: the gate was designed on the same 20 traces (overfitting risk, no held-out set), and ungrounded replies are replaced wholesale. Earlier "60%" and "85% after fix" figures were simulated, never measured, and are retracted.
+- Status (2026-10-04): code pushed; the Trace Eval page and debug-key gating are not deployed yet (the API service needs `DEBUG_API_KEY`). Screenshots and the post are still to do.
 - Phase 5 (Ship): Maven submission.
 
 - **Location:** `ai-engineering-bootcamp-v2/week-1v2/`

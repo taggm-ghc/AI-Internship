@@ -7,7 +7,7 @@ Hands-on course materials for building production-style LLM services with **Fast
 | Week | Topic | Location |
 |------|-------|----------|
 | 1 | `/ask` endpoint — typed I/O, structured output, guardrails, model selection, cost | [`week-1/`](week-1/) |
-| 1–4 (capstone) | **The capstone service**: Session 1 typed `/ask` with guardrails, Session 2 RAG (`/ingest`, `/debug/retrieve` (needs `X-Debug-Key`), grounded + cited `/ask`, APA 7 references), Session 3 LangGraph agent (`/agent`), Session 4 (in progress) trace evaluation (Streamlit **Trace Eval** page) | [`week-1v2/`](week-1v2/) |
+| 1–4 (capstone) | **The capstone service**: Session 1 typed `/ask` with guardrails, Session 2 RAG (`/ingest`, `/debug/retrieve` (needs `X-Debug-Key`), grounded + cited `/ask`, APA 7 references), Session 3 LangGraph agent (`/agent`), Session 4 (in progress) trace evaluation (Streamlit **Trace Eval** page: measured 30% baseline, BLOCK; 20/20 by checks after the grounding gate, with caveats; pushed, not yet deployed) | [`week-1v2/`](week-1v2/) |
 | 2 | RAG and vector databases (standalone class materials; the capstone's RAG lives in `week-1v2/`) | [`week-2/`](week-2/) |
 
 ## Tech stack

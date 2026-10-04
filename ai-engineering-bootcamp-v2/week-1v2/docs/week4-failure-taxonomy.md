@@ -30,4 +30,4 @@ Fabricated facts lead on frequency (5 of 15 failures). Unauthorized action claim
 - Secondary issues not categorized: ha-007 replied in English to a Spanish query; ha-006 truncated address; no language-match check exists.
 - ha-001 is a borderline label (low confidence); the check does not flag it.
 - Small sample (n=20); counts are indicative only.
-- Annotation rows: `failure_category` assignment is staged in `~/tmp/w4_assign_categories.sql`, awaiting approval.
+- Annotation rows: the `failure_category` assignment is recorded in the database (`internship` schema); counts above match it (5 traces have category `none`).

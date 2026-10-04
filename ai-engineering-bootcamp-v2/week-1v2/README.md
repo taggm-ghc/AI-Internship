@@ -163,7 +163,7 @@ Open `http://localhost:8501`. The sidebar lists six pages:
 | **MVP Layered Health** | A view of `GET /health` |
 | **Setup** | Local setup instructions |
 | **Agent** | The Session 3 agent: answer, grounding line, references, and the Think → Act → Observe trace (the trace shows only with a debug key) |
-| **Trace Eval** | Week 4: code-based check results for the 20 Harmony traces (`internship.traces`, loaded with `load_harmony_traces.py`), before/after comparison and ship-decision thresholds. Needs migrations `002`/`003` |
+| **Trace Eval** | Week 4: code-based check results for the 20 Harmony traces, measured baseline vs measured after-fix, the sentence-retention metric and the ship decision (>=95 SHIP, 85-95 MITIGATE, <85 BLOCK). Reads the committed `eval_results/trace_eval_baseline.json` and `trace_eval_after_fix_measured.json`, with a read-only database fallback (`internship.eval_check_results`). It never calls the API and never displays the API host |
 
 The sidebar's optional **Debug key** box (`debug_key_widget.py`) holds the key
 in the browser session only (never written to disk, a URL or a log) and sends
@@ -176,6 +176,45 @@ samples). Its **Custom API base URL** field is blank by default so a
 screenshot can't leak your deployed URL; left blank, pages use the
 `API_BASE_URL` env var, then whatever `run.sh` last recorded in
 `.faststream-local-url`, then `http://127.0.0.1:8000`.
+
+The UI never displays the API host: `api_client.py` error messages (unreachable,
+timeout, Render cold-start) show only "the configured API (<path>)" and the
+exception type, and the Trace Eval page has no URL footer. Regression tests:
+`tests/test_api_client_no_host_leak.py`, `tests/test_trace_eval_page.py`. This
+is for screenshot hygiene; still crop the browser URL bar.
+
+The API never returns an AI provider's own error text either. An unmapped
+provider failure comes back as a 502 with a coarse category and a reference,
+for example "The AI provider request failed: the AI provider rejected the
+request. Reference: 3f9c0a1b2d4e". The full detail is in the server log under
+that reference, with key-like strings masked, control characters escaped and
+the length capped. Bad key (401), no credit (402) and rate limit (429) keep
+their fixed messages, and "no provider available" messages (written by
+`providers.py`) are shown as-is. Regression test:
+`tests/test_provider_error_no_leak.py`.
+
+### Week 4 results (measured)
+
+The three deterministic checks in `scripts/check_functions.py` ran over the 20
+Harmony traces. **Baseline:** `check_no_ungrounded_claims` 8/20,
+`check_policy_limits_enforced` 17/20, `check_no_unauthorized_claims` 18/20;
+all three pass on 6/20 (30%), so the decision is **BLOCK**. **After the
+deterministic grounding gate** (`grounding_gate.py`): 20/20 by the same checks,
+"SHIP by checks - see caveats". Caveats: the gate was designed on the same 20
+traces (overfitting risk, no held-out set), and replies with ungrounded claims
+are replaced wholesale (the page shows the retention metric). The gate is not
+wired into the live `/ask` path. Earlier "60%" and "60% -> 85%" figures were a
+simulation (a hard-coded pass set), never measured, and are retracted.
+
+```bash
+python3 scripts/check_functions.py --selftest   # self-test only
+python3 scripts/check_functions.py              # baseline (writes eval_results/trace_eval_baseline.json)
+python3 scripts/check_functions.py --apply-fix  # gated replies, same checks (after_fix_measured)
+```
+
+`--save` upserts into the database, which is production (see Security notes);
+it needs `load_harmony_traces.py` to have run first. The script refuses the
+retired `after_fix` run label (the simulated run).
 
 ## Try the Guardrail Demo
 
@@ -372,8 +411,10 @@ comments) and runs `uvicorn main:app --host 0.0.0.0 --port 8000`.
    suffix is needed there. **Never put the admin credentials
    (`DB_ADMIN_*`) on Render.** A full `INTERNAL_DB_URL` still works as a
    fallback when `DB_ACCOUNT` is unset.
-   **Also set `DEBUG_API_KEY`** before deploying item #62: unset, every
+   **Also set `DEBUG_API_KEY` on the API service only** before deploying item #62: unset, every
    `/debug/*` route returns 401 and `/agent` returns no trace (fail closed).
+   Do **not** set it on the Streamlit service; users type the key into the
+   sidebar **Debug key** box (session-only).
    Optional: `INGEST_API_KEY` (see [Security](#security)) and the
    retrieval switches under [Configuration](#configuration); the defaults
    are the tested ones. Set these directly in Render's dashboard; never
@@ -688,8 +729,7 @@ DB-side in `internship.artifacts`.
   characters (validate/trim/enforce), wired into `/ask` and `/agent`, and
   `citations.py` shows a licence note. Live behaviour is UNVERIFIED.
 - **Item #62** (debug key, `/stats/summary`, quoting): plan in the local
-  planning record; built locally, its 55
-  tests pass (87 with the other unit suites), NOT committed or deployed. `DEBUG_API_KEY` must be set on Render
+  planning record; pushed 2026-10-04 but NOT deployed yet (deploys are manual). `DEBUG_API_KEY` must be set on the Render API service
   before deploy (fail closed locks the routes otherwise). Open: `GET
   /ingest/versions/diff` is public and returns document-text diffs; R1 has
   not decided to restrict it. **Item #63** (purge and licence gate) is recorded there too.
@@ -905,8 +945,8 @@ week-1v2/
   `scripts/migrate_operational_store.py` still reference it, so the migration
   and verify scripts cannot run as written (`operational_store.py` only
   mentions the retired store in its docstring). Cleanup awaits R2 approval (p3m3 item #63, open question 7).
-- **Item #62 not deployed.** Built and unit-tested locally only; needs
-  `DEBUG_API_KEY` on Render first. `GET /ingest/versions/diff` is still public
+- **Item #62 not deployed.** Pushed 2026-10-04 and unit-tested; deploy
+  requires `DEBUG_API_KEY` on the API service first. `GET /ingest/versions/diff` is still public
   and returns document-text diffs (undecided).
 - **Ingest filters.** The `INGEST_API_KEY` fail-open default is closed and
   injection phrasing is labelled non-actionable rather than exempted by key

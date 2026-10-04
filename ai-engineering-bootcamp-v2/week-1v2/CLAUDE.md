@@ -47,10 +47,18 @@ distinct risk surface from the app's own ingestion/retrieval defenses.
   - Filters apply to all ingest, including manual or keyed submissions.
   - No new DB accounts without a named request.
   - Introspection is keyed: `/debug/*` and the `/agent` trace need
-    `X-Debug-Key` (`DEBUG_API_KEY`, fail closed; built locally, not yet
-    deployed). Never put the key in a URL,
+    `X-Debug-Key` (`DEBUG_API_KEY`, fail closed; pushed 2026-10-04; deploy
+    requires `DEBUG_API_KEY` on the API service, still pending). Never put the key in a URL,
     log or commit. `INGEST_API_KEY` is only for manually submitted data and
     never bypasses a filter.
+  - UI must never display the API host (live deployment URL): error text
+    shows the path only. Any new UI surface gets a sentinel-host regression
+    test (see `tests/test_api_client_no_host_leak.py`,
+    `tests/test_trace_eval_page.py`).
+  - API error responses never carry a provider's or SDK's exception text:
+    use `_provider_failure_detail` (category + reference; detail to the log,
+    redacted). Only `providers.ProviderUnavailableError` text, which this
+    project writes, is shown as-is (p3m3 item #69, D-027).
   - Plan before code: p3m3 entry via the research-informed-planning skill.
 - **Standing rules added 2026-10-02 (R1 decisions):**
   - Hardcoded-data standard (refined, adopted): invariants (protocol or
