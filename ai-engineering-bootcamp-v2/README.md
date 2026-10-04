@@ -7,7 +7,7 @@ Hands-on course materials for building production-style LLM services with **Fast
 | Week | Topic | Location |
 |------|-------|----------|
 | 1 | `/ask` endpoint — typed I/O, structured output, guardrails, model selection, cost | [`week-1/`](week-1/) |
-| 1–3 (capstone) | **The capstone service**: Session 1 typed `/ask` with guardrails, Session 2 RAG (`/ingest`, `/debug/retrieve`, grounded + cited `/ask`, APA 7 references), Session 3 LangGraph agent (`/agent`) | [`week-1v2/`](week-1v2/) |
+| 1–4 (capstone) | **The capstone service**: Session 1 typed `/ask` with guardrails, Session 2 RAG (`/ingest`, `/debug/retrieve` (needs `X-Debug-Key`), grounded + cited `/ask`, APA 7 references), Session 3 LangGraph agent (`/agent`), Session 4 (in progress) trace evaluation (Streamlit **Trace Eval** page) | [`week-1v2/`](week-1v2/) |
 | 2 | RAG and vector databases (standalone class materials; the capstone's RAG lives in `week-1v2/`) | [`week-2/`](week-2/) |
 
 ## Tech stack
@@ -15,8 +15,8 @@ Hands-on course materials for building production-style LLM services with **Fast
 - **FastAPI** — HTTP API with automatic OpenAPI docs
 - **OpenAI Python SDK** — chat completions and structured output (`response_format`)
 - **Pydantic** — request/response schemas and validation guardrails
-- **python-dotenv** — load `OPENAI_API_KEY` from `.env`
-- **PostgreSQL + pgvector** — documents, embeddings, events and provenance
+- **python-dotenv** — load `OPENAI_API_KEY` from the gitignored `.env` (database settings come from `.env.db-accounts`)
+- **PostgreSQL + pgvector** — documents, embeddings, events and provenance (the only vector store; the legacy local Chroma store was removed 2026-10-01)
 - **LangGraph** — the Session 3 agent loop
 - **Streamlit** — the UI (`MVP_Layered_Ask.py` plus pages, including the Agent page)
 - **httpx** — HTTP client for tests and the Streamlit UI
@@ -26,6 +26,7 @@ Hands-on course materials for building production-style LLM services with **Fast
 ```bash
 cd week-1v2
 cp .env.example .env          # add OPENAI_API_KEY; put the DB_* settings in .env.db-accounts (Postgres is required)
+                              # never commit either file or paste their values anywhere public
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt

@@ -32,8 +32,9 @@ are traceable.
 | POST | `/agent` | LangGraph agent with a `search_corpus` tool |
 | POST | `/ingest`, `/ingest/batch`, `/ingest-pdf` | Add documents to the corpus |
 | GET/POST | `/ingest/versions`, `/ingest/versions/diff`, `/ingest/versions/accept` | Review and accept staged re-ingests |
-| GET | `/debug/retrieve` | Raw retrieval (top-k chunks + distances), no LLM involved |
-| GET | `/debug/similar-documents`, `/debug/corpus-summary`, `/debug/events` | Corpus and observability introspection |
+| GET | `/stats/summary` | Public, aggregate-only operational stats (counts, rates, latency percentiles, cost totals; small cells suppressed) |
+| GET | `/debug/retrieve` | Raw retrieval (top-k chunks + distances), no LLM involved. **Requires `X-Debug-Key`** |
+| GET | `/debug/similar-documents`, `/debug/corpus-summary`, `/debug/events` | Corpus and observability introspection. **Require `X-Debug-Key`** |
 | POST | `/summarize`, `/analyze-sentiment` | Session 1 structured-output siblings of `/ask` |
 
 `/ask` returns `answer` (a structured object), `tokens_used`, `model`,
@@ -41,7 +42,8 @@ are traceable.
 and the RAG fields `status` (`supported` / `insufficient` /
 `not_applicable`), `citations` (chunk IDs), `references` (APA 7 entries) and
 `embedding_cost_usd`. `/agent` returns `answer`, `trace`, `grounding` (including `tool_error`
-when its search failed), `sources` and `references`.
+when its search failed), `sources` and `references`; `trace` is `[]` unless the
+request carries a valid `X-Debug-Key` (see [Security](#security)).
 
 ## Quick Start
 
@@ -106,8 +108,13 @@ python scripts/test_db_connection.py               # confirms the app's own conn
 
 A fresh database starts with an empty corpus; add documents with
 [`/ingest`](#ingesting-documents). (`scripts/migrate_operational_store.py`
-is the one-off migration from the legacy local Chroma store, and needs
-`chroma_store/`, which a fresh clone doesn't have.)
+is the one-off migration from the legacy local Chroma store; that store
+was deleted on 2026-10-01, so the script can no longer run. See
+[Known pending items](#known-pending-items).)
+`install_schema()` applies every `migrations/NNN_*.sql` file in filename order (001 operational
+store, 002 trace-eval tables, 003 eval `run_label`), one transaction per file. All three are idempotent
+(re-running is safe; checked 2026-10-02 on a throwaway local Postgres, three rounds plus the
+already-applied path, with pgvector stubbed). It has not been run against the shared database.
 **Caution:** if your local settings point at the same database your
 deployed service uses, every local run reads and writes production data.
 Running locally as a least-privilege account limits what a mistake can do.
@@ -147,15 +154,20 @@ source .venv/bin/activate
 streamlit run MVP_Layered_Ask.py
 ```
 
-Open `http://localhost:8501`. The sidebar lists five pages:
+Open `http://localhost:8501`. The sidebar lists six pages:
 
 | Page | What it's for |
 |---|---|
 | **MVP Layered Ask** | Ask a question, pick provider/model and RAG mode, ingest a document, inspect the JSON, copy the equivalent `curl`; shows citations and the APA reference list |
-| **Observability Dashboard** | Retrieval/HTTP events, confidence and cost-by-outcome panels |
+| **Observability Dashboard** | Retrieval/HTTP events, confidence, cost-by-outcome, retrieval-degradation, cost-forecast and SLO panels. Aggregate panels use the public `/stats/summary`; the request-level section needs the debug key (below) |
 | **MVP Layered Health** | A view of `GET /health` |
 | **Setup** | Local setup instructions |
-| **Agent** | The Session 3 agent: answer, grounding line, references, and the Think → Act → Observe trace |
+| **Agent** | The Session 3 agent: answer, grounding line, references, and the Think → Act → Observe trace (the trace shows only with a debug key) |
+| **Trace Eval** | Week 4: code-based check results for the 20 Harmony traces (`internship.traces`, loaded with `load_harmony_traces.py`), before/after comparison and ship-decision thresholds. Needs migrations `002`/`003` |
+
+The sidebar's optional **Debug key** box (`debug_key_widget.py`) holds the key
+in the browser session only (never written to disk, a URL or a log) and sends
+it as `X-Debug-Key`.
 
 The sidebar also tracks this session's running costs and, per
 provider/model, a latency boxplot built from real `/ask` response times
@@ -212,7 +224,8 @@ its siblings also have:
   1,000-token completion cap keep per-call cost bounded and
   calculable: typical usage runs about **$0.165/day**, worst case
   (maximum-length input/output on every request) about **$0.96/day** —
-  comfortably inside a small wallet budget.
+  comfortably inside a small wallet budget. These two are estimates from an
+  earlier session, not re-measured on 2026-10-02 (re-measure pending).
 - **A three-window rate limiter** (`10/min; 30/hour; 300/day`,
   tightest window checked first) on every endpoint, so a burst of
   traffic against the public demo URL can't run up an unbounded bill.
@@ -253,10 +266,19 @@ curl -s -X POST http://127.0.0.1:8000/agent \
   -d '{"question": "What is the memory wall problem for mixture-of-experts models on SSDs?"}' | jq '{answer, grounding, sources, references}'
 ```
 
-Retrieval only, no LLM. `?q=` is the course contract; `?query=` also works:
+Retrieval only, no LLM. `?q=` is the course contract; `?query=` also works.
+Every `/debug/*` route needs the `X-Debug-Key` header (the value of
+`DEBUG_API_KEY`); send it as a header, never in the URL:
 
 ```bash
-curl -s "http://127.0.0.1:8000/debug/retrieve?q=memory+wall+mixture+of+experts&top_k=5" | jq
+curl -s -H "X-Debug-Key: $DEBUG_API_KEY" \
+  "http://127.0.0.1:8000/debug/retrieve?q=memory+wall+mixture+of+experts&top_k=5" | jq
+```
+
+Public aggregate stats (no key):
+
+```bash
+curl -s "http://127.0.0.1:8000/stats/summary?window_hours=24" | jq
 ```
 
 Ingest a document (see [Ingesting documents](#ingesting-documents)):
@@ -301,11 +323,12 @@ uvicorn stages.stage_3_guardrails_and_observability:app --host 127.0.0.1 --port 
 |---|---|---|
 | `python smoke_test.py` | Starts the API, checks `/health` and `/docs` | No tokens |
 | `python -m unittest test_citations test_pdf_extract test_db_admin_fallback` | APA formatter and marker rendering; PDF extraction; DB URL built from parts + admin-login retry (32 tests) | No network, no DB |
+| `python -m pytest -q test_quote_guard.py test_introspection_access.py test_item62_ui.py` | Item #62: 300-char quote guard, `X-Debug-Key` access on every `/debug/*` route plus the route inventory, `/stats/summary` suppression, the Streamlit key widget (55 tests; with the three suites above, 87 under pytest). `pytest` is pinned in `requirements-dev.txt` (not in `requirements.txt`; the Docker image never installs it). Verified 2026-10-02: 32 unittest and 55 pytest tests pass locally | No network, no DB |
 | `python scripts/test_db_connection.py` | The app's own DB connection (which account, which host) | One `select 1` |
 | `python scripts/provision_db_accounts.py --verify` | Least-privilege accounts: privilege matrix, no admin rights, logins work | Read-only |
 | `python test_all_stages.py` | Live `/ask` contract: structured answer, guardrail retry, model override, cost scaling | Real calls, well under a cent (5 calls ≈ $0.0006) |
-| `python golden_eval.py [--base-url URL]` | 10 golden questions: retrieval hit, supported/refusal correctness, content overlap | Real calls via `/ask`; writes request, retrieval and `golden_eval` events to the DB |
-| `python scripts/retrieval_eval.py` | 200-question retrieval eval (`config/retrieval_eval_set.json`): dense vs. hybrid vs. reranked, paired t-test + permutation test, per-stratum | Real embedding + reranker calls; read-only against the DB |
+| `python golden_eval.py [--base-url URL]` | The 9 active golden questions (`config/golden_eval_set.json`; 1 purged entry kept aside): retrieval hit, supported/refusal correctness, content overlap | Real calls via `/ask`; writes request, retrieval and `golden_eval` events to the DB |
+| `python scripts/retrieval_eval.py` | Retrieval eval (`config/retrieval_eval_set.json`, 195 active entries after the 2026-10-01 purge; the retrieval evidence below was measured on the earlier 200-question set): dense vs. hybrid vs. reranked, paired t-test + permutation test, per-stratum | Real embedding + reranker calls; read-only against the DB |
 | `python scripts/rerank_gate_calibration.py` | Calibrates the reranker's high-confidence skip threshold from saved eval results | Embedding calls only |
 
 The eval set is rebuilt with `python scripts/build_retrieval_eval_set.py`
@@ -349,6 +372,8 @@ comments) and runs `uvicorn main:app --host 0.0.0.0 --port 8000`.
    suffix is needed there. **Never put the admin credentials
    (`DB_ADMIN_*`) on Render.** A full `INTERNAL_DB_URL` still works as a
    fallback when `DB_ACCOUNT` is unset.
+   **Also set `DEBUG_API_KEY`** before deploying item #62: unset, every
+   `/debug/*` route returns 401 and `/agent` returns no trace (fail closed).
    Optional: `INGEST_API_KEY` (see [Security](#security)) and the
    retrieval switches under [Configuration](#configuration); the defaults
    are the tested ones. Set these directly in Render's dashboard; never
@@ -358,8 +383,8 @@ comments) and runs `uvicorn main:app --host 0.0.0.0 --port 8000`.
    to the port it `EXPOSE`s (8000) — no `$PORT` wiring needed on this
    runtime. If a push to your branch doesn't trigger a build, check the
    service's auto-deploy setting, or use **Manual Deploy → Deploy latest
-   commit**. Peak memory measured on a clean install is about 184 MB, within
-   the free tier's 512 MB (see `RAG_HYBRID` under
+   commit**. Peak memory measured on a clean install was about 184 MB (last measured
+   2026-09-25; re-measure pending), within the free tier's 512 MB (see `RAG_HYBRID` under
    [Configuration](#configuration) before enabling hybrid search).
 
 On Render's free tier the service spins down after inactivity — see the
@@ -400,16 +425,20 @@ change and on a schedule, with `pg_dump` running as its own read-only account.
 ### PostgreSQL runtime and recovery
 
 All durable state lives in one Postgres database, `internship` schema,
-eight tables: `documents` (source text + provenance), `document_versions`
+the operational tables below (plus the Week 4 trace-eval tables from `migrations/002`), eight core tables: `documents` (source text + provenance), `document_versions`
 (staged re-ingests awaiting acceptance), `vectors` (chunk and
 document-centroid embeddings), `artifacts` (raw file bytes, SHA-256-keyed —
 uploaded PDFs and quarantined originals), `events` (the audit/observability
 log every `record_event()` call writes to), `provider_observations`,
 `collections` (with a revision counter that invalidates cached indexes),
 `schema_version`. Plus one read-only view, `document_provenance`, which
-flattens each document's provenance JSON into plain columns. Nothing the
-deployed app needs lives only on local disk or in `chroma_store/` (legacy,
-pre-migration, excluded from the deploy image — see `.dockerignore`).
+flattens each document's provenance JSON into plain columns. The Week 4
+trace-eval migration adds `traces`, `trace_annotations`,
+`failure_categories`, `eval_check_results` and two summary views. Nothing the
+deployed app needs lives only on local disk. The legacy `chroma_store/`
+(pre-migration vector store) was deleted on 2026-10-01 after every row was
+verified present in Postgres; it is not a fallback. Leftovers are listed under
+[Known pending items](#known-pending-items).
 
 **Recovery, in order of what's actually durable:**
 1. **Render's own Postgres backups** (if enabled on your plan) are the
@@ -472,7 +501,7 @@ Default: `gpt-4.1-nano` — OpenAI's cheapest structured-output-capable
 tier ($0.10/1M input, $0.40/1M output tokens). It fits `/ask`'s bounded
 single-turn Q&A contract, where a predictable schema matters more than
 deep reasoning; a real call against the deployed instance cost
-**$0.000096** (118 prompt + 210 completion tokens) — see [Cost per
+**$0.000096** (118 prompt + 210 completion tokens; last measured before 2026-10-01, re-measure pending) — see [Cost per
 call](#cost-per-call).
 
 Model selection is sourced from `config/model-selection.json`, not
@@ -508,7 +537,9 @@ that reason is recorded where the model is set.
 
 ### Cost per call
 
-Real `cost_usd` values from live calls, not estimates:
+Real `cost_usd` values from live calls, not estimates (last measured before
+2026-10-01 on the then-current default; not re-measured 2026-10-02, re-measure
+pending; prices and the default chain may have changed):
 
 | Call | Tokens (prompt + completion) | `cost_usd` |
 |------|-------------------------------|------------|
@@ -605,20 +636,63 @@ fields, never conflate a document ID with a chunk ID.
 - A **new** `document_id` goes live immediately. **Re-ingesting an existing
   `document_id` never overwrites it:** it stages a new version, reviewed via
   `GET /ingest/versions` and `/ingest/versions/diff`, and goes live through
-  `POST /ingest/versions/accept`. Staged versions are accepted automatically
-  only for an authenticated caller whose content scan is clean.
+  `POST /ingest/versions/accept`, which requires a valid `X-Ingest-Key` (the
+  only place the key is required; denied outright if no key is configured).
+  A re-ingest from a keyed caller with a clean scan is accepted automatically.
+  Exact-duplicate content (same SHA-256) is never ingested again, under the
+  same or a different `document_id` (`status: "duplicate"`, `duplicate_of`).
 - `rag_ingest.py` is the original one-off baseline-corpus builder; the live
   corpus is maintained through the endpoints above.
 
 ### Corpus
 
-About 260 documents: open-access AI/ML research papers (arXiv, PMLR/ICML,
+261 documents (last measured 2026-10-01, after the NC-ND purge below; not re-counted since, re-measure pending): open-access AI/ML research papers (arXiv, PMLR/ICML,
 ACL Anthology, NeurIPS, JMLR), a few news and blog articles, and design
 references. Each document's provenance (source, URL, fetch time, content
 hash, content-scan result) is stored with it, queryable through the
 `internship.document_provenance` view. Source PDFs are kept locally in
 `ingestion_quarantine/` (gitignored, excluded from the image) and
 DB-side in `internship.artifacts`.
+
+**Annotations, 2026-10-01 (R11a records; details in the p3m3 item files):**
+
+- **Licence fields.** `config/citation_metadata.json` records now carry
+  `license`, `license_url` and `license_checked` (checked against each
+  source page; 3 VentureBeat pages hit a 429 and are unchecked). Original
+  source licences prevail provided the original source is used (OneUptime
+  CC BY 4.0 and NVIDIA AIPerf Apache-2.0 citations point to the repo file
+  plus commit, with the website kept as `website_url`). Records with no open
+  licence (arXiv non-exclusive, NeurIPS 2023, 4 vendor blogs) and the 5
+  BY-NC-SA records stay under the short-cited-quotes default.
+  The list is in the local planning record.
+- **NC-ND purge (item #63).** All BY-NC-ND sources were purged: 5 documents
+  (430 vector rows) plus their raw PDFs in `internship.artifacts`, local
+  files and the legacy Chroma store (since deleted outright). Corpus 266 to 261 documents; 5 citation
+  records removed; the golden eval set is 9 active entries and the retrieval
+  eval set 195 (affected entries moved to `purged_entries`). Residuals
+  (stale chunk IDs in `index_metadata.pickle`, HNSW vectors until
+  compaction, ID mentions in manifests and events) are recorded in the item
+  file. Going forward the licence gate rejects declared NC/ND and holds
+  unknown-licence sources for human review (a human allow-lists).
+- **DB-first source storage.** `internship.artifacts` holds the source files
+  (271 under `ingestion_quarantine/` plus 7 uploads) and
+  `documents.text_content` holds the extracted text. The local
+  `ingestion_quarantine/` is a duplicate staging copy still read by
+  `rag_ingest.py` and `scripts/verify_operational_store.py`; retiring it
+  awaits R1.
+- **No raw source documents in the repo.** Raw external sources must not be
+  committed; if kept anywhere, they live in the database. `sample_docs/` is
+  course material and stays.
+- **Short cited quotes.** Answers use targeted, relevant short quotes, never
+  significant portions of chunks; `quote_guard.py` caps quotes at 300
+  characters (validate/trim/enforce), wired into `/ask` and `/agent`, and
+  `citations.py` shows a licence note. Live behaviour is UNVERIFIED.
+- **Item #62** (debug key, `/stats/summary`, quoting): plan in the local
+  planning record; built locally, its 55
+  tests pass (87 with the other unit suites), NOT committed or deployed. `DEBUG_API_KEY` must be set on Render
+  before deploy (fail closed locks the routes otherwise). Open: `GET
+  /ingest/versions/diff` is public and returns document-text diffs; R1 has
+  not decided to restrict it. **Item #63** (purge and licence gate) is recorded there too.
 
 ### Retrieval decisions, and the evidence behind them
 
@@ -628,7 +702,7 @@ DB-side in `internship.artifacts`.
   on a held-out half.
 - **Hybrid search off** (`RAG_HYBRID`). It showed no significant gain,
   trended worse on paraphrased questions, and its in-process BM25 index
-  adds about 232 MB (about 600 MB peak during a post-ingest rebuild).
+  adds about 232 MB (about 600 MB peak during a post-ingest rebuild; earlier measurement, re-measure pending).
 - **Citation precision.** Only passages the model says it used are cited.
 - **`RAG_RELEVANCE_THRESHOLD`** is calibrated for this corpus, embedding
   model and distance metric, not a universal constant. Re-check it with
@@ -702,11 +776,37 @@ work cited in the text.
 - **Keys and URLs** live only in `.env` (gitignored) or the host's dashboard.
   Never commit them, and never post your deployed URL publicly.
 - **`/ingest` content scan** (`detect_adversarial_content`): invisible
-  Unicode is always rejected. Prompt-injection phrasing and
-  corpus-exfiltration patterns are rejected for unauthenticated callers.
-  A caller is authenticated by sending `X-Ingest-Key` matching
-  `INGEST_API_KEY` (compared in constant time). **If `INGEST_API_KEY` is
-  unset, every caller counts as authenticated.**
+  Unicode is always rejected, for every caller. Prompt-injection phrasing is
+  **not rejected** (legitimate security papers match): it is ingested, recorded
+  as `provenance.non_actionable`, returned as `non_actionable: true`, and at
+  retrieval (both `/ask` and the agent's `search_corpus`) labelled inert data
+  that is never to be treated as instructions. This is a probabilistic
+  mitigation, layered with the "treat retrieved text as data" prompt rule, not
+  a hard block. A caller is authenticated by sending `X-Ingest-Key` matching
+  `INGEST_API_KEY` (constant-time compare); **if `INGEST_API_KEY` is unset no
+  caller is authenticated (fails closed)**. The key only affects handling
+  after the filters (auto-accept of a clean re-ingest, and
+  `POST /ingest/versions/accept`); it never exempts content from a filter.
+- **Introspection routes are keyed** (p3m3 item #62, **contract change
+  2026-10-01**): `/debug/retrieve`, `/debug/similar-documents`,
+  `/debug/events` and `/debug/corpus-summary` require an `X-Debug-Key`
+  header matching `DEBUG_API_KEY`, compared as fixed-length SHA-256 digests
+  in constant time. Missing, wrong or unconfigured keys all get the same
+  `401 {"detail": "restricted"}`; **if `DEBUG_API_KEY` is unset the routes
+  stay locked (fail closed)**, unlike `INGEST_API_KEY`. Failed attempts are
+  rate limited per client address (`5/minute; 20/hour`, then 429) and
+  recorded as `debug_denied` events (path and address only, never the key).
+  `/agent` still answers everyone but returns its step `trace` only to a key
+  holder. The Week 2 contract's unauthenticated `GET /debug/retrieve?q=` now
+  returns 401. Aggregates that used to be computed from raw events are served
+  publicly by `GET /stats/summary`: counts, rates, p50/p95 latency and cost
+  sums only, no payloads, IPs, request IDs, titles or text; any value resting
+  on fewer than 10 events is `null` and named in `suppressed`, with
+  complementary suppression so hidden cells can't be back-calculated from
+  totals; cached about 60 s and rate limited (`30/minute; 600/hour`).
+- **Short quotes only:** `quote_guard.py` caps any quotation at 300
+  characters; it is wired into `/ask` (prompt rule plus post-generation
+  enforcement) and `/agent`. Unit-tested; live behaviour not yet verified.
 - **Retrieved text is data, never instructions**, in both `/ask`'s grounded
   prompt and `/agent`'s system prompt. `/ask` also strips invisible
   Unicode from every retrieved chunk, and `/agent` does the same for the
@@ -730,18 +830,21 @@ work cited in the text.
 | `DB_ADMIN_ROLE`, `DB_ADMIN_PASSWORD`, `DB_ADMIN_ROLE_RETRY` | admin tasks only | — | Owner account for schema changes and account setup; never on the deployed service |
 | `DB_RO_GROUP`, `DB_RW_GROUP`, `DB_API_RW_USER`, `DB_LOCAL_AGENT_RW_USER`, `DB_BACKUP_RO_USER` | for `provision_db_accounts.py` | — | Account and group names (no names are hardcoded) |
 | `EXTERNAL_DB_URL` / `INTERNAL_DB_URL` | fallback | — | Full URL, used only when `DB_ACCOUNT` is unset (`RENDER=true` selects internal) |
-
-Locally, keep every `DB_*` setting in `.env.db-accounts` (loaded by `db.py`),
-not `.env`. On Render, set them as service environment variables.
 | `GROQ_API_KEY`, `GEMINI_API_KEY`, `MISTRAL_API_KEY`, `OPENROUTER_API_KEY`, `SAMBANOVA_API_KEY`, `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` | no | — | Free-tier providers tried first; see `.env.example` |
 | `LOCAL_INFERENCE_HOST` / `_PORT` / `_SERVERS` / `_API_KEY` | no | — | Optional LAN inference servers |
-| `INGEST_API_KEY` | no | unset (everyone authenticated) | See [Security](#security) |
+| `INGEST_API_KEY` | no | unset (nobody authenticated; accept denied) | See [Security](#security) |
+| `DEBUG_API_KEY` | for `/debug/*` and the `/agent` trace | unset (**locked**, fail closed) | Shared key sent as `X-Debug-Key`; see [Security](#security) |
 | `API_BASE_URL` | no | — | Streamlit service: which API the pages call |
 | `RAG_RERANK` | no | on | Reranker in `/ask` |
 | `RAG_RERANK_MODEL` | no | `gpt-4.1-nano` | Reranker model (pinned) |
 | `RAG_RERANK_HIGH_GAP` | no | `0.20` | Skip the reranker when the top document leads by more than this |
-| `RAG_HYBRID` | no | off | Hybrid BM25 + dense retrieval; adds about 232 MB of memory |
+| `RAG_HYBRID` | no | off | Hybrid BM25 + dense retrieval; adds about 232 MB of memory (earlier measurement) |
 | `AGENT_LOG_TOOL_CONTENT` | no | off | Also log the question and tool arguments/results in `/agent`'s `agent_run` audit events (metadata only by default) |
+
+Locally, keep every `DB_*` setting in `.env.db-accounts` (loaded by `db.py`),
+not `.env`. On Render, set them as service environment variables.
+`.env.example` documents account names and variables only; it holds no secret
+values, and no database accounts beyond those described there should be created.
 
 The `RAG_*` switches are read at request time, so changing one in the host's
 dashboard and restarting is enough; no redeploy is needed.
@@ -759,21 +862,26 @@ week-1v2/
 ├── rag_service.py              # Retrieval, reranker, confidence gate, grounded prompt
 ├── rag_ingest.py               # Chunking/embedding; one-off baseline corpus builder
 ├── pdf_extract.py              # PDF → text
-├── citations.py                # APA 7 in-text citations + reference lists
+├── citations.py                # APA 7 in-text citations + reference lists (with licence note)
+├── quote_guard.py              # Item #62: 300-char quote cap (validate/trim/enforce)
+├── stats_service.py            # Item #62: public aggregate-only stats behind GET /stats/summary
+├── debug_key_widget.py         # Item #62: Streamlit sidebar debug-key box (session state only)
+├── load_harmony_traces.py      # Week 4: loads the 20 Harmony traces into internship.traces
 ├── agent_service.py            # Session 3 LangGraph agent
 ├── db.py, operational_store.py, operational_audit.py   # Postgres access (URL from parts, admin engine), events, audit middleware
 ├── pricing_config.py           # Cost calculation from config/model-pricing.json
 ├── MVP_Layered_Ask.py          # Streamlit entry page
-├── pages/                      # Observability Dashboard, Health, Setup, Agent
+├── pages/                      # Observability Dashboard, Health, Setup, Agent, Trace Eval
 ├── api_client.py, ui_theme.py, ui_widgets.py            # Shared Streamlit helpers
 ├── config/                     # model selection/pricing, golden set, retrieval eval set, citation metadata
-├── migrations/                 # Postgres schema (001_operational_store.sql)
+├── migrations/                 # Postgres schema (001 operational store, 002 trace eval, 003 eval run label)
 ├── scripts/                    # evals, calibration, metadata builder, DB account provisioning, curriculum demos, pricing tools
 ├── stages/                     # Session 1 teaching references
-├── smoke_test.py, golden_eval.py, test_*.py
-├── .claude/skills/             # Project Claude Code skills (rag-scaffold, research-informed-planning)
-├── chroma_store/               # Legacy pre-Postgres vector store (gitignored, not deployed)
-└── ingestion_quarantine/       # Local source PDFs (gitignored, not deployed)
+├── smoke_test.py, golden_eval.py, test_*.py   # test_gpt6_astra.py is a live-API smoke script, not a unit test
+├── build-in-public-post.md     # Draft post text (not part of the service)
+├── sample_docs/                # Northwind course material (stays in the repo)
+├── .claude/skills/             # Project Claude Code skills (rag-scaffold, research-informed-planning, which now has a findings-file lint script; its four experimental agents are in the repo-root .claude/agents/)
+└── ingestion_quarantine/       # Local source PDFs, duplicate staging copy (gitignored, not deployed; see its README)
 ```
 
 ## Troubleshooting
@@ -788,3 +896,24 @@ week-1v2/
 - A push didn't redeploy on Render: check the service's auto-deploy setting, or use Manual Deploy.
 - `/agent` returns `503 … stopped at its step limit`: the agent looped without reaching an answer; ask a narrower question. (This is the intended fail-closed response, not a crash.)
 - An `/agent` answer starts with "Note: the corpus search failed…": the search tool errored (see server logs for the error type); the answer is from general knowledge, and `grounding` is `tool_error`.
+
+## Known pending items
+
+- **Chroma leftovers.** `chroma_store/` is gone, but `chromadb` is still
+  pinned in `requirements.txt`, and `rag_ingest.py` (`CHROMA_PATH`),
+  `scripts/verify_operational_store.py` and
+  `scripts/migrate_operational_store.py` still reference it, so the migration
+  and verify scripts cannot run as written (`operational_store.py` only
+  mentions the retired store in its docstring). Cleanup awaits R2 approval (p3m3 item #63, open question 7).
+- **Item #62 not deployed.** Built and unit-tested locally only; needs
+  `DEBUG_API_KEY` on Render first. `GET /ingest/versions/diff` is still public
+  and returns document-text diffs (undecided).
+- **Ingest filters.** The `INGEST_API_KEY` fail-open default is closed and
+  injection phrasing is labelled non-actionable rather than exempted by key
+  (items #60-ingest, #65); see Security.
+- **Licence gate.** The ingest licence gate (reject declared NC/ND, hold
+  unknown licences for review; item #63 Part B) is planned, not built.
+  `ingestion_quarantine/` retirement awaits R1.
+- **Planning record.** `p3m3/` (repository root) is a local planning record.
+  It is gitignored and not in the public repo, so the `p3m3/...` file names
+  in this README name local files that public readers cannot open.

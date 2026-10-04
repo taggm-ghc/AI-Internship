@@ -47,3 +47,12 @@ env/
 
 # Local scratch (not part of the course repo)
 ai-eng-demo-1/
+
+# Local Fossil (version history for p3m3; never commit; may hold gitignored material)
+clerk.fossil
+.fslckout
+_FOSSIL_
+*.fossil
+
+# local Claude permission backups (contain local paths/allow rules)
+.claude/*.bak*

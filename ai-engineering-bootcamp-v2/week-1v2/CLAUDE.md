@@ -1,5 +1,7 @@
 # Working in this repo
 
+<!-- DIVERGENCE:D-001 accepted divergence: secrets held in gitignored local .env files (see p3m3/divergence-register.json). -->
+
 This repo isn't a sandbox. `.env` holds real API keys, and `.env.db-accounts`
 holds real Postgres credentials (a least-privilege local account plus the
 admin account; `EXTERNAL_DB_URL`/`INTERNAL_DB_URL` only as fallbacks) for a
@@ -28,13 +30,60 @@ distinct risk surface from the app's own ingestion/retrieval defenses.
 - **Commits and pushes need an explicit, per-instance go-ahead** — a prior
   approval for one change doesn't extend to a later, separate one in the
   same session.
+- **The legacy `chroma_store/` was deleted on 2026-10-01**; do not recreate it
+  or treat it as a fallback. `chromadb` remains pinned and a few scripts still
+  reference it until the R2-approved cleanup (p3m3 item #63).
 - **A supply-chain risk exists and isn't fully closed**: dependencies in
   `requirements.txt` are pinned to exact versions (good baseline hygiene),
   but no vulnerability scan (`pip-audit` or equivalent) runs automatically.
+- **Standing rules added 2026-10-01 (R1 decisions):**
+  - No raw external source documents in the repo; if kept anywhere, in the
+    database. `sample_docs/` is course material and stays.
+  - Original-source licence policy: the original source's licence prevails
+    when the original source is used; NC/ND declared = reject [Corrected 2026-10-03: reject ONLY no-derivatives (ND), no-educational-use and strictly-for-fee licences; plain NC is accepted; unclear = hold for human review]; no declared
+    licence = held for human review (a human allow-lists).
+  - Quote only short, cited, relevant passages, never significant portions
+    of chunks (`quote_guard.py`).
+  - Filters apply to all ingest, including manual or keyed submissions.
+  - No new DB accounts without a named request.
+  - Introspection is keyed: `/debug/*` and the `/agent` trace need
+    `X-Debug-Key` (`DEBUG_API_KEY`, fail closed; built locally, not yet
+    deployed). Never put the key in a URL,
+    log or commit. `INGEST_API_KEY` is only for manually submitted data and
+    never bypasses a filter.
+  - Plan before code: p3m3 entry via the research-informed-planning skill.
+- **Standing rules added 2026-10-02 (R1 decisions):**
+  - Hardcoded-data standard (refined, adopted): invariants (protocol or
+    provider facts, unit conversions) stay in code as named constants, defined
+    once with a comment on why. Values that vary by environment come from
+    configuration (versioned defaults, environment overrides, validated at
+    load); volatile values come from input, the DB or config. Evaluation
+    parameters (models, judge, prompts, thresholds, questions, budgets) are
+    frozen: versioned, fingerprinted, recorded with every result; a change is a
+    new version, never an edit. Never put eval parameters or DB connection
+    details in the DB. Any other shortfall is a recorded, accepted divergence.
+  - Secrets live only in gitignored `.env` / `.env.db-accounts` (or the host's
+    dashboard). That is an accepted local-development divergence, not the
+    ideal; never log the environment. A secret-store migration is a
+    post-course item, not yet scheduled.
+  - Research skill (`.claude/skills/research-informed-planning/SKILL.md`):
+    step 5 now includes adversarial search (5a), findings files (5b),
+    independent citation verification (5c) and a lint gate (5d, run
+    `check_research_log.py --config research_config.json` on the findings; a
+    non-zero exit blocks the step). The four agents in the repo-root
+    `.claude/agents/` (`researcher`, `adversarial-researcher`,
+    `citation-verifier`, `synthesizer`) are experimental and read-only; spawn
+    them by definition name, never as a fork. The lint checks form, not truth.
+
+## The main agent orchestrates and delegates
+
+The main agent is an orchestrator. A core reason is **context economy**: everything it reads or runs itself stays in its context window for the rest of the session, so bulk reading, searching, research, document passes, test runs and independent implementation are delegated to sub-agents that return only short conclusions. That keeps the main session small, focused on decisions, approvals and the user, and cheaper. Verify a sub-agent's result before reporting work as done. Full working model: [`AGENTS.md`](../../AGENTS.md) at the repository root.
 
 ## Where the real planning record lives
 
-`p3m3/` is this project's durable planning record — gitignored, not part
+`p3m3/` (at the repository root, `AI-Internship/p3m3/`; the same-named folder
+inside `week-1v2/` holds only a verification script) is this project's durable
+local planning record, gitignored (so not in the public repo) and not part
 of the graded deliverable, but the actual source of truth for what's done,
 open, or deferred. `p3m3/todo-digest.md`'s prioritized digest is more
 current than anything in this file. `.claude/skills/research-informed-planning/SKILL.md`

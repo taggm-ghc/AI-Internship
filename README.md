@@ -5,11 +5,18 @@ This repository contains code snippets, notebooks, and exercises for various AI 
 ## 📚 Available Courses
 
 ### AI Engineering Bootcamp v2
-Build a typed LLM service step by step: FastAPI + structured output and guardrails (Session 1), RAG with PostgreSQL/pgvector and APA 7 citations (Session 2), and a LangGraph agent (Session 3).
+Build a typed LLM service step by step: FastAPI + structured output (Session 1), RAG with PostgreSQL/pgvector and APA 7 citations (Session 2), LangGraph agent with tool orchestration (Session 3), and a TRACE evaluation system (Session 4).
 
-- **Location:** `ai-engineering-bootcamp-v2/`
-- **Status:** Sessions 1–3 available; the capstone service is `ai-engineering-bootcamp-v2/week-1v2/`
-- **Get Started:** See [ai-engineering-bootcamp-v2/README.md](ai-engineering-bootcamp-v2/README.md)
+**Sessions 1–3 (Weeks 1–3):** complete.
+**Session 4 (Week 4): TRACE evaluation system** — in progress; the Maven submission is due Oct 7, 2026.
+- Phases 1–4: discover failure patterns in 20 traces, codify them as three deterministic checks, run the baseline, and design a targeted fix.
+- Measured baseline (2026-10-01): 6 of 20 traces pass all three checks (30%), which is below the 85% ship threshold, so the decision is BLOCK. The per-check results are 8/20, 17/20 and 18/20.
+- The designed grounding gate is a proposal. An earlier projection of 85% after the fix was a simulation, not a measurement, and is withdrawn.
+- Phase 5 (Ship): Maven submission.
+
+- **Location:** `ai-engineering-bootcamp-v2/week-1v2/`
+- **Planning:** kept in a local, gitignored planning record (`p3m3/`) that is not part of this public repository.
+- **Get Started:** see [ai-engineering-bootcamp-v2/README.md](ai-engineering-bootcamp-v2/README.md)
 
 ### AI Builders Bootcamp
 Practical builder sessions for agent workflows, AI evals, and production tooling.
@@ -25,10 +32,19 @@ Learn to build production-ready multi-agent systems using LangGraph.
 - **Status:** Weeks 1–4 available
 - **Get Started:** See [multi-agent-systems/README.md](multi-agent-systems/README.md)
 
+### VERA: Capstone Project
+Verifiable Evidence-based Research Answers: a provenance-grounded research assistant that aims to produce auditable, evidence-backed answers.
+
+VERA is a separate project and is not included in this repository. It is under active development; nothing here documents its status or schedule.
+
 ### AI Engineering Bootcamp (v1)
 Earlier bootcamp modules — RAG, ADK/LangGraph agents, eval monitoring, and more.
 
 - **Location:** `ai-engineering-bootcamp/`
+- **Get Started:** see the README in each module folder where one exists
+
+### Other folders
+`claude-architect-bootcamp/` (see its [README](claude-architect-bootcamp/README.md)), `ai-portfolio-bootcamp/` and `lightning-lesson-demos/` hold further course material.
 
 ## 🗂️ Repository Structure
 
@@ -37,7 +53,7 @@ AI-Internship/
 ├── README.md                         # This file
 ├── ai-engineering-bootcamp-v2/       # AI Engineering Bootcamp v2
 │   ├── week-1/                       # Original FastAPI /ask demo
-│   ├── week-1v2/                     # Capstone service (Sessions 1–3: /ask, RAG, /agent)
+│   ├── week-1v2/                     # Capstone service (/ask, RAG, /agent, Week 4 trace eval)
 │   └── week-2/                       # RAG and vector databases
 ├── ai-builders-bootcamp/             # AI Builders sessions
 │   ├── ai-evals-session/             # LLM tracing and eval tooling
@@ -45,6 +61,9 @@ AI-Internship/
 ├── ai-engineering-bootcamp/          # AI Engineering Bootcamp v1 modules
 ├── multi-agent-systems/              # Multi-Agent Systems course
 │   └── week-1/ ... week-4/
+├── claude-architect-bootcamp/        # Claude architect course material
+├── ai-portfolio-bootcamp/            # Portfolio starter repo
+└── lightning-lesson-demos/           # Short demo projects
 ```
 
 ## 🚀 Quick Start
@@ -58,7 +77,7 @@ AI-Internship/
 
 - Python 3.12 for the AI Engineering Bootcamp v2 capstone (`week-1v2/`); other courses list their own requirements
 - pip (Python package manager)
-- Jupyter Notebook or JupyterLab
+- Jupyter Notebook or JupyterLab (only for courses that ship notebooks)
 - Git (for cloning this repository)
 
 ## 🔗 Resources
@@ -81,14 +100,11 @@ AI-Internship/
 
 3. **Follow the course-specific instructions** in each week's README
 
-4. **Work through the notebooks** in order
-
-5. **Experiment and learn!**
+4. **Work through the course material** in order, then experiment and learn
 
 ## 🆘 Getting Help
 
 - Check the README in each week's folder
-- Review the notebook comments and markdown cells
 - Refer to course documentation
 - Ask questions in the course discussion forum
 
@@ -98,5 +114,5 @@ This repository contains educational materials for the AI Internship program.
 
 ---
 
-**Welcome to the AI Internship! 🎓**
+**Welcome to the AI Internship!**
 

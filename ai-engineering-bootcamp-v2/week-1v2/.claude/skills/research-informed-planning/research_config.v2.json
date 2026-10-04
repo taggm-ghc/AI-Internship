@@ -1,0 +1,279 @@
+{
+  "schema_version": 1,
+  "config_version": "2",
+  "profiles": {
+    "rapid": {
+      "max_calls_per_plan": 6,
+      "angles": [
+        "support",
+        "against"
+      ],
+      "red_team_required": false,
+      "verifier_scope": "load_bearing"
+    },
+    "standard": {
+      "max_calls_per_plan": 12,
+      "angles": [
+        "support",
+        "against",
+        "domain_broad"
+      ],
+      "red_team_required": true,
+      "verifier_scope": "load_bearing"
+    }
+  },
+  "budgets": {
+    "researcher_calls": 4,
+    "adversarial_calls": 4,
+    "red_team_calls": 4,
+    "verifier_calls": 1,
+    "verifier_slack": 2,
+    "synthesizer_turns": 10,
+    "researcher_max_turns": 25,
+    "adversarial_max_turns": 25,
+    "verifier_max_turns": 25,
+    "synthesizer_max_turns": 25
+  },
+  "recursion": {
+    "max_depth": 3,
+    "max_children_per_agent": 4,
+    "max_agents_per_tree": 8
+  },
+  "lint": {
+    "max_fix_attempts": 2,
+    "source_id_pattern": "^{research_id}-[A-Za-z]+-S[0-9]+$",
+    "year_pattern": "^[0-9]{4}$",
+    "date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+    "arxiv_hosts": [
+      "arxiv.org"
+    ],
+    "arxiv_id_pattern": "[0-9]{4}\\.[0-9]{4,5}(v[0-9]+)?",
+    "header_marker": "research-header",
+    "header_required_keys": [
+      "research_id",
+      "plan_ref",
+      "role",
+      "angle",
+      "model",
+      "parent",
+      "depth",
+      "config_version",
+      "config_sha256",
+      "budget_limit",
+      "budget_used",
+      "date",
+      "subclaims"
+    ],
+    "non_verbatim_quote_prefix": "~",
+    "no_value_markers": [
+      "-",
+      ""
+    ],
+    "override_cell_pattern": "^(high|medium|low) \\(override: (.+)\\)$",
+    "override_max_level_distance": 1,
+    "verified_label_pattern": "\\b(verified|validated)\\b",
+    "legacy_read_column_patterns": [
+      "read"
+    ],
+    "legacy_state_patterns": [
+      [
+        "TITLE-ONLY",
+        "title[- ]only|titles only"
+      ],
+      [
+        "FETCH-FAILED",
+        "fetch(ed)? failed|failed"
+      ],
+      [
+        "SUMMARY",
+        "search[- ]summary|summary only|summary:|not (re-?)?(fetched|read)|not re-?checked|search result|^search\\b|search only|^summary\\b"
+      ],
+      [
+        "READ-SUMMARIZER",
+        "\\bread\\b|fetched"
+      ]
+    ],
+    "legacy_url_column_patterns": [
+      "url"
+    ],
+    "legacy_file_note_patterns": [
+      [
+        "SUMMARY",
+        "all rows are search[- ]summary"
+      ]
+    ]
+  },
+  "quote_max_words": 25,
+  "read_status_values": [
+    "READ-VERBATIM",
+    "READ-SUMMARIZER",
+    "SUMMARY",
+    "TITLE-ONLY",
+    "FETCH-FAILED"
+  ],
+  "stance_values": [
+    "for",
+    "against",
+    "neutral",
+    "competing"
+  ],
+  "strength_values": [
+    "measured",
+    "survey",
+    "guideline",
+    "opinion",
+    "unknown"
+  ],
+  "verifier_status_values": [
+    "-",
+    "VERIFIED",
+    "MISMATCH",
+    "UNVERIFIED"
+  ],
+  "verdict_values": [
+    "survived",
+    "qualified",
+    "overturned",
+    "no-evidence"
+  ],
+  "antagonistic_stances": [
+    "against",
+    "competing"
+  ],
+  "min_antagonistic_per_subclaim": 1,
+  "reliability_order": [
+    "low",
+    "medium",
+    "high"
+  ],
+  "reliability_default_tier": "low",
+  "reliability_override_requires_reason": true,
+  "reliability_tiers": {
+    "high": [
+      "arxiv.org",
+      "aclanthology.org",
+      "dl.acm.org",
+      "ieeexplore.ieee.org",
+      "usenix.org",
+      "nist.gov",
+      "iso.org",
+      "owasp.org",
+      "cisa.gov",
+      "sei.cmu.edu",
+      "cochrane.org"
+    ],
+    "medium": [
+      "docs.python.org",
+      "postgresql.org",
+      "prometheus.io",
+      "opentelemetry.io",
+      "sre.google",
+      "docs.aws.amazon.com",
+      "learn.microsoft.com",
+      "cloud.google.com",
+      "kubernetes.io",
+      "docs.anthropic.com",
+      "code.claude.com",
+      "github.com"
+    ],
+    "low": []
+  },
+  "evidence_chain": {
+    "blocking_read_states": [
+      "SUMMARY",
+      "TITLE-ONLY",
+      "FETCH-FAILED"
+    ],
+    "blocking_verifier_states": [
+      "MISMATCH",
+      "UNVERIFIED"
+    ],
+    "verified_verifier_state": "VERIFIED"
+  },
+  "model_tiers": {
+    "researcher": "sonnet",
+    "adversarial": "opus",
+    "verifier": "opus",
+    "synthesizer": "opus"
+  },
+  "agent_files": {
+    "researcher": "researcher",
+    "adversarial-researcher": "adversarial",
+    "citation-verifier": "verifier",
+    "synthesizer": "synthesizer"
+  },
+  "allowed_tools": {
+    "researcher": [
+      "Read",
+      "Grep",
+      "Glob",
+      "WebSearch",
+      "WebFetch",
+      "Agent",
+      "mcp__research-run-write-researcher-writer__submit_findings",
+      "mcp__research-run-read-researcher-writer__lint_findings"
+    ],
+    "adversarial": [
+      "Read",
+      "Grep",
+      "Glob",
+      "WebSearch",
+      "WebFetch",
+      "Agent",
+      "mcp__research-run-write-adversarial-writer__submit_findings",
+      "mcp__research-run-read-adversarial-writer__lint_findings"
+    ],
+    "verifier": [
+      "Read",
+      "WebFetch",
+      "WebSearch",
+      "Agent",
+      "mcp__research-run-write-verifier-writer__set_verifier_status",
+      "mcp__research-run-read-verifier-writer__list_findings",
+      "mcp__research-run-read-verifier-writer__read_finding"
+    ],
+    "synthesizer": [
+      "Read",
+      "mcp__research-run-read-synthesizer-reader__list_findings",
+      "mcp__research-run-read-synthesizer-reader__read_finding",
+      "mcp__research-run-read-synthesizer-reader__lint_findings"
+    ]
+  },
+  "spawn_tool": "Agent",
+  "may_spawn": {
+    "researcher": true,
+    "adversarial": true,
+    "verifier": true,
+    "synthesizer": false
+  },
+  "required_disallowed_tools": {
+    "researcher": [],
+    "adversarial": [],
+    "verifier": [],
+    "synthesizer": [
+      "Agent"
+    ]
+  },
+  "spawner_forbidden_tools": [
+    "Write",
+    "Edit",
+    "Bash"
+  ],
+  "spawner_required_body_keys": [
+    "recursion.max_depth",
+    "recursion.max_children_per_agent",
+    "recursion.max_agents_per_tree"
+  ],
+  "secret_patterns": {
+    "api-key-sk": "\\bsk-[A-Za-z0-9_-]{20,}",
+    "aws-access-key-id": "\\bAKIA[0-9A-Z]{16}\\b",
+    "github-token": "\\bgh[pousr]_[A-Za-z0-9]{30,}",
+    "private-key-block": "-----BEGIN [A-Z ]*PRIVATE KEY-----",
+    "url-with-password": "[a-z][a-z0-9+.-]*://[^\\s/:@]+:[^\\s/@]+@",
+    "assignment-of-secret": "(?i)\\b(api[_-]?key|secret|passw(or)?d|token)\\b\\s*[=:]\\s*[\"']?[A-Za-z0-9/+_.-]{12,}"
+  },
+  "verification": {
+    "human_spot_check_count": 2
+  },
+  "findings_dir": "scratchpad"
+}
