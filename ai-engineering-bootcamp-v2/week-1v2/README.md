@@ -1,6 +1,7 @@
-# Agentic AI Engineering Bootcamp: Capstone Service
+# Agentic AI Engineering Bootcamp: Course Service
 
-This folder is the capstone service built across the bootcamp's first three
+This folder is the course service (the weekly assignments; the capstone, VERA,
+is a separate repository) built across the bootcamp's first four
 sessions, one FastAPI app and one Streamlit UI growing week by week:
 
 | Session | What it adds | Where |

@@ -9,10 +9,10 @@ Build a typed LLM service step by step: FastAPI + structured output (Session 1),
 
 **Sessions 1–3 (Weeks 1–3):** complete.
 **Session 4 (Week 4): TRACE evaluation system** — in progress; the Maven submission is due Oct 7, 2026.
-- Phases 1–4: discover failure patterns in 20 traces, codify them as three deterministic checks, run the baseline, and design a targeted fix.
+- Phases 1–4: discover failure patterns in 20 traces (the course-provided Harmony Apartments set), codify them as three deterministic checks, run the baseline, and build and measure a targeted fix.
 - Measured baseline (2026-10-01): 6 of 20 traces pass all three checks (30%), which is below the 85% ship threshold, so the decision is BLOCK. The per-check results are 8/20, 17/20 and 18/20.
 - Fix: a deterministic post-generation grounding gate (`grounding_gate.py`). Measured re-run (2026-10-04): 20/20 by the same three checks, "SHIP by checks, see caveats". Caveats: the gate was designed on the same 20 traces (overfitting risk, no held-out set), and ungrounded replies are replaced wholesale. Earlier "60%" and "85% after fix" figures were simulated, never measured, and are retracted.
-- Status (2026-10-04): code pushed; the Trace Eval page and debug-key gating are not deployed yet (the API service needs `DEBUG_API_KEY`). Screenshots and the post are still to do.
+- Status (2026-10-04): code pushed and deployed, including the Trace Eval page and debug-key gating. Screenshots and the post are still to do.
 - Phase 5 (Ship): Maven submission.
 
 - **Location:** `ai-engineering-bootcamp-v2/week-1v2/`
@@ -36,7 +36,7 @@ Learn to build production-ready multi-agent systems using LangGraph.
 ### VERA: Capstone Project
 Verifiable Evidence-based Research Answers: a provenance-grounded research assistant that aims to produce auditable, evidence-backed answers.
 
-VERA is a separate project and is not included in this repository. It is under active development; nothing here documents its status or schedule.
+VERA is the bootcamp capstone. It is a separate project in its own repository and is not included here; the weekly course assignments (Sessions 1–4) were built in `ai-engineering-bootcamp-v2/week-1v2/`. It is under active development; nothing here documents its status or schedule.
 
 ### AI Engineering Bootcamp (v1)
 Earlier bootcamp modules — RAG, ADK/LangGraph agents, eval monitoring, and more.
@@ -54,7 +54,7 @@ AI-Internship/
 ├── README.md                         # This file
 ├── ai-engineering-bootcamp-v2/       # AI Engineering Bootcamp v2
 │   ├── week-1/                       # Original FastAPI /ask demo
-│   ├── week-1v2/                     # Capstone service (/ask, RAG, /agent, Week 4 trace eval)
+│   ├── week-1v2/                     # Course service (/ask, RAG, /agent, Week 4 trace eval)
 │   └── week-2/                       # RAG and vector databases
 ├── ai-builders-bootcamp/             # AI Builders sessions
 │   ├── ai-evals-session/             # LLM tracing and eval tooling
@@ -76,7 +76,7 @@ AI-Internship/
 
 ## 📋 General Prerequisites
 
-- Python 3.12 for the AI Engineering Bootcamp v2 capstone (`week-1v2/`); other courses list their own requirements
+- Python 3.12 for the AI Engineering Bootcamp v2 course service (`week-1v2/`); other courses list their own requirements
 - pip (Python package manager)
 - Jupyter Notebook or JupyterLab (only for courses that ship notebooks)
 - Git (for cloning this repository)

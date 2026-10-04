@@ -7,8 +7,8 @@ Hands-on course materials for building production-style LLM services with **Fast
 | Week | Topic | Location |
 |------|-------|----------|
 | 1 | `/ask` endpoint — typed I/O, structured output, guardrails, model selection, cost | [`week-1/`](week-1/) |
-| 1–4 (capstone) | **The capstone service**: Session 1 typed `/ask` with guardrails, Session 2 RAG (`/ingest`, `/debug/retrieve` (needs `X-Debug-Key`), grounded + cited `/ask`, APA 7 references), Session 3 LangGraph agent (`/agent`), Session 4 (in progress) trace evaluation (Streamlit **Trace Eval** page: measured 30% baseline, BLOCK; 20/20 by checks after the grounding gate, with caveats; pushed, not yet deployed) | [`week-1v2/`](week-1v2/) |
-| 2 | RAG and vector databases (standalone class materials; the capstone's RAG lives in `week-1v2/`) | [`week-2/`](week-2/) |
+| 1–4 | **The course service** (weekly assignments; the capstone, VERA, is a separate repository): Session 1 typed `/ask` with guardrails, Session 2 RAG (`/ingest`, `/debug/retrieve` (needs `X-Debug-Key`), grounded + cited `/ask`, APA 7 references), Session 3 LangGraph agent (`/agent`), Session 4 (in progress) trace evaluation (Streamlit **Trace Eval** page: measured 30% baseline, BLOCK; 20/20 by checks after the grounding gate, with caveats; deployed 2026-10-04) | [`week-1v2/`](week-1v2/) |
+| 2 | RAG and vector databases (standalone class materials; the course service's RAG lives in `week-1v2/`) | [`week-2/`](week-2/) |
 
 ## Tech stack
 
@@ -32,5 +32,5 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Requires Python 3.12. See [week-1v2/README.md](week-1v2/README.md) for the full capstone guide (setup, database, endpoints, deploy), or
+Requires Python 3.12. See [week-1v2/README.md](week-1v2/README.md) for the full course-service guide (setup, database, endpoints, deploy), or
 [week-1/README.md](week-1/README.md) for the original five-stage version.
