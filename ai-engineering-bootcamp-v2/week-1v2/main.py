@@ -18,7 +18,7 @@ from typing import Literal
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse, StreamingResponse
-from openai import AuthenticationError, OpenAIError, RateLimitError
+from openai import APIConnectionError, APIStatusError, AuthenticationError, OpenAIError, RateLimitError
 from pydantic import BaseModel, Field, ValidationError
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -732,6 +732,40 @@ def _validate_forced_provider(provider_name: str | None, require_structured: boo
         )
 
 
+# Provider error text never reaches a caller (p3m3 item #69, D-027): SDK
+# messages can carry org/project ids, endpoint or configuration values and
+# completion data. The caller gets a coarse category and a reference; the
+# detail goes to the server log, with key-like strings masked, control
+# characters escaped by repr() (log injection) and the length capped.
+_PROVIDER_LOG_MAX_CHARS = 500
+_KEY_LIKE = re.compile(r"(sk-[A-Za-z0-9_-]{4})[A-Za-z0-9_-]+|(Bearer\s+)\S+")
+
+
+def _redact_for_log(text: str) -> str:
+    masked = _KEY_LIKE.sub(lambda m: (m.group(1) or m.group(2)) + "***", text)
+    return repr(masked[:_PROVIDER_LOG_MAX_CHARS])
+
+
+def _provider_failure_detail(exc: Exception) -> str:
+    if isinstance(exc, providers.ProviderUnavailableError):
+        return f"OpenAI request failed: {exc}"  # our own text, written in providers.py
+    reference = secrets.token_hex(6)
+    status = getattr(exc, "status_code", None)
+    if isinstance(exc, APIConnectionError):
+        category = "could not reach the AI provider"
+    elif isinstance(exc, APIStatusError) and status >= 500:
+        category = "the AI provider had an internal error"
+    elif isinstance(exc, APIStatusError):
+        category = "the AI provider rejected the request"
+    else:
+        category = "the AI provider request failed"
+    logger.error(
+        "Provider failure ref=%s type=%s status=%s request_id=%s message=%s",
+        reference, type(exc).__name__, status, getattr(exc, "request_id", None), _redact_for_log(str(exc)),
+    )
+    return f"The AI provider request failed: {category}. Reference: {reference}"
+
+
 def _map_openai_error(exc: Exception) -> HTTPException:
     """Same OpenAI-SDK-exception-to-HTTP-response mapping used in ask()'s
     except clauses, factored out 2026-09-13 so /summarize and
@@ -761,7 +795,7 @@ def _map_openai_error(exc: Exception) -> HTTPException:
             status_code=429,
             detail="OpenAI rate limit hit (too many requests). Wait a few seconds and retry.",
         )
-    return HTTPException(status_code=502, detail=f"OpenAI request failed: {exc}")
+    return HTTPException(status_code=502, detail=_provider_failure_detail(exc))
 
 
 def _call_structured_with_guardrail(
@@ -1802,7 +1836,7 @@ def ask(request: Request, body: AskRequest) -> AskResponse:
                 detail="OpenAI rate limit hit (too many requests). Wait a few seconds and retry.",
             ) from exc
         except OpenAIError as exc:
-            raise HTTPException(status_code=502, detail=f"OpenAI request failed: {exc}") from exc
+            raise HTTPException(status_code=502, detail=_provider_failure_detail(exc)) from exc
 
     raise HTTPException(
         status_code=502,

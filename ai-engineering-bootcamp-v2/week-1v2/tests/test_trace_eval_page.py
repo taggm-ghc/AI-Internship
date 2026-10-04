@@ -89,3 +89,17 @@ def test_page_renders_real_results():
     labels = [m.label for m in at.metric]
     assert any("Replies fully replaced" in x for x in labels)
     assert any("SHIP by checks - see caveats" in m.value for m in at.markdown)
+
+
+def test_page_never_shows_api_base_url(monkeypatch):
+    # The page's old footer printed the configured API URL (the live host on
+    # Render) on the page users screenshot; see todo-digest item #26.
+    from streamlit.testing.v1 import AppTest
+    sentinel = "sentinel-host-do-not-show.example"
+    monkeypatch.setenv("API_BASE_URL", f"https://{sentinel}")
+    at = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "pages" / "5_Trace_Eval.py"), default_timeout=60)
+    at.run()
+    assert not at.exception
+    shown = [str(getattr(e, a, "")) for kind in ("caption", "markdown", "text", "metric", "text_input", "info", "warning")
+             for e in at.get(kind) for a in ("value", "label", "body")]
+    assert not any(sentinel in x for x in shown)

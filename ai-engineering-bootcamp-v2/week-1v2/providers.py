@@ -46,6 +46,15 @@ from pricing_config import ProviderConfig, latest_pricing_for, load_model_pricin
 
 logger = logging.getLogger(__name__)
 
+
+class ProviderUnavailableError(OpenAIError):
+    """Raised by this module (never by the SDK) when no provider can serve a
+    request. Its text is written here and is safe to show a caller; every
+    other OpenAIError may carry provider or configuration text and is shown
+    only as a category plus a reference (main._provider_failure_detail;
+    p3m3 item #69, D-027). Subclassing OpenAIError keeps existing
+    `except OpenAIError` handlers catching it."""
+
 # LAN-local inference server(s) (e.g. llama.cpp/opencode-style OpenAI-
 # compatible servers reachable on the local network) — added 2026-09-13,
 # extended 2026-09-14 to allow more than one such server (e.g. two
@@ -713,11 +722,11 @@ def call_structured_with_fallback(
     if last_exc is not None:
         raise last_exc
     if forced_provider is not None:
-        raise OpenAIError(
+        raise ProviderUnavailableError(
             f"Provider {forced_provider!r} is not currently available (missing "
             "credential, cooling down, or an expired key — see GET /providers/status)."
         )
-    raise OpenAIError("No configured provider was available to serve this request.")
+    raise ProviderUnavailableError("No configured provider was available to serve this request.")
 
 
 def stream_with_fallback(messages: list[dict], forced_provider: str | None = None):
@@ -785,8 +794,8 @@ def stream_with_fallback(messages: list[dict], forced_provider: str | None = Non
     if last_exc is not None:
         raise last_exc
     if forced_provider is not None:
-        raise OpenAIError(
+        raise ProviderUnavailableError(
             f"Provider {forced_provider!r} is not currently available (missing "
             "credential, cooling down, or an expired key — see GET /providers/status)."
         )
-    raise OpenAIError("No configured provider was available to serve this request.")
+    raise ProviderUnavailableError("No configured provider was available to serve this request.")

@@ -82,6 +82,13 @@ def render_curl(path: str, payload: dict) -> str:
     )
 
 
+def _where(url: str) -> str:
+    """Path only, never the host: these messages are shown in the UI, and the
+    host is the live deployment URL that must not appear in screenshots (same
+    leak class as todo-digest item #26 and the Trace Eval footer, 2026-10-04)."""
+    return httpx.URL(url).path or "/"
+
+
 def unreachable_message(url: str) -> str:
     """ConnectError means nothing answered at all — the fix differs by
     whether base_url is local (nobody started uvicorn) or a deployed
@@ -92,9 +99,9 @@ def unreachable_message(url: str) -> str:
     deployed instance."""
     host = httpx.URL(url).host
     if host in ("127.0.0.1", "localhost"):
-        return f"Cannot reach {url}. Start the API server first."
+        return f"Cannot reach the local API ({_where(url)}). Start the API server first."
     return (
-        f"Cannot reach {url} — nothing answered at all. Double-check the "
+        f"Cannot reach the configured API ({_where(url)}) — nothing answered at all. Double-check the "
         "URL, and confirm the service is actually deployed and running in "
         "the Render dashboard (a slow *response*, as opposed to no "
         "response, usually means a free-tier cold start instead — see the "
@@ -104,7 +111,7 @@ def unreachable_message(url: str) -> str:
 
 def timeout_message(url: str) -> str:
     return (
-        f"Timed out waiting for {url}. If this is a Render free-tier "
+        f"Timed out waiting for the configured API ({_where(url)}). If this is a Render free-tier "
         "deployment, it may be waking from a cold start after a period of "
         "inactivity — that can take up to a minute (see the README's "
         "Test With Curl section) — try again in a moment."
@@ -134,7 +141,7 @@ def is_cold_start_bounce(status_code: int, raw_text: str) -> bool:
 def cold_start_bounce_message(url: str) -> str:
     total_wait = sum(COLD_START_RETRY_DELAYS_S)
     return (
-        f"{url} kept bouncing this request with a bare 429 across "
+        f"The configured API ({_where(url)}) kept bouncing this request with a bare 429 across "
         f"{len(COLD_START_RETRY_DELAYS_S) + 1} attempts over ~{total_wait:.0f}s — "
         "consistent with Render's free tier still cold-starting (a plain "
         "browser tab hitting the same URL would show Render's own "
@@ -164,7 +171,7 @@ def call_stream(url: str, payload: dict) -> tuple[int, str, str | None, bool | N
         except httpx.TimeoutException:
             return 0, timeout_message(url), None, None, [], []
         except httpx.HTTPError as exc:
-            return 0, str(exc), None, None, [], []
+            return 0, f"Request to the configured API ({_where(url)}) failed ({type(exc).__name__}).", None, None, [], []
         if not is_cold_start_bounce(response.status_code, response.text):
             break
 
@@ -207,7 +214,7 @@ def call_json(method: str, url: str, payload: dict | None = None, headers: dict 
         except httpx.TimeoutException:
             return 0, {"error": timeout_message(url)}
         except httpx.HTTPError as exc:
-            return 0, {"error": str(exc)}
+            return 0, {"error": f"Request to the configured API ({_where(url)}) failed ({type(exc).__name__})."}
         if not is_cold_start_bounce(response.status_code, response.text):
             break
 

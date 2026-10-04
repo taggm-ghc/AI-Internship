@@ -16,7 +16,6 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 import trace_eval_view as tv
 from ui_theme import apply_custom_css
-from ui_widgets import base_url_sidebar_widget
 
 RESULTS_DIR = ROOT / "eval_results"
 
@@ -174,5 +173,3 @@ with st.expander("All traces, baseline check matrix"):
         [{"trace_id": t["trace_id"], **{k: v.get("status") for k, v in t["checks"].items()}}
          for t in base["traces"]]), use_container_width=True, hide_index=True)
 
-st.divider()
-st.caption(f"Render: {base_url_sidebar_widget()}")
