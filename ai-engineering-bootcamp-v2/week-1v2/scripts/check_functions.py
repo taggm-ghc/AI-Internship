@@ -23,7 +23,11 @@ Usage
 -----
     python3 scripts/check_functions.py                 # dry run: print table + self-test
     python3 scripts/check_functions.py --selftest      # self-test only (exit 1 on mismatch)
+    python3 scripts/check_functions.py --apply-fix     # gate responses (grounding_gate.py), then same checks
     python3 scripts/check_functions.py --save          # also upsert into internship.eval_check_results
+
+Each run writes eval_results/trace_eval_<run_label>.json (labels: baseline, after_fix_measured).
+The checks never see the gate; --apply-fix only changes the response text they are given.
 
 WARNING on --save: per the project's DB notes, the local EXTERNAL_DB_URL and Render's
 INTERNAL_DB_URL are the SAME Postgres instance, so --save writes to the production
@@ -79,17 +83,6 @@ from typing import Callable
 
 TraceData = dict
 CheckResult = tuple[bool, str]
-
-# After-fix scenario: traces that would pass if post-generation grounding gate applied
-# These traces fail only due to ungrounded quantities/claims that would be caught
-# and prevented/rewritten by the grounding gate.
-_AFTER_FIX_PASS = {
-    "ha-012",  # ungrounded hours ("11am-4pm")
-    "ha-017",  # ungrounded sq ft ("900" vs tool result "680")
-    "ha-019",  # ungrounded weight ("60 lbs")
-    "ha-004",  # ungrounded deposit/fee
-    "ha-005",  # ungrounded response time
-}
 
 # ---------------------------------------------------------------------------
 # Normalisation helpers
@@ -304,7 +297,7 @@ def _unit_names_and_bath(nd: dict) -> tuple[dict[str, str], list[str]]:
     return bath, sorted(set(names))
 
 
-def check_no_ungrounded_claims(trace_data: TraceData, after_fix_mode: bool = False) -> CheckResult:
+def check_no_ungrounded_claims(trace_data: TraceData) -> CheckResult:
     """
     Pattern #1 - Ungrounded Fabrication (EARS: only values from retrieved context).
 
@@ -334,12 +327,6 @@ def check_no_ungrounded_claims(trace_data: TraceData, after_fix_mode: bool = Fal
       ha-020 "9am-6pm, 10am-2pm"              -> (True,  ...)  # 9am-6pm == context "9-6"
     """
     nd = _normalize(trace_data)
-    trace_id = nd.get("trace_id", "unknown")
-
-    # After-fix simulation: if grounding gate is applied, certain failures would pass
-    if after_fix_mode and trace_id in _AFTER_FIX_PASS:
-        return True, f"Would pass if grounding gate applied (prevented ungrounded {trace_id} claims)"
-
     resp, grounding, user = nd["response"], nd["grounding"], nd["user"]
     if not resp.strip():
         return True, "Empty response: nothing to ground"
@@ -708,7 +695,7 @@ CHECKS: dict[str, Callable[[TraceData], CheckResult]] = {
 }
 
 
-def run_all_checks(trace_data: TraceData, after_fix_mode: bool = False) -> dict:
+def run_all_checks(trace_data: TraceData) -> dict:
     """Run all checks; return {check_name: (pass, reason)}.
 
     A check that raises is recorded as a FAIL with a CHECK_ERROR reason (never a silent
@@ -717,26 +704,20 @@ def run_all_checks(trace_data: TraceData, after_fix_mode: bool = False) -> dict:
     out = {}
     for name, fn in CHECKS.items():
         try:
-            if name == "check_no_ungrounded_claims":
-                out[name] = fn(trace_data, after_fix_mode=after_fix_mode)
-            else:
-                out[name] = fn(trace_data)
+            out[name] = fn(trace_data)
         except Exception as e:  # noqa: BLE001 - fail verbosely, never pass silently
             print(f"CHECK_ERROR {name} on {trace_data.get('trace_id')}: {e!r}", file=sys.stderr)
             out[name] = (False, f"CHECK_ERROR: {type(e).__name__}: {e}")
     return out
 
 
-def run_all_with_timing(trace_data: TraceData, after_fix_mode: bool = False) -> list[dict]:
+def run_all_with_timing(trace_data: TraceData) -> list[dict]:
     """Rows shaped for internship.eval_check_results (adds latency_ms)."""
     rows = []
     for name, fn in CHECKS.items():
         t0 = time.perf_counter()
         try:
-            if name == "check_no_ungrounded_claims":
-                passed, reason = fn(trace_data, after_fix_mode=after_fix_mode)
-            else:
-                passed, reason = fn(trace_data)
+            passed, reason = fn(trace_data)
         except Exception as e:  # noqa: BLE001
             print(f"CHECK_ERROR {name} on {trace_data.get('trace_id')}: {e!r}", file=sys.stderr)
             passed, reason = False, f"CHECK_ERROR: {type(e).__name__}: {e}"
@@ -757,7 +738,7 @@ def save_results(rows: list[dict], run_label: str = 'baseline') -> int:
 
     Args:
         rows: list of dicts with trace_id, check_name, check_type, passed, reason, latency_ms
-        run_label: identifier for this run (e.g., 'baseline', 'after_fix')
+        run_label: identifier for this run ('baseline' or 'after_fix_measured')
 
     Idempotent: re-running with the same run_label replaces earlier results for (trace, check, run_label).
     FK: every trace_id must already exist in internship.traces.
@@ -827,32 +808,188 @@ def selftest(traces: list[dict], verbose: bool = True) -> bool:
     return ok
 
 
+DECISION_THRESHOLDS = {"SHIP": 0.95, "MITIGATE": 0.85}  # >=95% SHIP, 85-95% MITIGATE, <85% BLOCK
+RESULTS_DIR = Path(__file__).resolve().parents[1] / "eval_results"
+# 'after_fix' was the run label of a retracted SIMULATION (scripts/_retired/); never reuse it.
+RETIRED_LABELS = {"after_fix"}
+
+
+def decide(rate: float) -> str:
+    if rate >= DECISION_THRESHOLDS["SHIP"]:
+        return "SHIP"
+    if rate >= DECISION_THRESHOLDS["MITIGATE"]:
+        return "MITIGATE"
+    return "BLOCK"
+
+
+def evaluate(traces: list[dict], apply_fix: bool = False) -> tuple[list[dict], dict]:
+    """Run the (unchanged) checks on raw or gated responses.
+
+    Returns (db_rows, per_trace_info). With apply_fix, each trace's response is first passed
+    through grounding_gate.apply_gate; the checks themselves never see the gate.
+    """
+    gate_trace = None
+    if apply_fix:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        from grounding_gate import gate_trace  # noqa: PLC0415 - optional dependency of the CLI only
+
+    rows: list[dict] = []
+    info: dict = {}
+    for t in traces:
+        before = _normalize(t)["response"]
+        evaluated = t
+        gate = None
+        if gate_trace is not None:
+            evaluated, gate = gate_trace(t)
+        trace_rows = run_all_with_timing(evaluated)
+        rows.extend(trace_rows)
+        info[t["trace_id"]] = {
+            "before": before,
+            "after": _normalize(evaluated)["response"] if gate is not None else None,
+            "gate": gate,
+            "rows": trace_rows,
+        }
+    return rows, info
+
+
+def compute_retention(info: dict) -> dict | None:
+    """How much of the original replies survive the gate (after run only).
+
+    Method: split response_before and response_after into sentences with _sentences()
+    (split on . ! ? followed by whitespace, and on newlines); compare after whitespace and case
+    normalisation. A reply is "modified" if its normalised text differs; "fully replaced" if it is
+    modified and NO original sentence appears verbatim in the after text (the reply is only
+    evidence/hedge/hand-off/refusal text). Per-reply sentence retention = share of the original
+    sentences that survive verbatim (1.0 if unchanged; an empty original counts as 1.0).
+    mean_sentence_retention is the mean over all replies (unchanged replies count 1.0).
+    """
+    def norm(x: str) -> str:
+        return " ".join(x.lower().split())
+
+    modified = replaced = unchanged = 0
+    ratios: list[float] = []
+    for v in info.values():
+        if v.get("after") is None:
+            return None
+        b, a = v["before"] or "", v["after"] or ""
+        if norm(a) == norm(b):
+            unchanged += 1
+            ratios.append(1.0)
+            continue
+        modified += 1
+        orig = [norm(x) for x in _sentences(b)]
+        kept = {norm(x) for x in _sentences(a)}
+        survived = sum(1 for x in orig if x in kept)
+        ratios.append(survived / len(orig) if orig else 1.0)
+        if survived == 0:
+            replaced += 1
+    return {"responses_modified": modified, "responses_fully_replaced": replaced,
+            "responses_unchanged": unchanged,
+            "mean_sentence_retention": round(sum(ratios) / len(ratios), 4) if ratios else 1.0}
+
+
+def build_results_doc(rows: list[dict], info: dict, run_label: str, source: str, apply_fix: bool) -> dict:
+    """Shape results per the eval_results/trace_eval_<run_label>.json contract."""
+    from datetime import datetime, timezone
+
+    fix = None
+    if apply_fix:
+        from grounding_gate import FIX_DESCRIPTION  # noqa: PLC0415
+
+        n_changed = sum(1 for v in info.values() if v["gate"] and v["gate"].changed)
+        n_fallback = sum(1 for v in info.values() if v["gate"] and v["gate"].fallback_only)
+        fix = dict(FIX_DESCRIPTION)
+        fix["limitations"] += (
+            f" This run: gate changed {n_changed}/{len(info)} responses; {n_fallback} kept no original "
+            "sentence (only tool evidence, policy text, hedge, hand-off or refusal)."
+        )
+    per_check = {
+        name: {"pass": sum(1 for r in rows if r["check_name"] == name and r["passed"]),
+               "total": sum(1 for r in rows if r["check_name"] == name)}
+        for name in CHECKS
+    }
+    traces_out = []
+    for tid, v in info.items():
+        checks = {r["check_name"]: {"status": "PASS" if r["passed"] else "FAIL", "reason": r["reason"]} for r in v["rows"]}
+        traces_out.append({
+            "trace_id": tid,
+            "all_pass": all(c["status"] == "PASS" for c in checks.values()),
+            "checks": checks,
+            "response_before": v["before"],
+            "response_after": v["after"],
+        })
+    n_pass = sum(1 for t in traces_out if t["all_pass"])
+    total = len(traces_out)
+    rate = round(n_pass / total, 4) if total else 0.0
+    retention = compute_retention(info) if apply_fix else None
+    decision_note = None
+    if apply_fix:
+        r = retention or {}
+        decision_note = (
+            "Decision is by check pass-rate only and is not a ship recommendation: the gate and the checks "
+            "share rules (overfitting, nothing held out), and the gate cost reply content "
+            f"({r.get('responses_fully_replaced')}/{total} replies fully replaced, "
+            f"{r.get('responses_modified')}/{total} modified, mean sentence retention "
+            f"{r.get('mean_sentence_retention')}). Semantic errors the checks do not model can pass both.")
+    doc = {
+        "run_label": run_label,
+        "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
+        "source_traces": source,
+        "fix": fix,
+        "per_check": per_check,
+        "overall": {"pass": n_pass, "total": total, "rate": rate, "decision": decide(rate)},
+        "traces": traces_out,
+    }
+    if apply_fix:
+        doc["retention"] = retention
+        doc["decision_note"] = decision_note
+    return doc
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("traces", nargs="?", default=str(DEFAULT_TRACES))
     ap.add_argument("--selftest", action="store_true", help="only run the self-test")
+    ap.add_argument("--apply-fix", action="store_true",
+                    help="pass each response through grounding_gate.py before running the unchanged checks")
+    ap.add_argument("--run-label", default=None,
+                    help="label for this run [default: 'baseline', or 'after_fix_measured' with --apply-fix]")
     ap.add_argument("--save", action="store_true", help="upsert into internship.eval_check_results (PRODUCTION DB)")
-    ap.add_argument("--run-label", default="baseline", help="label for this run (e.g., 'baseline', 'after_fix') [default: baseline]")
-    ap.add_argument("--after-fix-mode", action="store_true", help="simulate post-generation grounding gate (for Phase 4.3 demo)")
+    ap.add_argument("--no-json", action="store_true", help="do not write eval_results/trace_eval_<label>.json")
     args = ap.parse_args()
+
+    label = args.run_label or ("after_fix_measured" if args.apply_fix else "baseline")
+    if label in RETIRED_LABELS:
+        print(f"refusing run label {label!r}: it belongs to the retracted simulation", file=sys.stderr)
+        return 2
+    if args.apply_fix == (label == "baseline"):
+        print(f"run label {label!r} does not match --apply-fix={args.apply_fix}", file=sys.stderr)
+        return 2
 
     traces = load_traces(Path(args.traces))
     if args.selftest:
         return 0 if selftest(traces) else 1
 
-    rows = []
-    for t in traces:
-        rows.extend(run_all_with_timing(t, after_fix_mode=args.after_fix_mode))
+    rows, info = evaluate(traces, apply_fix=args.apply_fix)
     for r in rows:
         print(f"{r['trace_id']}  {r['check_name']:<30} {'PASS' if r['passed'] else 'FAIL'}  {r['reason']}")
     print()
-    for name in CHECKS:
-        n_fail = sum(1 for r in rows if r["check_name"] == name and not r["passed"])
-        print(f"{name}: {len(traces) - n_fail}/{len(traces)} pass")
-    ok = selftest(traces)
+    doc = build_results_doc(rows, info, label, str(Path(args.traces).resolve()), args.apply_fix)
+    for name, c in doc["per_check"].items():
+        print(f"{name}: {c['pass']}/{c['total']} pass")
+    o = doc["overall"]
+    print(f"overall (all checks pass): {o['pass']}/{o['total']} = {o['rate']:.0%} -> {o['decision']}  [run_label={label}]")
+    if args.apply_fix:
+        print(doc["fix"]["limitations"].rsplit(" This run: ", 1)[-1])
+    ok = selftest(traces)  # the checks' own expectations on the RAW traces must still hold
+    if not args.no_json:
+        RESULTS_DIR.mkdir(exist_ok=True)
+        out = RESULTS_DIR / f"trace_eval_{label}.json"
+        out.write_text(json.dumps(doc, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        print(f"wrote {out}")
     if args.save:
-        saved = save_results(rows, run_label=args.run_label)
-        print(f"saved {saved} rows to internship.eval_check_results (run_label='{args.run_label}')")
+        saved = save_results(rows, run_label=label)
+        print(f"saved {saved} rows to internship.eval_check_results (run_label='{label}')")
     return 0 if ok else 1
 
 

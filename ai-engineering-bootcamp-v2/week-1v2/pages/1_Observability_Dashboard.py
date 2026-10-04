@@ -25,6 +25,7 @@ import pandas as pd
 import streamlit as st
 
 from api_client import call_json
+from debug_key_widget import INVALID_MESSAGE, RESTRICTED_MESSAGE, debug_key_headers, debug_key_sidebar_widget
 from ui_theme import apply_custom_css
 from ui_widgets import base_url_sidebar_widget
 
@@ -47,14 +48,15 @@ st.set_page_config(page_title="Observability Dashboard", layout="wide")
 apply_custom_css()
 st.title("Observability Dashboard")
 st.caption(
-    "Server-side durable log across ALL sessions/users — internship.events via GET /debug/events. "
-    "Distinct from the Ask demo's session-only sidebar cost/latency metrics."
+    "Aggregates across ALL sessions/users come from the public GET /stats/summary (no key needed). "
+    "Request-level panels (raw internship.events via GET /debug/events) unlock only with the debug key."
 )
 
 base_url = base_url_sidebar_widget()
 kind_filter = st.sidebar.selectbox(
     "Event kind", ["(all)", "http_completed", "retrieval", "retrieval_error", "ingest", "http_started", "golden_eval"]
 )
+debug_key = debug_key_sidebar_widget()
 limit = st.sidebar.slider("Events to fetch", 50, 500, 200)
 # No explicit "back" link: Streamlit's classic pages/-directory mode already
 # auto-generates sidebar navigation back to the entrypoint script, and an
@@ -64,14 +66,132 @@ limit = st.sidebar.slider("Events to fetch", 50, 500, 200)
 # actually running this page with streamlit.testing.v1.AppTest, not by
 # reading the code. Caught and removed 2026-09-22.
 
+
+# ---------------------------------------------------------------- aggregates
+# p3m3 item #62: everything in this section comes from GET /stats/summary,
+# which is public and carries no payloads/IPs/text/ids. Any value resting on
+# fewer than min_count events arrives as null (named in `suppressed`) and is
+# shown as "suppressed (too few events)" instead of a number.
+SLO_P95_LATENCY_MS = 3000
+SLO_ERROR_RATE = 0.02
+_SUPPRESSED = "suppressed (too few events)"
+
+window_hours = st.sidebar.selectbox("Aggregate window (hours)", [1, 6, 24, 72, 168], index=2)
+stats_status, stats = call_json("GET", f"{base_url.rstrip('/')}/stats/summary?window_hours={window_hours}")
+if stats_status != 200 or not isinstance(stats, dict):
+    st.error("Aggregate summary unavailable" if stats_status == 0 else f"Aggregate summary unavailable (HTTP {stats_status})")
+    stats = {}
+
+
+def _fmt(value, fmt):
+    return _SUPPRESSED if value is None else fmt.format(value)
+
+
+def _get(d, *path):
+    for part in path:
+        if not isinstance(d, dict):
+            return None
+        d = d.get(part)
+    return d
+
+
+if stats:
+    st.markdown("## Aggregates (public summary)")
+    st.caption(
+        f"Window: last {stats.get('window_hours', window_hours)} h. Values based on fewer than "
+        f"{stats.get('min_count', '?')} events are withheld. Suppressed: {', '.join(stats.get('suppressed') or []) or 'none'}."
+    )
+
+    st.markdown("## Panel 2 — latency (p50 / p95 per endpoint, not average)")
+    by_path = stats.get("latency_ms_by_path") or {}
+    lat_rows = [
+        {"path": path, "n": v.get("n"), "p50_ms": v.get("p50"), "p95_ms": v.get("p95")}
+        for path, v in by_path.items()
+        if isinstance(v, dict)
+    ]
+    if not lat_rows:
+        st.caption("No latency data in this window.")
+    else:
+        lat_df = pd.DataFrame(lat_rows)
+        st.dataframe(lat_df.fillna("suppressed"), width="stretch", hide_index=True)
+
+    st.markdown("## Panel 3 — requests and error rate")
+    totals = stats.get("totals") or {}
+    cols = st.columns(4)
+    cols[0].metric("Total requests", _fmt(totals.get("requests"), "{:d}"))
+    cols[1].metric("Errors", _fmt(totals.get("errors"), "{:d}"))
+    cols[2].metric("Error rate", _fmt(stats.get("error_rate"), "{:.1%}"))
+    cols[3].metric("Agent runs", _fmt(totals.get("agent_runs"), "{:d}"))
+
+    st.markdown("## Panel 4 — retrieval quality (grounded-answer hit rate)")
+    st.metric("Grounded-answer hit rate", _fmt(stats.get("grounded_answer_hit_rate"), "{:.1%}"))
+
+    st.markdown("## Panel 5 — cost")
+    cost = stats.get("cost_usd") or {}
+    cols = st.columns(2)
+    cols[0].metric("Total cost (window)", _fmt(cost.get("total"), "${:.6f}"))
+    cols[1].metric("Cost per /ask", _fmt(cost.get("per_ask"), "${:.6f}"))
+
+    st.markdown("## Panel 5b — retrieval degradation signal")
+    fn_rate = stats.get("agent_found_nothing_rate")
+    if fn_rate is None:
+        st.metric("Agent: tool found nothing rate", _SUPPRESSED)
+    else:
+        label = "Critical" if fn_rate > 0.25 else "Warning" if fn_rate > 0.15 else "Healthy"
+        cols = st.columns(2)
+        cols[0].metric("Agent: tool found nothing rate", f"{fn_rate:.1%}")
+        cols[1].metric("Status", label)
+        st.caption("Amber above 15%, critical above 25%.")
+
+    st.markdown("## Panel 5c — cost forecasting")
+    total_cost = cost.get("total")
+    hours = stats.get("window_hours") or window_hours
+    if total_cost is None or not hours:
+        st.caption(_SUPPRESSED)
+    else:
+        daily = total_cost / hours * 24
+        cols = st.columns(3)
+        cols[0].metric("Projected daily", f"${daily:.4f}")
+        cols[1].metric("Projected weekly", f"${daily * 7:.3f}")
+        cols[2].metric("Projected monthly", f"${daily * 30:.2f}")
+        st.caption("Linear extrapolation of this window's spend; use Panel 5 totals as ground truth.")
+
+    st.markdown("## Panel 5d — SLO tracking")
+    p95s = [r["p95_ms"] for r in lat_rows if r.get("p95_ms") is not None]
+    worst_p95 = max(p95s) if p95s else None
+    err_rate = stats.get("error_rate")
+    cols = st.columns(2)
+    cols[0].metric(
+        "Latency p95 (worst endpoint)",
+        _SUPPRESSED if worst_p95 is None else f"{'OK' if worst_p95 < SLO_P95_LATENCY_MS else 'MISS'} {worst_p95:.0f} ms",
+        delta=f"target: {SLO_P95_LATENCY_MS} ms",
+        delta_color="inverse",
+    )
+    cols[1].metric(
+        "Error rate",
+        _SUPPRESSED if err_rate is None else f"{'OK' if err_rate < SLO_ERROR_RATE else 'MISS'} {err_rate:.1%}",
+        delta=f"target: <{SLO_ERROR_RATE:.1%}",
+        delta_color="inverse",
+    )
+
+# ---------------------------------------------------- key-gated raw section
+st.markdown("## Request-level panels (restricted)")
+if not debug_key:
+    st.info(RESTRICTED_MESSAGE)
+    st.stop()
+
 url = f"{base_url.rstrip('/')}/debug/events?limit={limit}"
 if kind_filter != "(all)":
     url += f"&kind={kind_filter}"
-status, events = call_json("GET", url)
+status, events = call_json("GET", url, headers=debug_key_headers())
 
+if status == 401:
+    # Same message whether the key was wrong or the server rejected it for
+    # any other auth reason; no data is shown.
+    st.error(INVALID_MESSAGE)
+    st.stop()
 if status != 200 or not isinstance(events, list):
     st.error("Request failed" if status == 0 else f"HTTP {status}")
-    st.json(events)
     st.stop()
 
 if not events:
@@ -103,41 +223,7 @@ else:
     )
     st.altair_chart(volume_chart, width="stretch")
 
-st.markdown("## Panel 2 — latency (p50 / p90 / p99, not average)")
-st.caption(
-    "Average latency hides the long tail — p50 shows what a typical user sees, p99 shows the worst case. "
-    "(2026 LLM-observability research finding; see week2-priority-checklist.md's D-N section.)"
-)
-if completed.empty:
-    st.caption("No latency samples yet.")
-else:
-    latencies = completed["payload"].apply(lambda p: p.get("latency_ms")).dropna()
-    if latencies.empty:
-        st.caption("No latency samples yet.")
-    else:
-        p50, p90, p99 = latencies.quantile([0.5, 0.9, 0.99])
-        cols = st.columns(3)
-        cols[0].metric("p50", f"{p50:.0f} ms")
-        cols[1].metric("p90", f"{p90:.0f} ms")
-        cols[2].metric("p99", f"{p99:.0f} ms")
-
-        by_path = pd.DataFrame(
-            {"path": completed["payload"].apply(lambda p: p.get("path")), "latency_ms": completed["payload"].apply(lambda p: p.get("latency_ms"))}
-        ).dropna()
-        if not by_path.empty:
-            box = (
-                alt.Chart(by_path)
-                .mark_boxplot(extent="min-max")
-                .encode(
-                    x=alt.X("path:N", title=None, axis=alt.Axis(labelAngle=-30)),
-                    y=alt.Y("latency_ms:Q", title="latency (ms)"),
-                    color=alt.Color("path:N", legend=alt.Legend(title="endpoint")),
-                )
-                .properties(height=220)
-            )
-            st.altair_chart(box, width="stretch")
-
-st.markdown("## Panel 3 — errors by category")
+st.markdown("## Panel 3b — errors by category (raw)")
 st.caption(
     "Provider errors (429/500/529), internal errors (timeouts), and logical/client errors need different "
     "fixes and are invisible if bucketed into one rate — categorized here, not summarized as a single number."
@@ -184,7 +270,7 @@ else:
     st.altair_chart(err_chart, width="stretch")
     st.caption("🟢 ok  ·  🔴 error categories — status color never carries meaning alone, see labels above.")
 
-st.markdown("## Panel 4 — retrieval quality")
+st.markdown("## Panel 4 detail — outcome mix and retrieval distances")
 st.caption(
     "RAG-specific: groundedness/hit-rate is the metric that matters most for a retrieval system, per the "
     "research behind this dashboard. Uses this app's own already-computed `status` field — no new "
@@ -386,7 +472,7 @@ else:
             )
             box_cols[1].altair_chart(dist_box, width="stretch")
 
-st.markdown("## Panel 5 — cost")
+st.markdown("## Panel 5 detail — input/output cost split")
 if not ask_responses:
     st.caption("No cost data in this window.")
 else:
@@ -400,159 +486,6 @@ else:
     st.caption(
         "Aggregate across ALL sessions/users in this event window, unlike the Ask demo's per-session sidebar "
         "total. Free-tier calls show real per-token value, not necessarily money actually billed."
-    )
-
-st.markdown("## Panel 5b — retrieval degradation signals")
-st.caption(
-    "Soft retrieval failures: when the tool runs but finds nothing relevant, or when source freshness "
-    "is declining. Early warning signs that the corpus is stale or retrieval quality is silently degrading."
-)
-if not df[df["kind"] == "agent_run"].empty:
-    agent_runs = df[df["kind"] == "agent_run"].copy()
-    agent_runs["created_at"] = pd.to_datetime(agent_runs["created_at"])
-
-    # Count tool_found_nothing outcomes (soft failures)
-    found_nothing = agent_runs["payload"].apply(lambda p: p.get("grounding") == "tool_found_nothing").sum()
-    total_agent_runs = len(agent_runs)
-    found_nothing_rate = (found_nothing / total_agent_runs * 100) if total_agent_runs else 0
-
-    # Status: amber if >15%, red if >25%
-    status_color = _STATUS_GOOD
-    status_text = "✅ Healthy"
-    if found_nothing_rate > 25:
-        status_color = _STATUS_CRITICAL
-        status_text = "🔴 Critical"
-    elif found_nothing_rate > 15:
-        status_color = _STATUS_WARNING
-        status_text = "⚠️ Warning"
-
-    cols = st.columns(3)
-    cols[0].metric("Tool found nothing rate", f"{found_nothing_rate:.1f}%")
-    cols[1].metric("Status", status_text)
-    cols[2].metric("Sample size (agent runs)", total_agent_runs)
-
-    if total_agent_runs > 0:
-        # Trend over time
-        found_nothing_by_hour = agent_runs.set_index("created_at").resample("1h").apply(
-            lambda window: (window["payload"].apply(lambda p: p.get("grounding") == "tool_found_nothing").sum() / len(window) * 100)
-            if len(window) > 0 else 0
-        )
-        trend_df = found_nothing_by_hour.reset_index()
-        trend_df.columns = ["time", "found_nothing_rate"]
-
-        if not trend_df.empty:
-            trend_chart = (
-                alt.Chart(trend_df)
-                .mark_line(point=True, color=_STATUS_WARNING)
-                .encode(
-                    x=alt.X("time:T", title="time"),
-                    y=alt.Y("found_nothing_rate:Q", title="tool_found_nothing rate (%)"),
-                    tooltip=[alt.Tooltip("time:T", title="time"), alt.Tooltip("found_nothing_rate:Q", title="rate (%)", format=".1f")],
-                )
-                .properties(height=200)
-            )
-            threshold_line = alt.Chart(pd.DataFrame({"threshold": [15]})).mark_rule(color=_STATUS_WARNING, strokeDash=[4, 4]).encode(y="threshold:Q")
-            st.altair_chart(trend_chart + threshold_line, width="stretch")
-            st.caption("Dashed line: 15% threshold (amber alert). Sustained >25% triggers critical alert.")
-else:
-    st.caption("No agent_run events in this window.")
-
-st.markdown("## Panel 5c — cost forecasting")
-st.caption(
-    "Project current spend forward. Detects cost drift early and enables capacity planning. Based on "
-    "per-run token costs from the past hour/day."
-)
-if not ask_responses or not completed.empty:
-    # Compute cost trajectory
-    recent_cost = sum(r.get("cost_usd") or 0 for r in ask_responses) if ask_responses else 0
-    recent_count = len(ask_responses) if ask_responses else 0
-    cost_per_call = (recent_cost / recent_count) if recent_count > 0 else 0
-
-    # Project forward
-    calls_per_day_estimate = (recent_count / (limit / 200)) if limit else 0  # Rough: scale by event window
-    projected_daily = cost_per_call * calls_per_day_estimate * 100 if calls_per_day_estimate else 0  # Scaled up
-    projected_weekly = projected_daily * 7
-    projected_monthly = projected_daily * 30
-
-    cols = st.columns(4)
-    cols[0].metric("Cost per call (mean)", f"${cost_per_call:.6f}")
-    cols[1].metric("Projected daily", f"${projected_daily:.4f}")
-    cols[2].metric("Projected weekly", f"${projected_weekly:.3f}")
-    cols[3].metric("Projected monthly", f"${projected_monthly:.2f}")
-
-    st.caption(
-        f"⚠️ Projection caveat: based on {limit} recent events. Accuracy depends on whether recent "
-        "traffic is representative. Use the raw Panel 5 totals, not this forecast, as ground truth."
-    )
-else:
-    st.caption("No cost data in this window.")
-
-st.markdown("## Panel 5d — SLO tracking")
-st.caption(
-    "Are we meeting our service-level objectives? Target latency p95 < 3000ms, error rate < 2%, "
-    "availability 99.0% (hourly windows account for cold-start bounces)."
-)
-if completed.empty:
-    st.caption("No http_completed events in this window.")
-else:
-    # SLO targets (configurable)
-    SLO_P95_LATENCY_MS = 3000
-    SLO_ERROR_RATE = 0.02
-    SLO_AVAILABILITY_PCT = 99.0
-
-    # Compute actual metrics
-    latencies = completed["payload"].apply(lambda p: p.get("latency_ms")).dropna()
-    actual_p95_latency = latencies.quantile(0.95) if len(latencies) > 0 else None
-
-    errors = completed["payload"].apply(
-        lambda p: p.get("http_status", 200) >= 400 or p.get("error") is not None
-    )
-    error_count = errors.sum()
-    total_count = len(completed)
-    actual_error_rate = (error_count / total_count) if total_count > 0 else 0
-
-    # Availability (hourly granularity: any hour with >1 error counts as a "failed hour")
-    completed_copy = completed.copy()
-    completed_copy["hour"] = pd.to_datetime(completed_copy["created_at"]).dt.floor("1h")
-    hours_with_errors = (
-        completed_copy.groupby("hour")
-        .apply(lambda g: (g["payload"].apply(lambda p: p.get("http_status", 200) >= 400 or p.get("error") is not None).sum() > 0))
-        .sum()
-    )
-    total_hours = completed_copy["hour"].nunique()
-    actual_availability = ((total_hours - hours_with_errors) / total_hours * 100) if total_hours > 0 else 100
-
-    # Status indicators
-    slo_cols = st.columns(3)
-
-    lat_status = "✅" if actual_p95_latency and actual_p95_latency < SLO_P95_LATENCY_MS else "🔴"
-    slo_cols[0].metric(
-        f"{lat_status} Latency (p95)",
-        f"{actual_p95_latency:.0f}ms" if actual_p95_latency else "N/A",
-        delta=f"target: {SLO_P95_LATENCY_MS}ms",
-        delta_color="inverse"
-    )
-
-    err_status = "✅" if actual_error_rate < SLO_ERROR_RATE else "🔴"
-    slo_cols[1].metric(
-        f"{err_status} Error rate",
-        f"{actual_error_rate:.1%}",
-        delta=f"target: <{SLO_ERROR_RATE:.1%}",
-        delta_color="inverse"
-    )
-
-    avail_status = "✅" if actual_availability >= SLO_AVAILABILITY_PCT else "🔴"
-    slo_cols[2].metric(
-        f"{avail_status} Availability (hourly)",
-        f"{actual_availability:.1f}%",
-        delta=f"target: ≥{SLO_AVAILABILITY_PCT}%",
-        delta_color="inverse"
-    )
-
-    st.caption(
-        "Latency: p95 (not average) captures tail risk. Availability: hourly windows "
-        "(hours with ≥1 error are \"failed\") to account for cold-start bounces. "
-        "Error rate includes any HTTP ≥400 or logged error."
     )
 
 st.markdown("## Panel 7 — raw events (forensics)")

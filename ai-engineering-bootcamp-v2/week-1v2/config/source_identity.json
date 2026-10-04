@@ -1,0 +1,31 @@
+{
+  "_meta": {"version": 1, "plan": "p3m3/item-65-ingest-trust-model-best-practice.md section 8"},
+  "types": {
+    "arxiv":    {"normaliser": "normalise_arxiv",  "strength": 1, "description": "arXiv identifier, version suffix removed"},
+    "doi":      {"normaliser": "normalise_doi",    "strength": 1, "description": "Digital Object Identifier"},
+    "isbn":     {"normaliser": "normalise_isbn",   "strength": 1, "description": "ISBN-13 (edition specific)"},
+    "pmid":     {"normaliser": "normalise_pmid",   "strength": 1, "description": "PubMed id"},
+    "url":      {"normaliser": "normalise_url",    "strength": 2, "description": "normalised URL, weakest type"},
+    "other":    {"normaliser": "normalise_other",  "strength": 3, "description": "unparseable, never auto-matches"}
+  },
+  "never_auto_match_types": ["other"],
+  "url": {
+    "tracking_params": ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "utm_id", "gclid", "fbclid", "mc_cid", "mc_eid", "ref", "ref_src", "igshid", "yclid", "msclkid"],
+    "tracking_param_prefixes": ["utm_"],
+    "default_ports": {"http": 80, "https": 443},
+    "index_files": ["index.html", "index.htm"]
+  },
+  "arxiv_hosts": ["arxiv.org", "www.arxiv.org", "export.arxiv.org"],
+  "doi_hosts": ["doi.org", "dx.doi.org", "www.doi.org"],
+  "provenance_keys": {
+    "url": "source_url",
+    "doi": "doi",
+    "arxiv": "arxiv_id",
+    "isbn": "isbn",
+    "origin": "identifier_origin",
+    "original_value": "original"
+  },
+  "metadata_keys": {"doi": "DOI", "url": "URL"},
+  "metadata_doi_origin": "original",
+  "doi_trailing_punctuation": ".,;:)]}>\"'"
+}

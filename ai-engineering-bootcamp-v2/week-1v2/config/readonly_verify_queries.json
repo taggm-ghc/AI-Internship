@@ -1,0 +1,8 @@
+{
+  "_comment": "Fixed aggregate-only SELECTs for readonly_verify.py (2026-10-03). Add a query here only with the user's approval; each must be a single plain SELECT returning counts or dates, never row text.",
+  "queries": {
+    "eval_runs": "select run_label, count(*) as n, count(distinct trace_id) as traces, sum(case when pass then 1 else 0 end) as passed, min(created_at)::date as first_day, max(created_at)::date as last_day from internship.eval_check_results group by run_label order by 5",
+    "eval_by_check": "select run_label, check_name, count(*) as n, sum(case when pass then 1 else 0 end) as passed from internship.eval_check_results group by run_label, check_name order by 1, 2",
+    "corpus_counts": "select (select count(*) from internship.documents) as documents, (select count(*) from internship.events) as events"
+  }
+}

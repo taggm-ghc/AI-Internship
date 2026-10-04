@@ -1,8 +1,10 @@
 """PostgreSQL operational state. Schema installation is explicit, never on import.
 
-A small collection adapter preserves the existing retrieval contract during the
-Chroma migration. Distances remain squared L2; pgvector's <-> is unsquared L2.
-All SQL values are bound parameters. Local Chroma is only a migration input.
+PgCollection is the current store of source documents and chunks (internship.vectors,
+internship.documents). Its adapter keeps the retrieval contract the app was built on
+(a collection-style query returning ids/documents/metadatas/distances). Distances are
+squared L2; pgvector's <-> is unsquared L2. All SQL values are bound parameters.
+The legacy local Chroma store was retired 2026-10-01 (p3m3 item #63).
 """
 from contextlib import contextmanager
 import hashlib
@@ -26,9 +28,17 @@ def vector_literal(values):
 
 def install_schema(engine=None):
     engine = engine or get_admin_engine()  # DDL: admin account only (item #47)
-    sql = (Path(__file__).parent / 'migrations/001_operational_store.sql').read_text()
-    with engine.begin() as conn:
-        conn.exec_driver_sql(sql)
+    # Every migration, in filename order, one transaction each. All of them are idempotent
+    # (IF NOT EXISTS / state-checked), so re-running against an installed database is safe.
+    files = sorted((Path(__file__).parent / 'migrations').glob('[0-9][0-9][0-9]_*.sql'))
+    if not files:
+        raise FileNotFoundError('no migrations found next to operational_store.py')
+    for path in files:
+        try:
+            with engine.begin() as conn:
+                conn.exec_driver_sql(path.read_text())
+        except Exception as exc:
+            raise RuntimeError(f'migration {path.name} failed (rolled back; earlier files stay applied): {exc}') from exc
 
 
 def record_event(kind, payload, *, event_id=None, conn=None):
@@ -92,6 +102,24 @@ def corpus_summary(sample_size=10):
         'document_count': total,
         'sample_titles': [r.title or r.document_id for r in rows],
     }
+
+
+def find_live_document_by_content_sha(content_sha256, exclude_document_id=None):
+    """Cross-document exact-duplicate check: returns the document_id of a live
+    document (other than exclude_document_id) whose recorded
+    provenance->>'content_sha256' equals content_sha256, else None. The
+    per-document version history is handled by stage_document_version; this
+    covers identical content arriving under a DIFFERENT document_id. Documents
+    ingested before content_sha256 was recorded carry no hash and cannot match
+    (a known limit). Read-only."""
+    with get_engine().connect() as conn:
+        row = conn.execute(
+            text("""SELECT document_id FROM internship.documents
+                WHERE provenance->>'content_sha256'=:sha AND document_id IS DISTINCT FROM :ex
+                ORDER BY document_id LIMIT 1"""),
+            {"sha": content_sha256, "ex": exclude_document_id},
+        ).first()
+        return row[0] if row else None
 
 
 def document_exists(document_id):
@@ -169,6 +197,102 @@ def stage_document_version(document_id, text_content, metadata, provenance, cont
             },
         )
         return {"document_id": document_id, "version": new_version}
+
+
+_SOURCE_TABLES = ("source_identifiers", "identifiers", "sources", "document_sources", "source_identifier_types")
+
+
+def _is_missing_source_table(exc):
+    """True only for 'relation does not exist' (SQLSTATE 42P01) naming a migration-006 table."""
+    orig = getattr(exc, "orig", None)
+    code = getattr(orig, "sqlstate", None) or getattr(orig, "pgcode", None)
+    return code == "42P01" and any(t in str(orig) for t in _SOURCE_TABLES)
+
+
+def find_source_identity(identifiers):
+    """Read-only lookup for item #65: returns (links, documents_by_source).
+    links: every identifier link {source_id, type, value_norm, is_canonical, origin} of each source
+    that shares any (type, value_norm) with `identifiers`; documents_by_source: {source_id:
+    [document_id, ...]} ordered by linked_at then document_id (first = primary, the earliest linked). Returns ([], {}) when the migration
+    006 tables do not exist yet; any other DB error propagates."""
+    if not identifiers:
+        return [], {}
+    clauses, params = [], {}
+    for n, i in enumerate(identifiers):
+        clauses.append(f"(i.type=:t{n} AND i.value_norm=:v{n})")
+        params[f"t{n}"], params[f"v{n}"] = i["type"], i["value_norm"]
+    try:
+        with get_engine().connect() as conn:
+            rows = conn.execute(
+                text(f"""SELECT si.source_id, si.identifier_type AS type, i.value_norm, si.is_canonical, si.origin
+                    FROM internship.source_identifiers si JOIN internship.identifiers i ON i.id = si.identifier_id
+                    WHERE si.source_id IN (
+                        SELECT s2.source_id FROM internship.source_identifiers s2
+                        JOIN internship.identifiers i ON i.id = s2.identifier_id WHERE {' OR '.join(clauses)})
+                    ORDER BY si.source_id, si.identifier_type, i.value_norm"""),
+                params,
+            ).mappings().all()
+            links = [dict(r) for r in rows]
+            docs = {}
+            ids = sorted({l["source_id"] for l in links})
+            if ids:
+                for r in conn.execute(
+                    text("SELECT source_id, document_id FROM internship.document_sources WHERE source_id = ANY(:ids) ORDER BY source_id, linked_at, document_id"),
+                    {"ids": ids},
+                ):
+                    docs.setdefault(r.source_id, []).append(r.document_id)
+            return links, docs
+    except Exception as exc:
+        if _is_missing_source_table(exc):
+            return [], {}
+        raise
+
+
+def link_document_to_new_source(document_id, label, identifiers, asserted_by="ingest"):
+    """Creates a source for a live document with its identifiers and links, one transaction,
+    idempotent (conflict targets are named so partial unique index violations raise; a document already linked to a source is left alone and its
+    source_id returned). Returns the source_id, or None when the migration 006 tables do not exist
+    yet (write skipped); any other DB error propagates. Never attaches to an existing source."""
+    try:
+        with get_engine().begin() as conn:
+            existing = conn.execute(
+                text("SELECT source_id FROM internship.document_sources WHERE document_id=:d ORDER BY linked_at, source_id LIMIT 1"),
+                {"d": document_id},
+            ).first()
+            if existing is not None:
+                return existing[0]
+            source_id = conn.execute(
+                text("INSERT INTO internship.sources(label) VALUES (:label) RETURNING id"), {"label": label},
+            ).scalar()
+            for i in identifiers:
+                conn.execute(
+                    text("""INSERT INTO internship.identifiers(type, value_norm, value_raw) VALUES (:t, :n, :r)
+                        ON CONFLICT (type, value_norm) DO NOTHING"""),
+                    {"t": i["type"], "n": i["value_norm"], "r": i["value_raw"]},
+                )
+                ident_id = conn.execute(
+                    text("SELECT id FROM internship.identifiers WHERE type=:t AND value_norm=:n"),
+                    {"t": i["type"], "n": i["value_norm"]},
+                ).scalar()
+                n = conn.execute(
+                    text("""INSERT INTO internship.source_identifiers
+                        (source_id, identifier_id, identifier_type, is_canonical, origin, asserted_by)
+                        VALUES (:s, :i, :t, :c, :o, :by) ON CONFLICT (source_id, identifier_id) DO NOTHING"""),
+                    {"s": source_id, "i": ident_id, "t": i["type"], "c": i["is_canonical"], "o": i["origin"], "by": asserted_by},
+                ).rowcount
+                if n != 1:
+                    raise RuntimeError(f"source identity: source_identifiers insert affected {n} rows (expected 1) for {i['type']}:{i['value_norm']}; rolled back")
+            n = conn.execute(
+                text("INSERT INTO internship.document_sources(document_id, source_id) VALUES (:d, :s) ON CONFLICT (document_id, source_id) DO NOTHING"),
+                {"d": document_id, "s": source_id},
+            ).rowcount
+            if n != 1:
+                raise RuntimeError(f"source identity: document_sources insert affected {n} rows (expected 1) for {document_id}; rolled back")
+            return source_id
+    except Exception as exc:
+        if _is_missing_source_table(exc):
+            return None
+        raise
 
 
 def list_document_versions(document_id):
@@ -254,7 +378,7 @@ class PgCollection:
             params['ids'] = list(ids)
         if where is not None:
             # Current API supports equality filters (document_id). Reject unsupported
-            # operators rather than silently changing the meaning of a Chroma filter.
+            # operators rather than silently changing the meaning of a metadata filter.
             if not isinstance(where, dict) or any(k.startswith('$') or isinstance(v, (dict, list)) for k,v in where.items()):
                 raise ValueError('PostgreSQL metadata filters support scalar equality only')
             clauses.append('metadata @> CAST(:metadata AS jsonb)')

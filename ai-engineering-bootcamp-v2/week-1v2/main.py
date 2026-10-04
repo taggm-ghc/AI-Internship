@@ -16,15 +16,18 @@ from pathlib import Path
 from typing import Literal
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse, StreamingResponse
 from openai import AuthenticationError, OpenAIError, RateLimitError
 from pydantic import BaseModel, Field, ValidationError
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
+from limits import parse_many
 
 import providers
+import source_identity
+import stats_service
 from ask_service import (
     Answer,
     Sentiment,
@@ -37,6 +40,7 @@ from ask_service import (
 from openai import OpenAI
 from openai_key_check import OPENAI_KEY_ERROR_DETAIL, classify_openai_api_key
 from citations import render_numbered
+from quote_guard import enforce_quotes
 from pdf_extract import extract_pdf_text
 from pricing_config import (
     latest_pricing_for,
@@ -80,6 +84,9 @@ from operational_store import (
     query_events,
     corpus_summary,
     document_exists,
+    find_live_document_by_content_sha,
+    find_source_identity,
+    link_document_to_new_source,
     stage_document_version,
     list_document_versions,
     get_document_version,
@@ -568,7 +575,96 @@ def _ingest_authenticated(request: Request) -> bool:
     default="" since compare_digest requires two arguments of the same
     type and errors on None, which request.headers.get(...) returns for a
     caller that sent no header at all."""
-    return (not INGEST_API_KEY) or secrets.compare_digest(request.headers.get("X-Ingest-Key", ""), INGEST_API_KEY)
+    # Fails CLOSED (G4, 2026-10-02): an unset INGEST_API_KEY means nobody is
+    # authenticated, never everybody. The key only grants post-filter
+    # handling (auto-accept); it never bypasses a rejection filter.
+    if not INGEST_API_KEY:
+        return False
+    return secrets.compare_digest(request.headers.get("X-Ingest-Key", ""), INGEST_API_KEY)
+
+
+# p3m3 item #62 (W1/D1) -- introspection access. Unlike INGEST_API_KEY above
+# this FAILS CLOSED: with DEBUG_API_KEY unset, every /debug/* route returns
+# 401 and /agent never returns a trace. The key is hashed once here and only
+# the digest is kept; comparisons are between two fixed-length SHA-256
+# digests via secrets.compare_digest, so neither length nor a mismatch
+# position leaks through timing (plan step 6, source S4). The key travels
+# only in the X-Debug-Key header -- never a query parameter -- and is never
+# logged, echoed, or written to an event payload (FMEA F2).
+DEBUG_KEY_HEADER = "X-Debug-Key"
+_DEBUG_API_KEY_VALUE = os.getenv("DEBUG_API_KEY") or None
+_DEBUG_KEY_DIGEST: bytes | None = (
+    hashlib.sha256(_DEBUG_API_KEY_VALUE.encode()).digest() if _DEBUG_API_KEY_VALUE else None
+)
+del _DEBUG_API_KEY_VALUE
+if _DEBUG_KEY_DIGEST is None:
+    logger.warning("DEBUG_API_KEY is not set: /debug/* is locked (fail closed) and /agent returns no trace")
+
+# Failed-attempt rate limit (FMEA F9), counted in the app's own slowapi
+# limiter storage under a separate key, so only FAILURES consume it. Once
+# exhausted, even a correct key from that address is refused until the window
+# passes -- otherwise a brute-forcer would keep a validity oracle.
+DEBUG_FAILED_ATTEMPT_LIMIT = "5/minute;20/hour"
+_DEBUG_FAILED_ATTEMPT_LIMITS = parse_many(DEBUG_FAILED_ATTEMPT_LIMIT)
+
+
+def debug_key_valid(request: Request) -> bool:
+    """True only when DEBUG_API_KEY is configured AND the X-Debug-Key header
+    matches it. Fixed-length digest compare; missing header compares the
+    digest of "" (always unequal to a configured non-empty key)."""
+    if _DEBUG_KEY_DIGEST is None:
+        return False
+    sent = hashlib.sha256(request.headers.get(DEBUG_KEY_HEADER, "").encode()).digest()
+    return secrets.compare_digest(sent, _DEBUG_KEY_DIGEST)
+
+
+def _debug_failure_bucket(request: Request) -> str:
+    return f"debug-key-failures:{get_remote_address(request)}"
+
+
+def _debug_failures_exhausted(request: Request) -> bool:
+    bucket = _debug_failure_bucket(request)
+    return any(not limiter.limiter.test(item, bucket) for item in _DEBUG_FAILED_ATTEMPT_LIMITS)
+
+
+def _note_debug_failure(request: Request) -> None:
+    """Counts one failed attempt and writes a `debug_denied` audit event:
+    path and client address only -- never the key, never any header."""
+    bucket = _debug_failure_bucket(request)
+    for item in _DEBUG_FAILED_ATTEMPT_LIMITS:
+        limiter.limiter.hit(item, bucket)
+    logger.warning("Debug access denied on %s", request.url.path)
+    try:
+        record_event("debug_denied", {"path": request.url.path, "client_ip": get_remote_address(request)})
+    except Exception:
+        logger.exception("debug_denied audit event failed to write; denial unaffected")
+
+
+def require_debug_key(request: Request) -> None:
+    """FastAPI dependency for every /debug/* route. 401 with one generic body
+    for missing, wrong AND unconfigured keys, so a caller cannot learn the
+    server's configuration state; 429 once failed attempts are exhausted."""
+    if _debug_failures_exhausted(request):
+        raise HTTPException(status_code=429, detail="too many failed attempts; retry later")
+    if not debug_key_valid(request):
+        _note_debug_failure(request)
+        raise HTTPException(status_code=401, detail="restricted")
+
+
+def _agent_trace_allowed(request: Request) -> bool:
+    """/agent's trace gate. Same failure accounting as the debug routes when a
+    key header is sent but wrong (an anonymous call without the header is
+    normal use, not a failed attempt)."""
+    if _debug_failures_exhausted(request):
+        return False
+    if debug_key_valid(request):
+        return True
+    if request.headers.get(DEBUG_KEY_HEADER) is not None:
+        _note_debug_failure(request)
+    return False
+
+
+debug_router = APIRouter(prefix="/debug", dependencies=[Depends(require_debug_key)])
 
 
 def _guard_ingest(request: Request, text: str) -> tuple[dict, dict]:
@@ -906,6 +1002,18 @@ class IngestResponse(BaseModel):
     status: Literal["indexed", "empty", "staged", "duplicate"]
     version: int | None = None
     accepted: bool | None = None
+    # Set when status == "duplicate" because identical content (same SHA-256)
+    # is already live under another document_id.
+    duplicate_of: str | None = None
+    # True when the text matched injection phrasing: stored and served as inert data.
+    non_actionable: bool | None = None
+    # Item #65 source identity: set when the content was recognised as the same original source
+    # as an existing document and therefore handled as a new version of it.
+    source_id: int | None = None
+    matched_existing_document: bool | None = None
+    # Set when identifiers matched only non-decisively: ingested as its own source, never merged.
+    # Authenticated callers get the detail dict; unauthenticated callers only get True.
+    source_review: dict | bool | None = None
 
 
 def _ingest_or_stage(
@@ -915,37 +1023,88 @@ def _ingest_or_stage(
     """Shared by all three ingest endpoints (single/batch/PDF) so "never
     overwrite an existing document_id" (item #33) is enforced exactly once,
     not re-implemented per endpoint. document_exists is the branch: a
-    first-time id goes live immediately (unauthenticated phrase-block still
+    first-time id goes live immediately (the injection-phrase block applies to every caller, keyed or not,
     applies, since this path has no accept step to catch it later); an
     existing id always stages a new version, auto-accepted only when
     authenticated and clean, same trust distinction #30 already made."""
     authenticated = extra_event_fields["authenticated"]
-    if document_exists(document_id):
+    exists = document_exists(document_id)
+    # Rejection filters come first for everyone (G4); only then is exact-duplicate
+    # content dropped, so identical copies are never ingested again.
+    # Crude injection phrasing is NOT rejected (legitimate security papers match);
+    # it is recorded as non-actionable content and labelled again at retrieval.
+    non_actionable = "injection_phrases" in flags
+    if non_actionable:
+        provenance = {**provenance, "non_actionable": True}
+    twin = find_live_document_by_content_sha(provenance["content_sha256"], exclude_document_id=document_id)
+    if twin is not None:
+        return IngestResponse(document_id=document_id, chunks_indexed=0, status="duplicate", duplicate_of=twin)
+    ids = source_identity.extract_identifiers(provenance, metadata, trusted=bool(authenticated))
+    res = None
+    target_id, source_id, matched, source_review = document_id, None, None, None
+    if ids:
+        links, docs_by_source = find_source_identity(ids)
+        res = source_identity.resolve(ids, links)
+        if res.status == source_identity.CONFLICT:
+            try:
+                record_event("ingest_source_conflict", {"document_id": document_id, "reason": res.reason, "candidates": res.candidates})
+            except Exception:
+                logger.exception("ingest_source_conflict audit event failed to write; rejection unaffected")
+            raise HTTPException(status_code=422, detail=res.reason if authenticated else "conflicting source identifiers")
+        if res.status == source_identity.SAME_SOURCE:
+            source_id = res.source_id
+            known = docs_by_source.get(res.source_id) or []
+            if known and document_id not in known:
+                # Same original source under a new document_id: a new version of its primary document.
+                target_id, exists, matched = known[0], True, True
+        elif res.status == source_identity.REVIEW:
+            source_review = {"reason": res.reason, "candidate_source_ids": res.candidates} if authenticated else True
+            try:
+                record_event("ingest_source_review", {"document_id": document_id, "reason": res.reason, "candidates": res.candidates})
+            except Exception:
+                logger.exception("ingest_source_review audit event failed to write; ingest unaffected")
+        for w in res.warnings:
+            logger.warning("source identity (%s): %s", document_id, w)
+
+    def finish(response, live):
+        if live and ids and res.status in (source_identity.NEW_SOURCE, source_identity.REVIEW):
+            label = str(provenance.get("title") or document_id)
+            linked = link_document_to_new_source(target_id, label, ids)
+            if linked is None:
+                logger.warning("source identity tables missing (migration 006 not applied); source link skipped for %s", target_id)
+            response.source_id = linked
+        else:
+            response.source_id = source_id
+        if not authenticated:
+            response.source_id = None
+            matched_visible = None
+        else:
+            matched_visible = matched
+        response.matched_existing_document = matched_visible
+        response.source_review = source_review
+        return response
+
+    if exists:
         staged = stage_document_version(
-            document_id, text, metadata, provenance, provenance["content_sha256"],
+            target_id, text, metadata, provenance, provenance["content_sha256"],
             flags, extra_event_fields["client_ip"], authenticated,
         )
         if staged.get("duplicate"):
-            return IngestResponse(document_id=document_id, chunks_indexed=0, status="duplicate", version=None, accepted=None)
+            return finish(IngestResponse(document_id=target_id, chunks_indexed=0, status="duplicate", version=None, accepted=None), False)
         version = staged["version"]
         if authenticated and not flags:
             chunks_indexed = upsert_chunks(
-                client, collection, document_id, text, metadata,
+                client, collection, target_id, text, metadata,
                 provenance=provenance, extra_event_fields=extra_event_fields,
             )
-            accept_document_version(document_id, version, "auto")
-            return IngestResponse(document_id=document_id, chunks_indexed=chunks_indexed, status="indexed", version=version, accepted=True)
-        return IngestResponse(document_id=document_id, chunks_indexed=0, status="staged", version=version, accepted=False)
-    if "injection_phrases" in flags and not authenticated:
-        raise HTTPException(
-            status_code=422,
-            detail=f"rejected: content matches known prompt-injection phrasing ({', '.join(flags['injection_phrases'])}) -- ingestion by unauthenticated callers requires a valid X-Ingest-Key when this is detected",
-        )
+            accept_document_version(target_id, version, "auto")
+            return finish(IngestResponse(document_id=target_id, chunks_indexed=chunks_indexed, status="indexed", version=version, accepted=True, non_actionable=non_actionable), True)
+        return finish(IngestResponse(document_id=target_id, chunks_indexed=0, status="staged", version=version, accepted=False, non_actionable=non_actionable), False)
     chunks_indexed = upsert_chunks(
         client, collection, document_id, text, metadata,
         provenance=provenance, extra_event_fields=extra_event_fields,
     )
-    return IngestResponse(document_id=document_id, chunks_indexed=chunks_indexed, status="indexed" if chunks_indexed > 0 else "empty")
+    return finish(IngestResponse(document_id=document_id, chunks_indexed=chunks_indexed, status="indexed" if chunks_indexed > 0 else "empty", non_actionable=non_actionable), chunks_indexed > 0)
 
 
 def _accept_version_now(document_id: str, version: int, text: str, metadata: dict | None, provenance: dict, extra_event_fields: dict, accepted_by: str) -> int:
@@ -1065,25 +1224,20 @@ class AcceptVersionRequest(BaseModel):
 @app.post("/ingest/versions/accept")
 @limiter.limit(ASK_RATE_LIMIT)
 def post_accept_ingest_version(request: Request, body: AcceptVersionRequest) -> IngestResponse:
-    """p3m3 item #33 -- the only way a staged version reaches the live,
-    searchable corpus other than ingest()'s own auto-accept path. Always
-    requires the real operator credential, unlike staging itself: this is
-    the exact action that changes what /ask actually serves, so it's the
-    one step that stays gated on genuine trust regardless of how open
-    staging/self-service token generation ends up being."""
+    """p3m3 item #33 -- promotes a staged version of source content to the live
+    corpus. This is the ONLY place INGEST_API_KEY is required (R1, 2026-10-02):
+    staging and first-time ingest need no key (a key only lets /ingest auto-accept
+    a clean new version, which is the same accept action). Denied outright if no
+    key is configured. The invisible-Unicode filter is re-run here; injection
+    phrasing is non-actionable data, not a rejection."""
     _require_valid_key()
-    # Same secrets.compare_digest fix as _ingest_authenticated, and the
-    # same reason -- a second, separate `!=` comparison here had the exact
-    # same timing side-channel. Not reused via _ingest_authenticated()
-    # itself: that function fails OPEN when INGEST_API_KEY is unset, correct
-    # for staging elsewhere, but accepting a version must never fail open --
-    # deny outright if no key is configured at all, not just if the
-    # supplied one is wrong.
-    if not INGEST_API_KEY or not secrets.compare_digest(request.headers.get("X-Ingest-Key", ""), INGEST_API_KEY):
+    if not _ingest_authenticated(request):
         raise HTTPException(status_code=403, detail="accepting a version requires a valid X-Ingest-Key")
     version_row = get_document_version(body.document_id, body.version)
     if version_row is None:
         raise HTTPException(status_code=404, detail=f"document_id {body.document_id!r} has no version {body.version}")
+    if "invisible_unicode_chars" in detect_adversarial_content(version_row["text_content"] or ""):
+        raise HTTPException(status_code=422, detail="rejected: version contains invisible Unicode characters; filters apply to every caller")
     extra_event_fields = {"client_ip": get_remote_address(request), "authenticated": True}
     try:
         chunks_indexed = _accept_version_now(
@@ -1145,8 +1299,8 @@ def ingest_batch(request: Request, body: IngestBatchRequest) -> IngestBatchRespo
 
 
 # Generous vs. the baseline corpus's 2.5MB/file cap (ingestion_quarantine/
-# README.md) -- that cap is tuned for chroma_store/'s committed-to-git size
-# at 50-document scale; this is one ad hoc live upload, not an addition to
+# README.md) -- that cap is tuned for the baseline corpus's size at 50-document scale
+# (the corpus now lives in Postgres, not in git); this is one ad hoc live upload, not an addition to
 # the committed baseline corpus, so a looser bound is fine. Still bounded,
 # not unbounded, per this project's standing input-cap pattern.
 MAX_PDF_UPLOAD_BYTES = 10 * 1024 * 1024
@@ -1209,7 +1363,7 @@ class RetrieveResult(BaseModel):
     historical_score: float | None = None
 
 
-@app.get("/debug/retrieve")
+@debug_router.get("/retrieve")
 def debug_retrieve(
     query: str | None = None, top_k: int = 5, document_id: str | None = None, q: str | None = None,
 ) -> list[RetrieveResult]:
@@ -1217,11 +1371,11 @@ def debug_retrieve(
     lets a caller (or the grader) see exactly what /ask's retrieval step
     would find for a given query, independent of generation. Not
     rate-limited like /ask (no OpenAI chat cost here — just one embedding
-    call plus a local Chroma query) but still costs one real embedding
+    call plus a vector query against Postgres) but still costs one real embedding
     call, unlike GET /health or GET /providers/status.
 
     document_id, when given, narrows the search to that one document's
-    chunks via Chroma's own metadata filter (N.8) — e.g. to check how a
+    chunks via the store's metadata filter (N.8) — e.g. to check how a
     specific document ranks its own passages for a query, or to confirm a
     freshly-/ingest-ed document is actually searchable. Omitted, retrieval
     is corpus-wide as before.
@@ -1266,7 +1420,7 @@ class SimilarDocumentResult(BaseModel):
     distance: float
 
 
-@app.get("/debug/similar-documents")
+@debug_router.get("/similar-documents")
 def debug_similar_documents(document_id: str, top_k: int = 5) -> list[SimilarDocumentResult]:
     """p3m3 item #11 -- read path for the document-centroid collection,
     written to since D5 but never queried until now. No embedding call and
@@ -1295,7 +1449,7 @@ class EventRecord(BaseModel):
 MAX_EVENTS_LIMIT = 500
 
 
-@app.get("/debug/events")
+@debug_router.get("/events")
 def debug_events(kind: str | None = None, limit: int = 200) -> list[EventRecord]:
     """Read-only view into internship.events (operational_audit.py's
     OperationalAuditMiddleware + rag_service.py's/main.py's own
@@ -1320,7 +1474,7 @@ class CorpusSummary(BaseModel):
 MAX_SAMPLE_SIZE = 50
 
 
-@app.get("/debug/corpus-summary")
+@debug_router.get("/corpus-summary")
 def debug_corpus_summary(sample_size: int = 10) -> CorpusSummary:
     """Read-only corpus hint — added 2026-09-22 (p3m3 permanent item #20)
     so a caller (or the Streamlit UI) can see roughly what's in the corpus
@@ -1333,6 +1487,30 @@ def debug_corpus_summary(sample_size: int = 10) -> CorpusSummary:
     if sample_size < 1 or sample_size > MAX_SAMPLE_SIZE:
         raise HTTPException(status_code=400, detail=f"sample_size must be between 1 and {MAX_SAMPLE_SIZE}")
     return CorpusSummary(**corpus_summary(sample_size=sample_size))
+
+
+# Included after every debug route above is declared (older FastAPI copies a
+# router's routes at include time; 0.141 resolves them lazily). Either way,
+# test_introspection_access.py's route inventory asserts each /debug/* route
+# carries require_debug_key and every route is classified (FMEA F11).
+app.include_router(debug_router)
+
+
+STATS_RATE_LIMIT = "30/minute;600/hour"
+
+
+@app.get("/stats/summary")
+@limiter.limit(STATS_RATE_LIMIT)
+def stats_summary(request: Request, window_hours: int = 24) -> stats_service.StatsSummary:
+    """p3m3 item #62 (W1/D3) -- PUBLIC, aggregate-only replacement for the
+    dashboard's raw /debug/events pull: counts, rates, percentiles and sums
+    over internship.events, small cells suppressed (stats_service docstring).
+    Cached ~60 s and rate limited (FMEA F10). No payloads, IPs, request ids,
+    titles or document text ever leave it; the response model forbids extra
+    fields."""
+    if not 1 <= window_hours <= stats_service.MAX_WINDOW_HOURS:
+        raise HTTPException(status_code=400, detail=f"window_hours must be between 1 and {stats_service.MAX_WINDOW_HOURS}")
+    return stats_service.get_summary(window_hours)
 
 
 def _run_rag_retrieval(
@@ -1552,6 +1730,14 @@ def ask(request: Request, body: AskRequest) -> AskResponse:
             # answer supported but placed no markers, cite the passages it
             # declared (or the fallback set above) in one closing
             # parenthetical rather than leave a supported answer uncited.
+            # p3m3 item #62: short cited quotes only. The passages the model saw
+            # are inside the grounded prompt, so quotes are checked against it.
+            if rag_status == "supported" and grounded_messages:
+                checked, quote_violations = enforce_quotes(
+                    answer.answer, [m["content"] for m in grounded_messages if isinstance(m.get("content"), str)])
+                if quote_violations:
+                    logger.warning("quote guard (/ask): %s", [v["reason"] for v in quote_violations])
+                answer = answer.model_copy(update={"answer": checked})
             references: list[str] = []
             passage_documents = [cid.rsplit("::", 1)[0] for cid in retrieved_ids]
             if rag_status == "supported":
@@ -1710,7 +1896,12 @@ def agent(request: Request, body: AgentRequest) -> AgentResponse:
     except (AuthenticationError, RateLimitError, OpenAIError) as exc:
         raise _map_openai_error(exc) from exc
     _record_agent_run(request, body.question, result, stopped=False)
+    # p3m3 item #62 (W1/D2): the step-by-step trace (tool calls and up to
+    # 600 characters of retrieved passage text per step) is introspection
+    # data -- returned only to an X-Debug-Key holder; everyone else gets [].
+    # answer/grounding/sources/references are identical either way.
+    trace = result["trace"] if _agent_trace_allowed(request) else []
     return AgentResponse(
-        answer=result["answer"], trace=[AgentStep(**step) for step in result["trace"]],
+        answer=result["answer"], trace=[AgentStep(**step) for step in trace],
         grounding=result["grounding"], sources=result["sources"], references=result["references"],
     )

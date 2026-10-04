@@ -104,15 +104,22 @@ CREATE INDEX IF NOT EXISTS check_results_pass_idx ON internship.eval_check_resul
 -- Useful views for analysis and reporting
 
 -- Summary: Pass rate by check
-CREATE OR REPLACE VIEW internship.eval_check_summary AS
-SELECT
-    check_name,
-    COUNT(*) as total_runs,
-    SUM(CASE WHEN pass THEN 1 ELSE 0 END) as pass_count,
-    SUM(CASE WHEN pass THEN 1 ELSE 0 END)::float / COUNT(*) as pass_rate
-FROM internship.eval_check_results
-GROUP BY check_name
-ORDER BY check_name;
+-- Created only if absent: migration 003 later replaces this view with a run_label version, and
+-- CREATE OR REPLACE with this older column list would fail on a database that already has 003
+-- (install_schema() re-applies every migration in order, 2026-10-02).
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_views WHERE schemaname = 'internship' AND viewname = 'eval_check_summary') THEN
+    CREATE VIEW internship.eval_check_summary AS
+    SELECT
+        check_name,
+        COUNT(*) as total_runs,
+        SUM(CASE WHEN pass THEN 1 ELSE 0 END) as pass_count,
+        SUM(CASE WHEN pass THEN 1 ELSE 0 END)::float / COUNT(*) as pass_rate
+    FROM internship.eval_check_results
+    GROUP BY check_name
+    ORDER BY check_name;
+  END IF;
+END $$;
 
 
 -- Summary: Failure categories ranked by frequency

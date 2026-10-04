@@ -9,7 +9,7 @@ agent_service.py's search_corpus.
 checklist.md's D2 section for the scoping decision) -- deliberately NOT
 added to requirements.txt, since nothing in the deployed app (main.py,
 agent_service.py, rag_service.py) imports it; only this script does, the
-same way chromadb-migration scripts are dev-only tooling, but taken one
+same way the one-off migration/verify scripts are dev-only tooling, but taken one
 step further by not adding the dependency to the deployed image's install
 list at all.
 
@@ -17,6 +17,7 @@ Run with: python scripts/mcp_corpus_server.py  (stdio transport, per
 module-3.7.md's own "simplest to build and debug" guidance)
 Inspect with: npx @modelcontextprotocol/inspector python scripts/mcp_corpus_server.py
 """
+# DIVERGENCE:D-013 accepted divergence: this corpus MCP server has no policy gate yet (see p3m3/divergence-register.json).
 import sys
 from pathlib import Path
 

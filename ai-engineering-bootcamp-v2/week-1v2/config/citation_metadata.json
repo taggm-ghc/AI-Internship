@@ -3,13 +3,13 @@
   "item": "p3m3 #48",
   "format": "CSL-JSON items keyed by document_id",
   "built_at": "2026-09-25T10:52:14-0700",
-  "documents": 263,
-  "covered": 261,
+  "documents": 268,
+  "covered": 266,
   "failures": {
    "Spicy hot pickels": "no authoritative record (source=None)",
    "synthetic": "no authoritative record (source=None)"
   },
-  "updated_at": "2026-09-26T09:28:19-0700 (+2 via p3m3/ingest_item56_sources.py)"
+  "updated_at": "2026-10-01T15:46:28-0700 (+4 via p3m3/ingest_eval_best_practice_sources.py)"
  },
  "items": {
   "acl-2024.acl-long.118-open-set-semi-supervised-text-classification-via-adversarial-disagreem": {
@@ -60,7 +60,10 @@
    "page": "2170-2180",
    "DOI": "10.18653/v1/2024.acl-long.118",
    "URL": "https://aclanthology.org/2024.acl-long.118/",
-   "_source": "https://aclanthology.org/2024.acl-long.118.bib"
+   "_source": "https://aclanthology.org/2024.acl-long.118.bib",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "acl-2024.acl-long.120-a-synthetic-data-approach-for-domain-generalization-of": {
    "id": "acl-2024.acl-long.120-a-synthetic-data-approach-for-domain-generalization-of",
@@ -110,7 +113,10 @@
    "page": "2212-2226",
    "DOI": "10.18653/v1/2024.acl-long.120",
    "URL": "https://aclanthology.org/2024.acl-long.120/",
-   "_source": "https://aclanthology.org/2024.acl-long.120.bib"
+   "_source": "https://aclanthology.org/2024.acl-long.120.bib",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "acl-2024.acl-long.126-exploring-the-potential-of-large-language-models-in-computational-argu": {
    "id": "acl-2024.acl-long.126-exploring-the-potential-of-large-language-models-in-computational-argu",
@@ -160,7 +166,10 @@
    "page": "2309-2330",
    "DOI": "10.18653/v1/2024.acl-long.126",
    "URL": "https://aclanthology.org/2024.acl-long.126/",
-   "_source": "https://aclanthology.org/2024.acl-long.126.bib"
+   "_source": "https://aclanthology.org/2024.acl-long.126.bib",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "acl-2024.acl-long.1-quantized-side-tuning-fast-and-memory-efficient-tuning-of-quantized-la": {
    "id": "acl-2024.acl-long.1-quantized-side-tuning-fast-and-memory-efficient-tuning-of-quantized-la",
@@ -226,7 +235,10 @@
    "page": "1-17",
    "DOI": "10.18653/v1/2024.acl-long.1",
    "URL": "https://aclanthology.org/2024.acl-long.1/",
-   "_source": "https://aclanthology.org/2024.acl-long.1.bib"
+   "_source": "https://aclanthology.org/2024.acl-long.1.bib",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "acl-2024.acl-long.28-explore-spurious-correlations-at-the-concept-level-in-language-models": {
    "id": "acl-2024.acl-long.28-explore-spurious-correlations-at-the-concept-level-in-language-models",
@@ -284,7 +296,10 @@
    "page": "478-492",
    "DOI": "10.18653/v1/2024.acl-long.28",
    "URL": "https://aclanthology.org/2024.acl-long.28/",
-   "_source": "https://aclanthology.org/2024.acl-long.28.bib"
+   "_source": "https://aclanthology.org/2024.acl-long.28.bib",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "acl-2024.acl-long.31-pouring-your-heart-out-investigating-the-role-of-figurative-language-i": {
    "id": "acl-2024.acl-long.31-pouring-your-heart-out-investigating-the-role-of-figurative-language-i",
@@ -334,7 +349,10 @@
    "page": "519-529",
    "DOI": "10.18653/v1/2024.acl-long.31",
    "URL": "https://aclanthology.org/2024.acl-long.31/",
-   "_source": "https://aclanthology.org/2024.acl-long.31.bib"
+   "_source": "https://aclanthology.org/2024.acl-long.31.bib",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "acl-2024.acl-long.45-learn-from-failure-fine-tuning": {
    "id": "acl-2024.acl-long.45-learn-from-failure-fine-tuning",
@@ -404,7 +422,10 @@
    "page": "776-790",
    "DOI": "10.18653/v1/2024.acl-long.45",
    "URL": "https://aclanthology.org/2024.acl-long.45/",
-   "_source": "https://aclanthology.org/2024.acl-long.45.bib"
+   "_source": "https://aclanthology.org/2024.acl-long.45.bib",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "acl-2024.acl-long.58-self-distillation-bridges-distribution-gap-in-language-model-fine-tuni": {
    "id": "acl-2024.acl-long.58-self-distillation-bridges-distribution-gap-in-language-model-fine-tuni",
@@ -466,7 +487,10 @@
    "page": "1028-1043",
    "DOI": "10.18653/v1/2024.acl-long.58",
    "URL": "https://aclanthology.org/2024.acl-long.58/",
-   "_source": "https://aclanthology.org/2024.acl-long.58.bib"
+   "_source": "https://aclanthology.org/2024.acl-long.58.bib",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "acl-2024.acl-long.59-an-information-bottleneck-perspective-for-effective-noise-filtering-on": {
    "id": "acl-2024.acl-long.59-an-information-bottleneck-perspective-for-effective-noise-filtering-on",
@@ -540,7 +564,10 @@
    "page": "1044-1069",
    "DOI": "10.18653/v1/2024.acl-long.59",
    "URL": "https://aclanthology.org/2024.acl-long.59/",
-   "_source": "https://aclanthology.org/2024.acl-long.59.bib"
+   "_source": "https://aclanthology.org/2024.acl-long.59.bib",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "acl-2024.acl-long.72-advancing-abductive-reasoning-in-knowledge-graphs-through-complex-logi": {
    "id": "acl-2024.acl-long.72-advancing-abductive-reasoning-in-knowledge-graphs-through-complex-logi",
@@ -598,7 +625,10 @@
    "page": "1312-1329",
    "DOI": "10.18653/v1/2024.acl-long.72",
    "URL": "https://aclanthology.org/2024.acl-long.72/",
-   "_source": "https://aclanthology.org/2024.acl-long.72.bib"
+   "_source": "https://aclanthology.org/2024.acl-long.72.bib",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "acl-2024.acl-long.75-rewriting-the-code-a-simple-method-for-large-language-model-augmented": {
    "id": "acl-2024.acl-long.75-rewriting-the-code-a-simple-method-for-large-language-model-augmented",
@@ -644,7 +674,10 @@
    "page": "1371-1389",
    "DOI": "10.18653/v1/2024.acl-long.75",
    "URL": "https://aclanthology.org/2024.acl-long.75/",
-   "_source": "https://aclanthology.org/2024.acl-long.75.bib"
+   "_source": "https://aclanthology.org/2024.acl-long.75.bib",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "acl-2024.acl-long.77-mitigating-catastrophic-forgetting-in-large-language-models-with-self": {
    "id": "acl-2024.acl-long.77-mitigating-catastrophic-forgetting-in-large-language-models-with-self",
@@ -710,7 +743,10 @@
    "page": "1416-1428",
    "DOI": "10.18653/v1/2024.acl-long.77",
    "URL": "https://aclanthology.org/2024.acl-long.77/",
-   "_source": "https://aclanthology.org/2024.acl-long.77.bib"
+   "_source": "https://aclanthology.org/2024.acl-long.77.bib",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "acl-2024.acl-long.78-enhancing-large-language-models-in-coding-through-multi-perspective-se": {
    "id": "acl-2024.acl-long.78-enhancing-large-language-models-in-coding-through-multi-perspective-se",
@@ -760,7 +796,10 @@
    "page": "1429-1450",
    "DOI": "10.18653/v1/2024.acl-long.78",
    "URL": "https://aclanthology.org/2024.acl-long.78/",
-   "_source": "https://aclanthology.org/2024.acl-long.78.bib"
+   "_source": "https://aclanthology.org/2024.acl-long.78.bib",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "acl-2024.acl-long.80-transitive-consistency-constrained-learning-for-entity-to-entity-stanc": {
    "id": "acl-2024.acl-long.80-transitive-consistency-constrained-learning-for-entity-to-entity-stanc",
@@ -806,7 +845,10 @@
    "page": "1467-1480",
    "DOI": "10.18653/v1/2024.acl-long.80",
    "URL": "https://aclanthology.org/2024.acl-long.80/",
-   "_source": "https://aclanthology.org/2024.acl-long.80.bib"
+   "_source": "https://aclanthology.org/2024.acl-long.80.bib",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "acl-2024.acl-long.81-feature-adaptive-and-data-scalable-in-context-learning": {
    "id": "acl-2024.acl-long.81-feature-adaptive-and-data-scalable-in-context-learning",
@@ -860,7 +902,10 @@
    "page": "1481-1494",
    "DOI": "10.18653/v1/2024.acl-long.81",
    "URL": "https://aclanthology.org/2024.acl-long.81/",
-   "_source": "https://aclanthology.org/2024.acl-long.81.bib"
+   "_source": "https://aclanthology.org/2024.acl-long.81.bib",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "acl-2024.acl-long.84-dependency-transformer-grammars-integrating-dependency-structures-into": {
    "id": "acl-2024.acl-long.84-dependency-transformer-grammars-integrating-dependency-structures-into",
@@ -906,7 +951,10 @@
    "page": "1543-1556",
    "DOI": "10.18653/v1/2024.acl-long.84",
    "URL": "https://aclanthology.org/2024.acl-long.84/",
-   "_source": "https://aclanthology.org/2024.acl-long.84.bib"
+   "_source": "https://aclanthology.org/2024.acl-long.84.bib",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "acl-2024.acl-long.85-a-non-autoregressive-generation-framework-for-end-to-end-simultaneous": {
    "id": "acl-2024.acl-long.85-a-non-autoregressive-generation-framework-for-end-to-end-simultaneous",
@@ -964,7 +1012,10 @@
    "page": "1557-1575",
    "DOI": "10.18653/v1/2024.acl-long.85",
    "URL": "https://aclanthology.org/2024.acl-long.85/",
-   "_source": "https://aclanthology.org/2024.acl-long.85.bib"
+   "_source": "https://aclanthology.org/2024.acl-long.85.bib",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "acl-2024.acl-long.86-probing-language-models-for-pre-training-data-detection": {
    "id": "acl-2024.acl-long.86-probing-language-models-for-pre-training-data-detection",
@@ -1022,7 +1073,10 @@
    "page": "1576-1587",
    "DOI": "10.18653/v1/2024.acl-long.86",
    "URL": "https://aclanthology.org/2024.acl-long.86/",
-   "_source": "https://aclanthology.org/2024.acl-long.86.bib"
+   "_source": "https://aclanthology.org/2024.acl-long.86.bib",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "acl-2024.acl-long.94-multimodal-prompt-learning-with-missing-modalities-for-sentiment-analy": {
    "id": "acl-2024.acl-long.94-multimodal-prompt-learning-with-missing-modalities-for-sentiment-analy",
@@ -1068,7 +1122,10 @@
    "page": "1726-1736",
    "DOI": "10.18653/v1/2024.acl-long.94",
    "URL": "https://aclanthology.org/2024.acl-long.94/",
-   "_source": "https://aclanthology.org/2024.acl-long.94.bib"
+   "_source": "https://aclanthology.org/2024.acl-long.94.bib",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "acl-2024.acl-long.9-unsupervised-information-refinement-training-of-large-language-models": {
    "id": "acl-2024.acl-long.9-unsupervised-information-refinement-training-of-large-language-models",
@@ -1130,7 +1187,10 @@
    "page": "133-145",
    "DOI": "10.18653/v1/2024.acl-long.9",
    "URL": "https://aclanthology.org/2024.acl-long.9/",
-   "_source": "https://aclanthology.org/2024.acl-long.9.bib"
+   "_source": "https://aclanthology.org/2024.acl-long.9.bib",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "acl-2026.findings-acl.10-private-seeds-public-llms": {
    "id": "acl-2026.findings-acl.10-private-seeds-public-llms",
@@ -1176,7 +1236,10 @@
    "page": "189-210",
    "DOI": "10.18653/v1/2026.findings-acl.10",
    "URL": "https://aclanthology.org/2026.findings-acl.10/",
-   "_source": "https://aclanthology.org/2026.findings-acl.10.bib"
+   "_source": "https://aclanthology.org/2026.findings-acl.10.bib",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2007.13019-feedback-loop-bias-amplification-recommenders": {
    "id": "arxiv-2007.13019-feedback-loop-bias-amplification-recommenders",
@@ -1217,7 +1280,10 @@
    "_source": "https://arxiv.org/abs/2007.13019",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2007.13019"
+   "DOI": "10.48550/arXiv.2007.13019",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2607.01852-evaluating-chunking-strategies-rag-academic-texts": {
    "id": "arxiv-2607.01852-evaluating-chunking-strategies-rag-academic-texts",
@@ -1250,7 +1316,10 @@
    "_source": "https://arxiv.org/abs/2607.01852",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2607.01852"
+   "DOI": "10.48550/arXiv.2607.01852",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18063-other-half-of-memory-wall-moe-ssd": {
    "id": "arxiv-2609.18063-other-half-of-memory-wall-moe-ssd",
@@ -1291,7 +1360,10 @@
    "_source": "https://arxiv.org/abs/2609.18063",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18063"
+   "DOI": "10.48550/arXiv.2609.18063",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18099-when-is-graph-structure-worth-its-cost-rag": {
    "id": "arxiv-2609.18099-when-is-graph-structure-worth-its-cost-rag",
@@ -1336,7 +1408,10 @@
    "_source": "https://arxiv.org/abs/2609.18099",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18099"
+   "DOI": "10.48550/arXiv.2609.18099",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18123-autotunebench-agent-auto-tuning-llm-serving": {
    "id": "arxiv-2609.18123-autotunebench-agent-auto-tuning-llm-serving",
@@ -1361,7 +1436,10 @@
    "_source": "https://arxiv.org/abs/2609.18123",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18123"
+   "DOI": "10.48550/arXiv.2609.18123",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18163-time-aligned-evolving-concept-graphs-scientific-relation": {
    "id": "arxiv-2609.18163-time-aligned-evolving-concept-graphs-scientific-relation",
@@ -1398,7 +1476,10 @@
    "_source": "https://arxiv.org/abs/2609.18163",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18163"
+   "DOI": "10.48550/arXiv.2609.18163",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18270-benchcompass-payment-domain-llms": {
    "id": "arxiv-2609.18270-benchcompass-payment-domain-llms",
@@ -1467,7 +1548,10 @@
    "_source": "https://arxiv.org/abs/2609.18270",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18270"
+   "DOI": "10.48550/arXiv.2609.18270",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18272-who-audits-whom-agentic-ai-audit-protocol": {
    "id": "arxiv-2609.18272-who-audits-whom-agentic-ai-audit-protocol",
@@ -1492,7 +1576,10 @@
    "_source": "https://arxiv.org/abs/2609.18272",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18272"
+   "DOI": "10.48550/arXiv.2609.18272",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18283-where-should-agents-live-edge-cloud": {
    "id": "arxiv-2609.18283-where-should-agents-live-edge-cloud",
@@ -1529,7 +1616,10 @@
    "_source": "https://arxiv.org/abs/2609.18283",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18283"
+   "DOI": "10.48550/arXiv.2609.18283",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18286-what-counts-as-strategic-reasoning-chess": {
    "id": "arxiv-2609.18286-what-counts-as-strategic-reasoning-chess",
@@ -1558,7 +1648,10 @@
    "_source": "https://arxiv.org/abs/2609.18286",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18286"
+   "DOI": "10.48550/arXiv.2609.18286",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18315-multi-appliance-non-intrusive-load-monitoring-via-label-pres": {
    "id": "arxiv-2609.18315-multi-appliance-non-intrusive-load-monitoring-via-label-pres",
@@ -1587,7 +1680,10 @@
    "_source": "https://arxiv.org/abs/2609.18315",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18315"
+   "DOI": "10.48550/arXiv.2609.18315",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18320-attention-dispersion-as-a-diagnostic-signal-for-hallucinatio": {
    "id": "arxiv-2609.18320-attention-dispersion-as-a-diagnostic-signal-for-hallucinatio",
@@ -1616,7 +1712,10 @@
    "_source": "https://arxiv.org/abs/2609.18320",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18320"
+   "DOI": "10.48550/arXiv.2609.18320",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18338-autonomy-in-check-governor-mediated-adaptive-security-at-the": {
    "id": "arxiv-2609.18338-autonomy-in-check-governor-mediated-adaptive-security-at-the",
@@ -1653,7 +1752,10 @@
    "_source": "https://arxiv.org/abs/2609.18338",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18338"
+   "DOI": "10.48550/arXiv.2609.18338",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18341-understanding-ai-provider-recommendations-in-local-service-m": {
    "id": "arxiv-2609.18341-understanding-ai-provider-recommendations-in-local-service-m",
@@ -1682,7 +1784,10 @@
    "_source": "https://arxiv.org/abs/2609.18341",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18341"
+   "DOI": "10.48550/arXiv.2609.18341",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18346-faithful-yet-collusive-cot-monitoring-collusion": {
    "id": "arxiv-2609.18346-faithful-yet-collusive-cot-monitoring-collusion",
@@ -1711,7 +1816,10 @@
    "_source": "https://arxiv.org/abs/2609.18346",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18346"
+   "DOI": "10.48550/arXiv.2609.18346",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18357-market-signal-injection-adversarial-pricing-agents": {
    "id": "arxiv-2609.18357-market-signal-injection-adversarial-pricing-agents",
@@ -1740,7 +1848,10 @@
    "_source": "https://arxiv.org/abs/2609.18357",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18357"
+   "DOI": "10.48550/arXiv.2609.18357",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18368-semantic-csi-feedback-for-beam-selection-when-task-aware-emb": {
    "id": "arxiv-2609.18368-semantic-csi-feedback-for-beam-selection-when-task-aware-emb",
@@ -1773,7 +1884,10 @@
    "_source": "https://arxiv.org/abs/2609.18368",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18368"
+   "DOI": "10.48550/arXiv.2609.18368",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18407-tern-a-delta-rule-memory-with-a-seasonal-reference-and-onlin": {
    "id": "arxiv-2609.18407-tern-a-delta-rule-memory-with-a-seasonal-reference-and-onlin",
@@ -1802,7 +1916,10 @@
    "_source": "https://arxiv.org/abs/2609.18407",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18407"
+   "DOI": "10.48550/arXiv.2609.18407",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18417-dependency-aware-trajectory-refinement-for-efficient-multi-t": {
    "id": "arxiv-2609.18417-dependency-aware-trajectory-refinement-for-efficient-multi-t",
@@ -1839,7 +1956,10 @@
    "_source": "https://arxiv.org/abs/2609.18417",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18417"
+   "DOI": "10.48550/arXiv.2609.18417",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18431-hpoquest-rare-disease-diagnostic-agent": {
    "id": "arxiv-2609.18431-hpoquest-rare-disease-diagnostic-agent",
@@ -1876,7 +1996,10 @@
    "_source": "https://arxiv.org/abs/2609.18431",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18431"
+   "DOI": "10.48550/arXiv.2609.18431",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18440-planning-or-improvisation-stress-testing-the-poetry-planning": {
    "id": "arxiv-2609.18440-planning-or-improvisation-stress-testing-the-poetry-planning",
@@ -1901,7 +2024,10 @@
    "_source": "https://arxiv.org/abs/2609.18440",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18440"
+   "DOI": "10.48550/arXiv.2609.18440",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18481-hyperbolic-graph-differential-diagnosis": {
    "id": "arxiv-2609.18481-hyperbolic-graph-differential-diagnosis",
@@ -1954,7 +2080,10 @@
    "_source": "https://arxiv.org/abs/2609.18481",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18481"
+   "DOI": "10.48550/arXiv.2609.18481",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18494-size-matters-foundation-model-for-czech-html-documents": {
    "id": "arxiv-2609.18494-size-matters-foundation-model-for-czech-html-documents",
@@ -2003,7 +2132,10 @@
    "URL": "https://arxiv.org/abs/2609.18494",
    "_source": "https://arxiv.org/abs/2609.18494",
    "genre": "Preprint",
-   "publisher": "arXiv"
+   "publisher": "arXiv",
+   "license": "CC BY-NC-SA 4.0 (non-commercial, share-alike)",
+   "license_url": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18516-align-integrate-and-fire-efficient-token-level-alignment-for": {
    "id": "arxiv-2609.18516-align-integrate-and-fire-efficient-token-level-alignment-for",
@@ -2040,7 +2172,10 @@
    "_source": "https://arxiv.org/abs/2609.18516",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18516"
+   "DOI": "10.48550/arXiv.2609.18516",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18521-voicetrace-a-benchmark-and-retrieval-framework-for-who-said": {
    "id": "arxiv-2609.18521-voicetrace-a-benchmark-and-retrieval-framework-for-who-said",
@@ -2093,7 +2228,10 @@
    "_source": "https://arxiv.org/abs/2609.18521",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18521"
+   "DOI": "10.48550/arXiv.2609.18521",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18533-a-probe-shift-is-not-a-fairness-fix-the-limits-of-representa": {
    "id": "arxiv-2609.18533-a-probe-shift-is-not-a-fairness-fix-the-limits-of-representa",
@@ -2126,7 +2264,10 @@
    "_source": "https://arxiv.org/abs/2609.18533",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18533"
+   "DOI": "10.48550/arXiv.2609.18533",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18535-provable-guarantees-and-efficient-learning-of-structural-equ": {
    "id": "arxiv-2609.18535-provable-guarantees-and-efficient-learning-of-structural-equ",
@@ -2155,7 +2296,10 @@
    "_source": "https://arxiv.org/abs/2609.18535",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18535"
+   "DOI": "10.48550/arXiv.2609.18535",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18555-interpretable-patch-based-deep-learning-for-wildfire-spread": {
    "id": "arxiv-2609.18555-interpretable-patch-based-deep-learning-for-wildfire-spread",
@@ -2196,7 +2340,10 @@
    "_source": "https://arxiv.org/abs/2609.18555",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18555"
+   "DOI": "10.48550/arXiv.2609.18555",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18565-variational-quantum-transformer-architecture-for-synthetic-l": {
    "id": "arxiv-2609.18565-variational-quantum-transformer-architecture-for-synthetic-l",
@@ -2241,7 +2388,10 @@
    "_source": "https://arxiv.org/abs/2609.18565",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18565"
+   "DOI": "10.48550/arXiv.2609.18565",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18577-accurate-trace-estimation-with-fewer-random-bits-via-recursi": {
    "id": "arxiv-2609.18577-accurate-trace-estimation-with-fewer-random-bits-via-recursi",
@@ -2274,7 +2424,10 @@
    "_source": "https://arxiv.org/abs/2609.18577",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18577"
+   "DOI": "10.48550/arXiv.2609.18577",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18587-label-free-steering-compressing-test-time-reinforcement-lear": {
    "id": "arxiv-2609.18587-label-free-steering-compressing-test-time-reinforcement-lear",
@@ -2307,7 +2460,10 @@
    "_source": "https://arxiv.org/abs/2609.18587",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18587"
+   "DOI": "10.48550/arXiv.2609.18587",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18588-peak-aware-short-term-load-forecasting-across-distribution-g": {
    "id": "arxiv-2609.18588-peak-aware-short-term-load-forecasting-across-distribution-g",
@@ -2360,7 +2516,10 @@
    "_source": "https://arxiv.org/abs/2609.18588",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18588"
+   "DOI": "10.48550/arXiv.2609.18588",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18595-redil-gnn-resynthesis-domain-incremental-learning-for-circui": {
    "id": "arxiv-2609.18595-redil-gnn-resynthesis-domain-incremental-learning-for-circui",
@@ -2393,7 +2552,10 @@
    "_source": "https://arxiv.org/abs/2609.18595",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18595"
+   "DOI": "10.48550/arXiv.2609.18595",
+   "license": "CC BY-NC-SA 4.0 (non-commercial, share-alike)",
+   "license_url": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18599-online-robust-reinforcement-learning-through-monte-carlo-pla": {
    "id": "arxiv-2609.18599-online-robust-reinforcement-learning-through-monte-carlo-pla",
@@ -2430,36 +2592,10 @@
    "_source": "https://arxiv.org/abs/2609.18599",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18599"
-  },
-  "arxiv-2609.18605-pact-can-enterprise-ai-assistants-be-trusted-under-pressure": {
-   "id": "arxiv-2609.18605-pact-can-enterprise-ai-assistants-be-trusted-under-pressure",
-   "type": "article",
-   "title": "PACT: Can Enterprise AI Assistants Be Trusted Under Pressure?",
-   "author": [
-    {
-     "family": "Okamoto",
-     "given": "Mika"
-    },
-    {
-     "family": "Erol",
-     "given": "Ansel Kaplan"
-    }
-   ],
-   "issued": {
-    "date-parts": [
-     [
-      2026,
-      9,
-      16
-     ]
-    ]
-   },
-   "URL": "https://arxiv.org/abs/2609.18605",
-   "_source": "https://arxiv.org/abs/2609.18605",
-   "genre": "Preprint",
-   "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18605"
+   "DOI": "10.48550/arXiv.2609.18599",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18622-how-many-labels-does-model-choice-need-certificates-and-budg": {
    "id": "arxiv-2609.18622-how-many-labels-does-model-choice-need-certificates-and-budg",
@@ -2484,7 +2620,10 @@
    "_source": "https://arxiv.org/abs/2609.18622",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18622"
+   "DOI": "10.48550/arXiv.2609.18622",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18644-fallacy-benchmarks-measure-scheme-recognition-not-fallacy-de": {
    "id": "arxiv-2609.18644-fallacy-benchmarks-measure-scheme-recognition-not-fallacy-de",
@@ -2517,7 +2656,10 @@
    "_source": "https://arxiv.org/abs/2609.18644",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18644"
+   "DOI": "10.48550/arXiv.2609.18644",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18655-learning-to-program-adaptive-non-local-observables-for-machi": {
    "id": "arxiv-2609.18655-learning-to-program-adaptive-non-local-observables-for-machi",
@@ -2550,7 +2692,10 @@
    "_source": "https://arxiv.org/abs/2609.18655",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18655"
+   "DOI": "10.48550/arXiv.2609.18655",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18656-revisiting-distributed-sign-based-variance-reduction": {
    "id": "arxiv-2609.18656-revisiting-distributed-sign-based-variance-reduction",
@@ -2583,7 +2728,10 @@
    "_source": "https://arxiv.org/abs/2609.18656",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18656"
+   "DOI": "10.48550/arXiv.2609.18656",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18672-selection-is-retrieval-abstention-is-not-on-device-tool-rout": {
    "id": "arxiv-2609.18672-selection-is-retrieval-abstention-is-not-on-device-tool-rout",
@@ -2608,7 +2756,10 @@
    "_source": "https://arxiv.org/abs/2609.18672",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18672"
+   "DOI": "10.48550/arXiv.2609.18672",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18677-voice-of-reason-reinforcement-learning-for-spoken-math": {
    "id": "arxiv-2609.18677-voice-of-reason-reinforcement-learning-for-spoken-math",
@@ -2641,7 +2792,10 @@
    "_source": "https://arxiv.org/abs/2609.18677",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18677"
+   "DOI": "10.48550/arXiv.2609.18677",
+   "license": "CC BY-NC-SA 4.0 (non-commercial, share-alike)",
+   "license_url": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18680-hearincontext-a-benchmark-for-implicit-context-in-speech-rec": {
    "id": "arxiv-2609.18680-hearincontext-a-benchmark-for-implicit-context-in-speech-rec",
@@ -2674,7 +2828,10 @@
    "_source": "https://arxiv.org/abs/2609.18680",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18680"
+   "DOI": "10.48550/arXiv.2609.18680",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18682-rank-and-computation-of-the-pathlifting-jacobian-of-a-dag-re": {
    "id": "arxiv-2609.18682-rank-and-computation-of-the-pathlifting-jacobian-of-a-dag-re",
@@ -2699,7 +2856,10 @@
    "_source": "https://arxiv.org/abs/2609.18682",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18682"
+   "DOI": "10.48550/arXiv.2609.18682",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18688-generalist-specialist-mixture-of-experts-for-rare-pathology": {
    "id": "arxiv-2609.18688-generalist-specialist-mixture-of-experts-for-rare-pathology",
@@ -2736,7 +2896,10 @@
    "_source": "https://arxiv.org/abs/2609.18688",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18688"
+   "DOI": "10.48550/arXiv.2609.18688",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18704-toward-composable-network-digital-twins-a-subgraph-based-lat": {
    "id": "arxiv-2609.18704-toward-composable-network-digital-twins-a-subgraph-based-lat",
@@ -2777,7 +2940,10 @@
    "_source": "https://arxiv.org/abs/2609.18704",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18704"
+   "DOI": "10.48550/arXiv.2609.18704",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18723-beyond-truncation-llm-decoding-ensemble-pruning": {
    "id": "arxiv-2609.18723-beyond-truncation-llm-decoding-ensemble-pruning",
@@ -2818,7 +2984,10 @@
    "_source": "https://arxiv.org/abs/2609.18723",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18723"
+   "DOI": "10.48550/arXiv.2609.18723",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18729-if-i-had-to-buy-just-one-galaxy-s26-ultra-auditing-ai-genera": {
    "id": "arxiv-2609.18729-if-i-had-to-buy-just-one-galaxy-s26-ultra-auditing-ai-genera",
@@ -2871,7 +3040,10 @@
    "_source": "https://arxiv.org/abs/2609.18729",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18729"
+   "DOI": "10.48550/arXiv.2609.18729",
+   "license": "CC BY-SA 4.0 (share-alike)",
+   "license_url": "http://creativecommons.org/licenses/by-sa/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18731-best-llm-nl-goals-to-pddl": {
    "id": "arxiv-2609.18731-best-llm-nl-goals-to-pddl",
@@ -2904,7 +3076,10 @@
    "_source": "https://arxiv.org/abs/2609.18731",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18731"
+   "DOI": "10.48550/arXiv.2609.18731",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18736-clueing-up-llms-tool-augmented-deductive-reasoning": {
    "id": "arxiv-2609.18736-clueing-up-llms-tool-augmented-deductive-reasoning",
@@ -2933,7 +3108,10 @@
    "_source": "https://arxiv.org/abs/2609.18736",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18736"
+   "DOI": "10.48550/arXiv.2609.18736",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18745-when-edit-flows-are-edit-jumps-replicating-edit-flows-and-ev": {
    "id": "arxiv-2609.18745-when-edit-flows-are-edit-jumps-replicating-edit-flows-and-ev",
@@ -2978,7 +3156,10 @@
    "_source": "https://arxiv.org/abs/2609.18745",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18745"
+   "DOI": "10.48550/arXiv.2609.18745",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18759-stable-filters-for-generative-modeling-of-graph-signals": {
    "id": "arxiv-2609.18759-stable-filters-for-generative-modeling-of-graph-signals",
@@ -3007,7 +3188,10 @@
    "_source": "https://arxiv.org/abs/2609.18759",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18759"
+   "DOI": "10.48550/arXiv.2609.18759",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18772-zero-shot-cross-lingual-recognition-of-sign-language-handsha": {
    "id": "arxiv-2609.18772-zero-shot-cross-lingual-recognition-of-sign-language-handsha",
@@ -3048,7 +3232,10 @@
    "_source": "https://arxiv.org/abs/2609.18772",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18772"
+   "DOI": "10.48550/arXiv.2609.18772",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18782-a-convergence-framework-for-deep-v-learning-error-propagatio": {
    "id": "arxiv-2609.18782-a-convergence-framework-for-deep-v-learning-error-propagatio",
@@ -3073,7 +3260,10 @@
    "_source": "https://arxiv.org/abs/2609.18782",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18782"
+   "DOI": "10.48550/arXiv.2609.18782",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18804-beyond-frequency-measures-can-contextual-embeddings-capture": {
    "id": "arxiv-2609.18804-beyond-frequency-measures-can-contextual-embeddings-capture",
@@ -3106,44 +3296,10 @@
    "_source": "https://arxiv.org/abs/2609.18804",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18804"
-  },
-  "arxiv-2609.18842-infinite-parameter-llms-live-weights": {
-   "id": "arxiv-2609.18842-infinite-parameter-llms-live-weights",
-   "type": "article",
-   "title": "Infinite-Parameter LLMs: Generating and Adapting Weights from Live Data",
-   "author": [
-    {
-     "family": "Hu",
-     "given": "Jinli"
-    },
-    {
-     "family": "Clarke",
-     "given": "Ross M."
-    },
-    {
-     "family": "Zhang",
-     "given": "Yichuan"
-    },
-    {
-     "family": "Hernández-Lobato",
-     "given": "José Miguel"
-    }
-   ],
-   "issued": {
-    "date-parts": [
-     [
-      2026,
-      9,
-      16
-     ]
-    ]
-   },
-   "URL": "https://arxiv.org/abs/2609.18842",
-   "_source": "https://arxiv.org/abs/2609.18842",
-   "genre": "Preprint",
-   "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18842"
+   "DOI": "10.48550/arXiv.2609.18804",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18864-asleval-measuring-privacy-exposure-displacement-in-llm-agent": {
    "id": "arxiv-2609.18864-asleval-measuring-privacy-exposure-displacement-in-llm-agent",
@@ -3184,7 +3340,10 @@
    "_source": "https://arxiv.org/abs/2609.18864",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18864"
+   "DOI": "10.48550/arXiv.2609.18864",
+   "license": "CC BY-NC-SA 4.0 (non-commercial, share-alike)",
+   "license_url": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18878-preventing-model-collapse-a-fisher-rao-perspective-on-the-dy": {
    "id": "arxiv-2609.18878-preventing-model-collapse-a-fisher-rao-perspective-on-the-dy",
@@ -3221,7 +3380,10 @@
    "_source": "https://arxiv.org/abs/2609.18878",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18878"
+   "DOI": "10.48550/arXiv.2609.18878",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18905-structured-claim-level-discourse-representations-for-dense-h": {
    "id": "arxiv-2609.18905-structured-claim-level-discourse-representations-for-dense-h",
@@ -3258,7 +3420,10 @@
    "_source": "https://arxiv.org/abs/2609.18905",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18905"
+   "DOI": "10.48550/arXiv.2609.18905",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18929-social-laws-for-multi-agent-coordination-in-stochastic-envir": {
    "id": "arxiv-2609.18929-social-laws-for-multi-agent-coordination-in-stochastic-envir",
@@ -3311,36 +3476,10 @@
    "_source": "https://arxiv.org/abs/2609.18929",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18929"
-  },
-  "arxiv-2609.18985-suppressed-not-erased-knowledge-editing": {
-   "id": "arxiv-2609.18985-suppressed-not-erased-knowledge-editing",
-   "type": "article",
-   "title": "Suppressed, Not Erased: A Representational Trace of Edited Facts Survives Even Weight-Free Knowledge Editing",
-   "author": [
-    {
-     "family": "Srivastava",
-     "given": "Priyansh"
-    },
-    {
-     "family": "Chatterjee",
-     "given": "Romit"
-    }
-   ],
-   "issued": {
-    "date-parts": [
-     [
-      2026,
-      7,
-      17
-     ]
-    ]
-   },
-   "URL": "https://arxiv.org/abs/2609.18985",
-   "_source": "https://arxiv.org/abs/2609.18985",
-   "genre": "Preprint",
-   "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18985"
+   "DOI": "10.48550/arXiv.2609.18929",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18989-function-lives-where-variance-doesnt": {
    "id": "arxiv-2609.18989-function-lives-where-variance-doesnt",
@@ -3365,7 +3504,10 @@
    "_source": "https://arxiv.org/abs/2609.18989",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18989"
+   "DOI": "10.48550/arXiv.2609.18989",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.18996-compiled-agency-coding-agents-game-players": {
    "id": "arxiv-2609.18996-compiled-agency-coding-agents-game-players",
@@ -3394,7 +3536,10 @@
    "_source": "https://arxiv.org/abs/2609.18996",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.18996"
+   "DOI": "10.48550/arXiv.2609.18996",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19096-prepared-or-unprepared-evaluating-healthcare-workforce-readi": {
    "id": "arxiv-2609.19096-prepared-or-unprepared-evaluating-healthcare-workforce-readi",
@@ -3451,52 +3596,10 @@
    "_source": "https://arxiv.org/abs/2609.19096",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19096"
-  },
-  "arxiv-2609.19099-evidence-grounded-agentic-formulation-development-in-an-auto": {
-   "id": "arxiv-2609.19099-evidence-grounded-agentic-formulation-development-in-an-auto",
-   "type": "article",
-   "title": "Evidence-Grounded Agentic Formulation Development in an Autonomous Laboratory",
-   "author": [
-    {
-     "family": "Craig",
-     "given": "Michael M."
-    },
-    {
-     "family": "Hickman",
-     "given": "Riley J."
-    },
-    {
-     "family": "Ma",
-     "given": "Yingshan"
-    },
-    {
-     "family": "Piché-Taillefer",
-     "given": "Rémi"
-    },
-    {
-     "family": "Allen",
-     "given": "Christine"
-    },
-    {
-     "family": "Bannigan",
-     "given": "Pauric"
-    }
-   ],
-   "issued": {
-    "date-parts": [
-     [
-      2026,
-      9,
-      16
-     ]
-    ]
-   },
-   "URL": "https://arxiv.org/abs/2609.19099",
-   "_source": "https://arxiv.org/abs/2609.19099",
-   "genre": "Preprint",
-   "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19099"
+   "DOI": "10.48550/arXiv.2609.19096",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19113-playing-log-n-questions-over-wikipedia-abstracts-communicati": {
    "id": "arxiv-2609.19113-playing-log-n-questions-over-wikipedia-abstracts-communicati",
@@ -3521,7 +3624,10 @@
    "_source": "https://arxiv.org/abs/2609.19113",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19113"
+   "DOI": "10.48550/arXiv.2609.19113",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19128-cognitive-extensions-dual-process-agents": {
    "id": "arxiv-2609.19128-cognitive-extensions-dual-process-agents",
@@ -3550,7 +3656,10 @@
    "_source": "https://arxiv.org/abs/2609.19128",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19128"
+   "DOI": "10.48550/arXiv.2609.19128",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19135-exponential-hardness-of-off-policy-evaluation-under-history": {
    "id": "arxiv-2609.19135-exponential-hardness-of-off-policy-evaluation-under-history",
@@ -3575,7 +3684,10 @@
    "_source": "https://arxiv.org/abs/2609.19135",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19135"
+   "DOI": "10.48550/arXiv.2609.19135",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19144-a-zeroth-order-paradigm-for-llm-preference-alignment": {
    "id": "arxiv-2609.19144-a-zeroth-order-paradigm-for-llm-preference-alignment",
@@ -3612,7 +3724,10 @@
    "_source": "https://arxiv.org/abs/2609.19144",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19144"
+   "DOI": "10.48550/arXiv.2609.19144",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19145-objective-vs-search-decomposing-what-makes-a-good-tokeniser": {
    "id": "arxiv-2609.19145-objective-vs-search-decomposing-what-makes-a-good-tokeniser",
@@ -3645,7 +3760,10 @@
    "_source": "https://arxiv.org/abs/2609.19145",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19145"
+   "DOI": "10.48550/arXiv.2609.19145",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19202-federated-soft-clustering-via-generalized-total-variation-mi": {
    "id": "arxiv-2609.19202-federated-soft-clustering-via-generalized-total-variation-mi",
@@ -3674,7 +3792,10 @@
    "URL": "https://arxiv.org/abs/2609.19202",
    "_source": "https://arxiv.org/abs/2609.19202",
    "genre": "Preprint",
-   "publisher": "arXiv"
+   "publisher": "arXiv",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19207-meshkv-a-network-on-chip-kv-cache-fabric-for-scalable-transf": {
    "id": "arxiv-2609.19207-meshkv-a-network-on-chip-kv-cache-fabric-for-scalable-transf",
@@ -3703,7 +3824,10 @@
    "_source": "https://arxiv.org/abs/2609.19207",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19207"
+   "DOI": "10.48550/arXiv.2609.19207",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19210-not-all-nodes-are-created-equal-homophily-aware-stratificati": {
    "id": "arxiv-2609.19210-not-all-nodes-are-created-equal-homophily-aware-stratificati",
@@ -3752,7 +3876,10 @@
    "_source": "https://arxiv.org/abs/2609.19210",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19210"
+   "DOI": "10.48550/arXiv.2609.19210",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19234-the-ar-fairness-metamodel-a-structured-framework-for-fairnes": {
    "id": "arxiv-2609.19234-the-ar-fairness-metamodel-a-structured-framework-for-fairnes",
@@ -3781,7 +3908,10 @@
    "_source": "https://arxiv.org/abs/2609.19234",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19234"
+   "DOI": "10.48550/arXiv.2609.19234",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19242-block-parallelism-for-efficient-distributed-long-context-dif": {
    "id": "arxiv-2609.19242-block-parallelism-for-efficient-distributed-long-context-dif",
@@ -3830,7 +3960,10 @@
    "_source": "https://arxiv.org/abs/2609.19242",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19242"
+   "DOI": "10.48550/arXiv.2609.19242",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19334-a-frontend-backend-architecture-for-tool-calls-in-full-duple": {
    "id": "arxiv-2609.19334-a-frontend-backend-architecture-for-tool-calls-in-full-duple",
@@ -3903,7 +4036,10 @@
    "_source": "https://arxiv.org/abs/2609.19334",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19334"
+   "DOI": "10.48550/arXiv.2609.19334",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19357-learning-submanifolds-for-subsequent-inference-on-random-dot": {
    "id": "arxiv-2609.19357-learning-submanifolds-for-subsequent-inference-on-random-dot",
@@ -3932,7 +4068,10 @@
    "_source": "https://arxiv.org/abs/2609.19357",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19357"
+   "DOI": "10.48550/arXiv.2609.19357",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19363-stiefel-attention-when-the-geometry-of-transformer-projectio": {
    "id": "arxiv-2609.19363-stiefel-attention-when-the-geometry-of-transformer-projectio",
@@ -3957,7 +4096,10 @@
    "_source": "https://arxiv.org/abs/2609.19363",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19363"
+   "DOI": "10.48550/arXiv.2609.19363",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19366-the-role-of-fine-grained-harm-signals-in-llm-safety": {
    "id": "arxiv-2609.19366-the-role-of-fine-grained-harm-signals-in-llm-safety",
@@ -3994,7 +4136,10 @@
    "_source": "https://arxiv.org/abs/2609.19366",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19366"
+   "DOI": "10.48550/arXiv.2609.19366",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19374-machine-learning-assessment-of-the-predictive-value-of-infla": {
    "id": "arxiv-2609.19374-machine-learning-assessment-of-the-predictive-value-of-infla",
@@ -4039,7 +4184,10 @@
    "_source": "https://arxiv.org/abs/2609.19374",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19374"
+   "DOI": "10.48550/arXiv.2609.19374",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19391-mags-multi-agent-auto-formalization-guarantees-safety-for-ag": {
    "id": "arxiv-2609.19391-mags-multi-agent-auto-formalization-guarantees-safety-for-ag",
@@ -4092,7 +4240,10 @@
    "_source": "https://arxiv.org/abs/2609.19391",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19391"
+   "DOI": "10.48550/arXiv.2609.19391",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19416-deep-learning-detection-of-beyond-general-relativity-deviati": {
    "id": "arxiv-2609.19416-deep-learning-detection-of-beyond-general-relativity-deviati",
@@ -4117,7 +4268,10 @@
    "_source": "https://arxiv.org/abs/2609.19416",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19416"
+   "DOI": "10.48550/arXiv.2609.19416",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19422-burnrisc-toward-non-invasive-burnout-screening-in-open-sourc": {
    "id": "arxiv-2609.19422-burnrisc-toward-non-invasive-burnout-screening-in-open-sourc",
@@ -4150,7 +4304,10 @@
    "_source": "https://arxiv.org/abs/2609.19422",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19422"
+   "DOI": "10.48550/arXiv.2609.19422",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19425-closed-world-resolution-against-tool-hallucination-in-llm-ag": {
    "id": "arxiv-2609.19425-closed-world-resolution-against-tool-hallucination-in-llm-ag",
@@ -4175,7 +4332,10 @@
    "_source": "https://arxiv.org/abs/2609.19425",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19425"
+   "DOI": "10.48550/arXiv.2609.19425",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19428-demystifying-linear-operator-learning-for-control-systems": {
    "id": "arxiv-2609.19428-demystifying-linear-operator-learning-for-control-systems",
@@ -4212,7 +4372,10 @@
    "_source": "https://arxiv.org/abs/2609.19428",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19428"
+   "DOI": "10.48550/arXiv.2609.19428",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19502-reputation-as-community-memory-for-the-agentic-web": {
    "id": "arxiv-2609.19502-reputation-as-community-memory-for-the-agentic-web",
@@ -4261,7 +4424,10 @@
    "_source": "https://arxiv.org/abs/2609.19502",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19502"
+   "DOI": "10.48550/arXiv.2609.19502",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19504-for-your-eyes-only-evaluating-coordination-between-isolated": {
    "id": "arxiv-2609.19504-for-your-eyes-only-evaluating-coordination-between-isolated",
@@ -4290,7 +4456,10 @@
    "_source": "https://arxiv.org/abs/2609.19504",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19504"
+   "DOI": "10.48550/arXiv.2609.19504",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19512-coresense-traceable-failure-recall-and-conflict-aware-belief": {
    "id": "arxiv-2609.19512-coresense-traceable-failure-recall-and-conflict-aware-belief",
@@ -4315,7 +4484,10 @@
    "_source": "https://arxiv.org/abs/2609.19512",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19512"
+   "DOI": "10.48550/arXiv.2609.19512",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19513-qvac-genesis-iii-a-large-scale-high-quality-open-synthetic-s": {
    "id": "arxiv-2609.19513-qvac-genesis-iii-a-large-scale-high-quality-open-synthetic-s",
@@ -4356,7 +4528,10 @@
    "_source": "https://arxiv.org/abs/2609.19513",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19513"
+   "DOI": "10.48550/arXiv.2609.19513",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19519-an-architecture-for-long-horizon-agents-levels-ticks-and-cas": {
    "id": "arxiv-2609.19519-an-architecture-for-long-horizon-agents-levels-ticks-and-cas",
@@ -4393,7 +4568,10 @@
    "_source": "https://arxiv.org/abs/2609.19519",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19519"
+   "DOI": "10.48550/arXiv.2609.19519",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19530-when-hiring-becomes-agent-mediated-evaluating-access-and-rec": {
    "id": "arxiv-2609.19530-when-hiring-becomes-agent-mediated-evaluating-access-and-rec",
@@ -4422,7 +4600,10 @@
    "_source": "https://arxiv.org/abs/2609.19530",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19530"
+   "DOI": "10.48550/arXiv.2609.19530",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19539-compressed-active-subspaces-for-scalable-bayesian-inference": {
    "id": "arxiv-2609.19539-compressed-active-subspaces-for-scalable-bayesian-inference",
@@ -4459,7 +4640,10 @@
    "_source": "https://arxiv.org/abs/2609.19539",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19539"
+   "DOI": "10.48550/arXiv.2609.19539",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19551-continual-enterprise-world-model-discovery-in-dynamic-system": {
    "id": "arxiv-2609.19551-continual-enterprise-world-model-discovery-in-dynamic-system",
@@ -4504,7 +4688,10 @@
    "_source": "https://arxiv.org/abs/2609.19551",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19551"
+   "DOI": "10.48550/arXiv.2609.19551",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19559-fedfibos-fisher-importance-based-optimal-submodelling-for-he": {
    "id": "arxiv-2609.19559-fedfibos-fisher-importance-based-optimal-submodelling-for-he",
@@ -4537,7 +4724,10 @@
    "_source": "https://arxiv.org/abs/2609.19559",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19559"
+   "DOI": "10.48550/arXiv.2609.19559",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19569-large-language-model-agents-for-evidence-based-genetic-disea": {
    "id": "arxiv-2609.19569-large-language-model-agents-for-evidence-based-genetic-disea",
@@ -4598,7 +4788,10 @@
    "_source": "https://arxiv.org/abs/2609.19569",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19569"
+   "DOI": "10.48550/arXiv.2609.19569",
+   "license": "CC BY-SA 4.0 (share-alike)",
+   "license_url": "http://creativecommons.org/licenses/by-sa/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19589-form-over-content-in-gradient-based-data-attribution-methods": {
    "id": "arxiv-2609.19589-form-over-content-in-gradient-based-data-attribution-methods",
@@ -4639,7 +4832,10 @@
    "_source": "https://arxiv.org/abs/2609.19589",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19589"
+   "DOI": "10.48550/arXiv.2609.19589",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19596-full-duplex-speech-models-take-the-floor-when-asked-not-when": {
    "id": "arxiv-2609.19596-full-duplex-speech-models-take-the-floor-when-asked-not-when",
@@ -4676,7 +4872,10 @@
    "_source": "https://arxiv.org/abs/2609.19596",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19596"
+   "DOI": "10.48550/arXiv.2609.19596",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19606-chain-of-thought-entropy-as-a-reliability-signal-a-preregist": {
    "id": "arxiv-2609.19606-chain-of-thought-entropy-as-a-reliability-signal-a-preregist",
@@ -4701,7 +4900,10 @@
    "_source": "https://arxiv.org/abs/2609.19606",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19606"
+   "DOI": "10.48550/arXiv.2609.19606",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19607-deltaselect-affordable-a-b-testing-for-coding-agents": {
    "id": "arxiv-2609.19607-deltaselect-affordable-a-b-testing-for-coding-agents",
@@ -4726,7 +4928,10 @@
    "_source": "https://arxiv.org/abs/2609.19607",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19607"
+   "DOI": "10.48550/arXiv.2609.19607",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19615-semantic-layer-induction-from-raw-telemetry-via-hierarchical": {
    "id": "arxiv-2609.19615-semantic-layer-induction-from-raw-telemetry-via-hierarchical",
@@ -4755,7 +4960,10 @@
    "_source": "https://arxiv.org/abs/2609.19615",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19615"
+   "DOI": "10.48550/arXiv.2609.19615",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19617-datacanvas-edu-an-agentic-framework-for-instructor-guided-sy": {
    "id": "arxiv-2609.19617-datacanvas-edu-an-agentic-framework-for-instructor-guided-sy",
@@ -4788,7 +4996,10 @@
    "_source": "https://arxiv.org/abs/2609.19617",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19617"
+   "DOI": "10.48550/arXiv.2609.19617",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19640-a-policy-profile-for-croissant-refusal-as-a-property-of-the": {
    "id": "arxiv-2609.19640-a-policy-profile-for-croissant-refusal-as-a-property-of-the",
@@ -4813,7 +5024,10 @@
    "_source": "https://arxiv.org/abs/2609.19640",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19640"
+   "DOI": "10.48550/arXiv.2609.19640",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19647-well-posedness-of-neural-turbulence-closures-and-tangent-dis": {
    "id": "arxiv-2609.19647-well-posedness-of-neural-turbulence-closures-and-tangent-dis",
@@ -4842,7 +5056,10 @@
    "_source": "https://arxiv.org/abs/2609.19647",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19647"
+   "DOI": "10.48550/arXiv.2609.19647",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19654-replan-repair-or-edit-a-unified-empirical-evaluation-of-trav": {
    "id": "arxiv-2609.19654-replan-repair-or-edit-a-unified-empirical-evaluation-of-trav",
@@ -4903,7 +5120,10 @@
    "_source": "https://arxiv.org/abs/2609.19654",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19654"
+   "DOI": "10.48550/arXiv.2609.19654",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19657-prefixbench-h100-characterizing-prefix-reuse-and-time-to-fir": {
    "id": "arxiv-2609.19657-prefixbench-h100-characterizing-prefix-reuse-and-time-to-fir",
@@ -4936,7 +5156,10 @@
    "_source": "https://arxiv.org/abs/2609.19657",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19657"
+   "DOI": "10.48550/arXiv.2609.19657",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19680-finskillops-a-self-evolving-multi-agent-system-for-sec-filin": {
    "id": "arxiv-2609.19680-finskillops-a-self-evolving-multi-agent-system-for-sec-filin",
@@ -5069,7 +5292,10 @@
    "_source": "https://arxiv.org/abs/2609.19680",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19680"
+   "DOI": "10.48550/arXiv.2609.19680",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19722-alibi-adversarial-legitimacy-injection-in-binary-input-again": {
    "id": "arxiv-2609.19722-alibi-adversarial-legitimacy-injection-in-binary-input-again",
@@ -5106,7 +5332,10 @@
    "_source": "https://arxiv.org/abs/2609.19722",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19722"
+   "DOI": "10.48550/arXiv.2609.19722",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19736-a-phonemically-comprehensive-ascii-only-romanization-scheme": {
    "id": "arxiv-2609.19736-a-phonemically-comprehensive-ascii-only-romanization-scheme",
@@ -5135,7 +5364,10 @@
    "_source": "https://arxiv.org/abs/2609.19736",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19736"
+   "DOI": "10.48550/arXiv.2609.19736",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19754-autodata-agentic-search-for-pre-training-data-selection": {
    "id": "arxiv-2609.19754-autodata-agentic-search-for-pre-training-data-selection",
@@ -5176,7 +5408,10 @@
    "_source": "https://arxiv.org/abs/2609.19754",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19754"
+   "DOI": "10.48550/arXiv.2609.19754",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19776-phyrestore-physics-structured-latent-factor-restoration": {
    "id": "arxiv-2609.19776-phyrestore-physics-structured-latent-factor-restoration",
@@ -5205,7 +5440,10 @@
    "_source": "https://arxiv.org/abs/2609.19776",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19776"
+   "DOI": "10.48550/arXiv.2609.19776",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19814-long-horizon-autoformalization-of-a-core-theorem-underlying": {
    "id": "arxiv-2609.19814-long-horizon-autoformalization-of-a-core-theorem-underlying",
@@ -5242,7 +5480,10 @@
    "_source": "https://arxiv.org/abs/2609.19814",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19814"
+   "DOI": "10.48550/arXiv.2609.19814",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19818-coreloop-parameter-efficient-controlled-recurrent-refinement": {
    "id": "arxiv-2609.19818-coreloop-parameter-efficient-controlled-recurrent-refinement",
@@ -5283,7 +5524,10 @@
    "_source": "https://arxiv.org/abs/2609.19818",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19818"
+   "DOI": "10.48550/arXiv.2609.19818",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19820-steering-equilibrium-selection-in-regularized-self-play-via": {
    "id": "arxiv-2609.19820-steering-equilibrium-selection-in-regularized-self-play-via",
@@ -5308,7 +5552,10 @@
    "_source": "https://arxiv.org/abs/2609.19820",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19820"
+   "DOI": "10.48550/arXiv.2609.19820",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19827-f-2-dr-a-fine-grained-full-pipeline-reward-framework-for-dee": {
    "id": "arxiv-2609.19827-f-2-dr-a-fine-grained-full-pipeline-reward-framework-for-dee",
@@ -5385,7 +5632,10 @@
    "_source": "https://arxiv.org/abs/2609.19827",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19827"
+   "DOI": "10.48550/arXiv.2609.19827",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19832-metartl-meta-path-attention-enhanced-relational-table-learni": {
    "id": "arxiv-2609.19832-metartl-meta-path-attention-enhanced-relational-table-learni",
@@ -5418,7 +5668,10 @@
    "_source": "https://arxiv.org/abs/2609.19832",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19832"
+   "DOI": "10.48550/arXiv.2609.19832",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19844-trust-but-validate-the-instrument-auditing-ai-generated-rtl": {
    "id": "arxiv-2609.19844-trust-but-validate-the-instrument-auditing-ai-generated-rtl",
@@ -5459,7 +5712,10 @@
    "_source": "https://arxiv.org/abs/2609.19844",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19844"
+   "DOI": "10.48550/arXiv.2609.19844",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19848-constraint-safe-graph-context-scoring-for-stable-point-featu": {
    "id": "arxiv-2609.19848-constraint-safe-graph-context-scoring-for-stable-point-featu",
@@ -5484,7 +5740,10 @@
    "_source": "https://arxiv.org/abs/2609.19848",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19848"
+   "DOI": "10.48550/arXiv.2609.19848",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19855-a-functional-pilot-for-certified-freshness-aware-semantic-sp": {
    "id": "arxiv-2609.19855-a-functional-pilot-for-certified-freshness-aware-semantic-sp",
@@ -5509,7 +5768,10 @@
    "_source": "https://arxiv.org/abs/2609.19855",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19855"
+   "DOI": "10.48550/arXiv.2609.19855",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19868-zarya-a-hybrid-autoregressive-masked-diffusion-language-mode": {
    "id": "arxiv-2609.19868-zarya-a-hybrid-autoregressive-masked-diffusion-language-mode",
@@ -5542,7 +5804,10 @@
    "_source": "https://arxiv.org/abs/2609.19868",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19868"
+   "DOI": "10.48550/arXiv.2609.19868",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19880-d-quant-driftable-entropy-coding-for-kv-cache-quantization": {
    "id": "arxiv-2609.19880-d-quant-driftable-entropy-coding-for-kv-cache-quantization",
@@ -5579,7 +5844,10 @@
    "_source": "https://arxiv.org/abs/2609.19880",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19880"
+   "DOI": "10.48550/arXiv.2609.19880",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19934-beyond-depth-truncation-controlled-evaluation-of-depth-utili": {
    "id": "arxiv-2609.19934-beyond-depth-truncation-controlled-evaluation-of-depth-utili",
@@ -5612,7 +5880,10 @@
    "_source": "https://arxiv.org/abs/2609.19934",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19934"
+   "DOI": "10.48550/arXiv.2609.19934",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19937-error-bounds-in-sobolev-norms-for-approximations-with-norm-c": {
    "id": "arxiv-2609.19937-error-bounds-in-sobolev-norms-for-approximations-with-norm-c",
@@ -5641,7 +5912,10 @@
    "_source": "https://arxiv.org/abs/2609.19937",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19937"
+   "DOI": "10.48550/arXiv.2609.19937",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19942-intrinsic-sequence-likelihood-confidence-in-retrieval-domina": {
    "id": "arxiv-2609.19942-intrinsic-sequence-likelihood-confidence-in-retrieval-domina",
@@ -5686,7 +5960,10 @@
    "_source": "https://arxiv.org/abs/2609.19942",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19942"
+   "DOI": "10.48550/arXiv.2609.19942",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19944-mascod-a-multi-agent-framework-for-structural-context-guided": {
    "id": "arxiv-2609.19944-mascod-a-multi-agent-framework-for-structural-context-guided",
@@ -5719,7 +5996,10 @@
    "_source": "https://arxiv.org/abs/2609.19944",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19944"
+   "DOI": "10.48550/arXiv.2609.19944",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19956-graph-based-stochastic-power-uct-monte-carlo-graph-search-wi": {
    "id": "arxiv-2609.19956-graph-based-stochastic-power-uct-monte-carlo-graph-search-wi",
@@ -5756,7 +6036,10 @@
    "_source": "https://arxiv.org/abs/2609.19956",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.19956"
+   "DOI": "10.48550/arXiv.2609.19956",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.19972-efficiently-distributed-federated-learning": {
    "id": "arxiv-2609.19972-efficiently-distributed-federated-learning",
@@ -5789,7 +6072,10 @@
    "URL": "https://arxiv.org/abs/2609.19972",
    "_source": "https://arxiv.org/abs/2609.19972",
    "genre": "Preprint",
-   "publisher": "arXiv"
+   "publisher": "arXiv",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20016-governance-as-code-translating-eu-ai-act-technical-requireme": {
    "id": "arxiv-2609.20016-governance-as-code-translating-eu-ai-act-technical-requireme",
@@ -5818,7 +6104,10 @@
    "_source": "https://arxiv.org/abs/2609.20016",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20016"
+   "DOI": "10.48550/arXiv.2609.20016",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20027-can-data-attribution-filter-out-subliminal-learning-not-reli": {
    "id": "arxiv-2609.20027-can-data-attribution-filter-out-subliminal-learning-not-reli",
@@ -5871,7 +6160,10 @@
    "_source": "https://arxiv.org/abs/2609.20027",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20027"
+   "DOI": "10.48550/arXiv.2609.20027",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20045-correct-now-insufficient-later-auditing-update-sufficiency-i": {
    "id": "arxiv-2609.20045-correct-now-insufficient-later-auditing-update-sufficiency-i",
@@ -5896,7 +6188,10 @@
    "_source": "https://arxiv.org/abs/2609.20045",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20045"
+   "DOI": "10.48550/arXiv.2609.20045",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20057-wicleandata-guaranteeing-the-type-consistency-of-wikidata-by": {
    "id": "arxiv-2609.20057-wicleandata-guaranteeing-the-type-consistency-of-wikidata-by",
@@ -5929,7 +6224,10 @@
    "_source": "https://arxiv.org/abs/2609.20057",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20057"
+   "DOI": "10.48550/arXiv.2609.20057",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20058-evaluating-explanation-methods-by-the-predictors-they-induce": {
    "id": "arxiv-2609.20058-evaluating-explanation-methods-by-the-predictors-they-induce",
@@ -5958,7 +6256,10 @@
    "_source": "https://arxiv.org/abs/2609.20058",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20058"
+   "DOI": "10.48550/arXiv.2609.20058",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20059-ai-should-facilitate-democratic-deliberation-at-scale": {
    "id": "arxiv-2609.20059-ai-should-facilitate-democratic-deliberation-at-scale",
@@ -5991,7 +6292,10 @@
    "_source": "https://arxiv.org/abs/2609.20059",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20059"
+   "DOI": "10.48550/arXiv.2609.20059",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20080-a-proposal-for-an-agentic-ai-architecture-to-support-multi-d": {
    "id": "arxiv-2609.20080-a-proposal-for-an-agentic-ai-architecture-to-support-multi-d",
@@ -6032,7 +6336,10 @@
    "_source": "https://arxiv.org/abs/2609.20080",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20080"
+   "DOI": "10.48550/arXiv.2609.20080",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20091-solving-minimum-span-antibandwidth-and-cyclic-antibandwidth": {
    "id": "arxiv-2609.20091-solving-minimum-span-antibandwidth-and-cyclic-antibandwidth",
@@ -6061,7 +6368,10 @@
    "_source": "https://arxiv.org/abs/2609.20091",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20091"
+   "DOI": "10.48550/arXiv.2609.20091",
+   "license": "CC BY-NC-SA 4.0 (non-commercial, share-alike)",
+   "license_url": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20095-a-scalable-trust-discovery-architecture-for-the-internet-of": {
    "id": "arxiv-2609.20095-a-scalable-trust-discovery-architecture-for-the-internet-of",
@@ -6110,7 +6420,10 @@
    "_source": "https://arxiv.org/abs/2609.20095",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20095"
+   "DOI": "10.48550/arXiv.2609.20095",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20104-design-of-the-ibm-granite-5-0-turboctc-asr-model": {
    "id": "arxiv-2609.20104-design-of-the-ibm-granite-5-0-turboctc-asr-model",
@@ -6163,7 +6476,10 @@
    "_source": "https://arxiv.org/abs/2609.20104",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20104"
+   "DOI": "10.48550/arXiv.2609.20104",
+   "license": "CC BY-SA 4.0 (share-alike)",
+   "license_url": "http://creativecommons.org/licenses/by-sa/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20123-qos-aware-federated-learning-for-multimodal-in-cabin-interac": {
    "id": "arxiv-2609.20123-qos-aware-federated-learning-for-multimodal-in-cabin-interac",
@@ -6200,7 +6516,10 @@
    "_source": "https://arxiv.org/abs/2609.20123",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20123"
+   "DOI": "10.48550/arXiv.2609.20123",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20124-multi-dimensional-prosody-judgment-for-live-streaming-speech": {
    "id": "arxiv-2609.20124-multi-dimensional-prosody-judgment-for-live-streaming-speech",
@@ -6245,7 +6564,10 @@
    "_source": "https://arxiv.org/abs/2609.20124",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20124"
+   "DOI": "10.48550/arXiv.2609.20124",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20152-mtva-bench-evaluating-the-language-model-inside-cascaded-voi": {
    "id": "arxiv-2609.20152-mtva-bench-evaluating-the-language-model-inside-cascaded-voi",
@@ -6282,7 +6604,10 @@
    "_source": "https://arxiv.org/abs/2609.20152",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20152"
+   "DOI": "10.48550/arXiv.2609.20152",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20159-special-lagrangian-cones-in-deep-learning": {
    "id": "arxiv-2609.20159-special-lagrangian-cones-in-deep-learning",
@@ -6311,7 +6636,10 @@
    "_source": "https://arxiv.org/abs/2609.20159",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20159"
+   "DOI": "10.48550/arXiv.2609.20159",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20327-near-optimal-pure-single-loop-extragradient-method-for-stron": {
    "id": "arxiv-2609.20327-near-optimal-pure-single-loop-extragradient-method-for-stron",
@@ -6340,7 +6668,10 @@
    "_source": "https://arxiv.org/abs/2609.20327",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20327"
+   "DOI": "10.48550/arXiv.2609.20327",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20333-sharp-reconstruction-bounds-for-autoencoders-using-the-same": {
    "id": "arxiv-2609.20333-sharp-reconstruction-bounds-for-autoencoders-using-the-same",
@@ -6369,7 +6700,10 @@
    "_source": "https://arxiv.org/abs/2609.20333",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20333"
+   "DOI": "10.48550/arXiv.2609.20333",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20334-structured-four-stage-legal-translation-from-natural-languag": {
    "id": "arxiv-2609.20334-structured-four-stage-legal-translation-from-natural-languag",
@@ -6406,7 +6740,10 @@
    "_source": "https://arxiv.org/abs/2609.20334",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20334"
+   "DOI": "10.48550/arXiv.2609.20334",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20336-detecting-deceptive-recruitment-a-signal-theoretic-machine-l": {
    "id": "arxiv-2609.20336-detecting-deceptive-recruitment-a-signal-theoretic-machine-l",
@@ -6443,7 +6780,10 @@
    "_source": "https://arxiv.org/abs/2609.20336",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20336"
+   "DOI": "10.48550/arXiv.2609.20336",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20347-str-agent-an-llm-driven-agent-for-qos-aware-routing-in-leo-s": {
    "id": "arxiv-2609.20347-str-agent-an-llm-driven-agent-for-qos-aware-routing-in-leo-s",
@@ -6488,7 +6828,10 @@
    "URL": "https://arxiv.org/abs/2609.20347",
    "_source": "https://arxiv.org/abs/2609.20347",
    "genre": "Preprint",
-   "publisher": "arXiv"
+   "publisher": "arXiv",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20349-a-qualitative-model-for-reasoning-about-path-and-support": {
    "id": "arxiv-2609.20349-a-qualitative-model-for-reasoning-about-path-and-support",
@@ -6517,7 +6860,10 @@
    "_source": "https://arxiv.org/abs/2609.20349",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20349"
+   "DOI": "10.48550/arXiv.2609.20349",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20353-minimax-optimal-online-contract-design-with-unrestricted-bou": {
    "id": "arxiv-2609.20353-minimax-optimal-online-contract-design-with-unrestricted-bou",
@@ -6550,7 +6896,10 @@
    "_source": "https://arxiv.org/abs/2609.20353",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20353"
+   "DOI": "10.48550/arXiv.2609.20353",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20389-model-based-bootstrap-for-offline-policy-evaluation-in-tabul": {
    "id": "arxiv-2609.20389-model-based-bootstrap-for-offline-policy-evaluation-in-tabul",
@@ -6587,7 +6936,10 @@
    "_source": "https://arxiv.org/abs/2609.20389",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20389"
+   "DOI": "10.48550/arXiv.2609.20389",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20404-learning-principal-agent-contracts-for-equitable-smallholder": {
    "id": "arxiv-2609.20404-learning-principal-agent-contracts-for-equitable-smallholder",
@@ -6616,7 +6968,10 @@
    "_source": "https://arxiv.org/abs/2609.20404",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20404"
+   "DOI": "10.48550/arXiv.2609.20404",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20489-resolution-limits-for-process-comparison-from-event-data": {
    "id": "arxiv-2609.20489-resolution-limits-for-process-comparison-from-event-data",
@@ -6649,7 +7004,10 @@
    "_source": "https://arxiv.org/abs/2609.20489",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20489"
+   "DOI": "10.48550/arXiv.2609.20489",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20504-model-agnostic-and-language-agnostic-voice-pipeline-improvem": {
    "id": "arxiv-2609.20504-model-agnostic-and-language-agnostic-voice-pipeline-improvem",
@@ -6694,7 +7052,10 @@
    "_source": "https://arxiv.org/abs/2609.20504",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20504"
+   "DOI": "10.48550/arXiv.2609.20504",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20535-freqcondnorm-towards-cross-domain-predictive-maintenance-thr": {
    "id": "arxiv-2609.20535-freqcondnorm-towards-cross-domain-predictive-maintenance-thr",
@@ -6727,7 +7088,10 @@
    "_source": "https://arxiv.org/abs/2609.20535",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20535"
+   "DOI": "10.48550/arXiv.2609.20535",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20538-refuse-decompose-refresh-a-claim-safe-protocol-for-closed-lo": {
    "id": "arxiv-2609.20538-refuse-decompose-refresh-a-claim-safe-protocol-for-closed-lo",
@@ -6756,7 +7120,10 @@
    "_source": "https://arxiv.org/abs/2609.20538",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20538"
+   "DOI": "10.48550/arXiv.2609.20538",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20541-an-analysis-of-training-free-self-reported-confidence-in-lan": {
    "id": "arxiv-2609.20541-an-analysis-of-training-free-self-reported-confidence-in-lan",
@@ -6797,7 +7164,10 @@
    "_source": "https://arxiv.org/abs/2609.20541",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20541"
+   "DOI": "10.48550/arXiv.2609.20541",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20548-mitigating-retaliatory-algorithmic-collusion-in-repeated-gam": {
    "id": "arxiv-2609.20548-mitigating-retaliatory-algorithmic-collusion-in-repeated-gam",
@@ -6826,7 +7196,10 @@
    "_source": "https://arxiv.org/abs/2609.20548",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20548"
+   "DOI": "10.48550/arXiv.2609.20548",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20569-value-based-massive-access-through-goal-oriented-irregular-r": {
    "id": "arxiv-2609.20569-value-based-massive-access-through-goal-oriented-irregular-r",
@@ -6867,7 +7240,10 @@
    "_source": "https://arxiv.org/abs/2609.20569",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20569"
+   "DOI": "10.48550/arXiv.2609.20569",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20577-tap-accuracy-below-the-fluctuation-scale-and-universal-poste": {
    "id": "arxiv-2609.20577-tap-accuracy-below-the-fluctuation-scale-and-universal-poste",
@@ -6896,7 +7272,10 @@
    "_source": "https://arxiv.org/abs/2609.20577",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20577"
+   "DOI": "10.48550/arXiv.2609.20577",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20581-limits-of-confidence-in-diffusion": {
    "id": "arxiv-2609.20581-limits-of-confidence-in-diffusion",
@@ -6933,7 +7312,10 @@
    "_source": "https://arxiv.org/abs/2609.20581",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20581"
+   "DOI": "10.48550/arXiv.2609.20581",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20584-safari-an-industrial-benchmark-for-llm-assisted-hazard-analy": {
    "id": "arxiv-2609.20584-safari-an-industrial-benchmark-for-llm-assisted-hazard-analy",
@@ -6974,7 +7356,10 @@
    "_source": "https://arxiv.org/abs/2609.20584",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20584"
+   "DOI": "10.48550/arXiv.2609.20584",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20594-recursive-quantum-long-short-term-memory-for-stable-short-ho": {
    "id": "arxiv-2609.20594-recursive-quantum-long-short-term-memory-for-stable-short-ho",
@@ -7011,7 +7396,10 @@
    "_source": "https://arxiv.org/abs/2609.20594",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20594"
+   "DOI": "10.48550/arXiv.2609.20594",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20598-coin-gp-cooperative-online-learning-in-networked-distributed": {
    "id": "arxiv-2609.20598-coin-gp-cooperative-online-learning-in-networked-distributed",
@@ -7056,7 +7444,10 @@
    "_source": "https://arxiv.org/abs/2609.20598",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20598"
+   "DOI": "10.48550/arXiv.2609.20598",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20625-chronicle-cut-point-replay-for-regression-testing-of-llm-age": {
    "id": "arxiv-2609.20625-chronicle-cut-point-replay-for-regression-testing-of-llm-age",
@@ -7085,7 +7476,10 @@
    "_source": "https://arxiv.org/abs/2609.20625",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20625"
+   "DOI": "10.48550/arXiv.2609.20625",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20634-paa-the-probabilistic-allen-algebra-a-generative-and-complet": {
    "id": "arxiv-2609.20634-paa-the-probabilistic-allen-algebra-a-generative-and-complet",
@@ -7110,7 +7504,10 @@
    "_source": "https://arxiv.org/abs/2609.20634",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20634"
+   "DOI": "10.48550/arXiv.2609.20634",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20658-ownership-in-ai-assisted-everyday-tasks": {
    "id": "arxiv-2609.20658-ownership-in-ai-assisted-everyday-tasks",
@@ -7159,7 +7556,10 @@
    "_source": "https://arxiv.org/abs/2609.20658",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20658"
+   "DOI": "10.48550/arXiv.2609.20658",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20676-epidemiological-causal-graph-identification-challenges-ident": {
    "id": "arxiv-2609.20676-epidemiological-causal-graph-identification-challenges-ident",
@@ -7196,7 +7596,10 @@
    "_source": "https://arxiv.org/abs/2609.20676",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20676"
+   "DOI": "10.48550/arXiv.2609.20676",
+   "license": "arXiv non-exclusive distribution license 1.0 (grants arXiv only; no reuse rights)",
+   "license_url": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20677-risc-v-and-machine-learning-a-survey": {
    "id": "arxiv-2609.20677-risc-v-and-machine-learning-a-survey",
@@ -7237,7 +7640,10 @@
    "URL": "https://arxiv.org/abs/2609.20677",
    "_source": "https://arxiv.org/abs/2609.20677",
    "genre": "Preprint",
-   "publisher": "arXiv"
+   "publisher": "arXiv",
+   "license": "CC BY-SA 4.0 (share-alike)",
+   "license_url": "http://creativecommons.org/licenses/by-sa/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20687-the-first-order-oracle-complexity-of-lipschitz-convex-optimi": {
    "id": "arxiv-2609.20687-the-first-order-oracle-complexity-of-lipschitz-convex-optimi",
@@ -7274,7 +7680,10 @@
    "_source": "https://arxiv.org/abs/2609.20687",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20687"
+   "DOI": "10.48550/arXiv.2609.20687",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20701-stable-movement-for-nondual-lipschitz-convex-optimization-ef": {
    "id": "arxiv-2609.20701-stable-movement-for-nondual-lipschitz-convex-optimization-ef",
@@ -7303,32 +7712,10 @@
    "_source": "https://arxiv.org/abs/2609.20701",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20701"
-  },
-  "arxiv-2609.20712-summarization-bias-the-directional-collapse-of-objective-pro": {
-   "id": "arxiv-2609.20712-summarization-bias-the-directional-collapse-of-objective-pro",
-   "type": "article",
-   "title": "Summarization Bias: The Directional Collapse of Objective Projection into Told-Mode Labels in Large Language Models --- A Conceptual Framework and Registered Test Protocol",
-   "author": [
-    {
-     "family": "Bulut",
-     "given": "Levent"
-    }
-   ],
-   "issued": {
-    "date-parts": [
-     [
-      2026,
-      9,
-      17
-     ]
-    ]
-   },
-   "URL": "https://arxiv.org/abs/2609.20712",
-   "_source": "https://arxiv.org/abs/2609.20712",
-   "genre": "Preprint",
-   "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20712"
+   "DOI": "10.48550/arXiv.2609.20701",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20715-don-t-mask-the-environment-observation-supervision-changes-h": {
    "id": "arxiv-2609.20715-don-t-mask-the-environment-observation-supervision-changes-h",
@@ -7369,7 +7756,10 @@
    "_source": "https://arxiv.org/abs/2609.20715",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20715"
+   "DOI": "10.48550/arXiv.2609.20715",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20722-deep-noir-autonomous-steering-discovery-via-architectural-ch": {
    "id": "arxiv-2609.20722-deep-noir-autonomous-steering-discovery-via-architectural-ch",
@@ -7410,7 +7800,10 @@
    "_source": "https://arxiv.org/abs/2609.20722",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20722"
+   "DOI": "10.48550/arXiv.2609.20722",
+   "license": "CC0 1.0",
+   "license_url": "http://creativecommons.org/publicdomain/zero/1.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20754-raft-a-stateful-retrieval-augmented-framework-for-troublesho": {
    "id": "arxiv-2609.20754-raft-a-stateful-retrieval-augmented-framework-for-troublesho",
@@ -7459,7 +7852,10 @@
    "_source": "https://arxiv.org/abs/2609.20754",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20754"
+   "DOI": "10.48550/arXiv.2609.20754",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20758-prediction-powered-smoothing-and-validation-for-disaggregate": {
    "id": "arxiv-2609.20758-prediction-powered-smoothing-and-validation-for-disaggregate",
@@ -7492,7 +7888,10 @@
    "_source": "https://arxiv.org/abs/2609.20758",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20758"
+   "DOI": "10.48550/arXiv.2609.20758",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20779-harm-laundering-in-gpt-models-evidence-that-gender-discrimin": {
    "id": "arxiv-2609.20779-harm-laundering-in-gpt-models-evidence-that-gender-discrimin",
@@ -7525,7 +7924,10 @@
    "_source": "https://arxiv.org/abs/2609.20779",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20779"
+   "DOI": "10.48550/arXiv.2609.20779",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2609.20808-unifying-models-of-intergroup-hostility-in-online-discourse": {
    "id": "arxiv-2609.20808-unifying-models-of-intergroup-hostility-in-online-discourse",
@@ -7558,7 +7960,10 @@
    "_source": "https://arxiv.org/abs/2609.20808",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2609.20808"
+   "DOI": "10.48550/arXiv.2609.20808",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "aws-ml-blog-2026-07-27-task-aware-knowledge-compression-rag": {
    "id": "aws-ml-blog-2026-07-27-task-aware-knowledge-compression-rag",
@@ -7589,7 +7994,9 @@
    },
    "container-title": "AWS Machine Learning Blog",
    "URL": "https://aws.amazon.com/blogs/machine-learning/beyond-rag-task-aware-knowledge-compression-for-enterprise-ai-on-aws/",
-   "_source": "provenance record (original fetch)"
+   "_source": "provenance record (original fetch)",
+   "license": "No license stated on the source page (all rights reserved by default)",
+   "license_checked": "2026-10-01"
   },
   "coralogix-2026-08-11-rag-observability": {
    "id": "coralogix-2026-08-11-rag-observability",
@@ -7611,7 +8018,9 @@
    },
    "container-title": "Coralogix",
    "URL": "https://coralogix.com/guides/rag-observability/",
-   "_source": "provenance record (original fetch)"
+   "_source": "provenance record (original fetch)",
+   "license": "No license stated on the source page (all rights reserved by default)",
+   "license_checked": "2026-10-01"
   },
   "greptime-2026-05-21-opentelemetry-genai-semantic-conventions": {
    "id": "greptime-2026-05-21-opentelemetry-genai-semantic-conventions",
@@ -7634,7 +8043,9 @@
    },
    "container-title": "Greptime",
    "URL": "https://greptime.com/blogs/2026-05-09-opentelemetry-genai-semantic-conventions",
-   "_source": "provenance record (original fetch)"
+   "_source": "provenance record (original fetch)",
+   "license": "No license stated on the source page (all rights reserved by default)",
+   "license_checked": "2026-10-01"
   },
   "jmlr-v24-18-080-approximation-bounds-for-hierarchical-clustering-average-linkage-bisec": {
    "id": "jmlr-v24-18-080-approximation-bounds-for-hierarchical-clustering-average-linkage-bisec",
@@ -7662,7 +8073,10 @@
    "issue": "1",
    "page": "1-36",
    "URL": "http://jmlr.org/papers/v24/18-080.html",
-   "_source": "https://jmlr.org/papers/v24/18-080.html"
+   "_source": "https://jmlr.org/papers/v24/18-080.html",
+   "license": "CC BY 4.0 (JMLR policy, volume 24; corroborated on sampled volume PDFs, not per paper)",
+   "license_url": "https://www.jmlr.org/",
+   "license_checked": "2026-10-01"
   },
   "jmlr-v24-19-1030-the-brier-score-under-administrative-censoring-problems-and-a-solution": {
    "id": "jmlr-v24-19-1030-the-brier-score-under-administrative-censoring-problems-and-a-solution",
@@ -7690,7 +8104,10 @@
    "issue": "2",
    "page": "1-26",
    "URL": "http://jmlr.org/papers/v24/19-1030.html",
-   "_source": "https://jmlr.org/papers/v24/19-1030.html"
+   "_source": "https://jmlr.org/papers/v24/19-1030.html",
+   "license": "CC BY 4.0 (JMLR policy, volume 24; corroborated on sampled volume PDFs, not per paper)",
+   "license_url": "https://www.jmlr.org/",
+   "license_checked": "2026-10-01"
   },
   "jmlr-v24-20-1355-autokeras-an-automl-library-for-deep-learning": {
    "id": "jmlr-v24-20-1355-autokeras-an-automl-library-for-deep-learning",
@@ -7726,7 +8143,10 @@
    "issue": "6",
    "page": "1-6",
    "URL": "http://jmlr.org/papers/v24/20-1355.html",
-   "_source": "https://jmlr.org/papers/v24/20-1355.html"
+   "_source": "https://jmlr.org/papers/v24/20-1355.html",
+   "license": "CC BY 4.0 (JMLR policy, volume 24; corroborated on sampled volume PDFs, not per paper)",
+   "license_url": "https://www.jmlr.org/",
+   "license_checked": "2026-10-01"
   },
   "jmlr-v24-20-238-on-distance-and-kernel-measures-of-conditional-dependence": {
    "id": "jmlr-v24-20-238-on-distance-and-kernel-measures-of-conditional-dependence",
@@ -7754,7 +8174,10 @@
    "issue": "7",
    "page": "1-16",
    "URL": "http://jmlr.org/papers/v24/20-238.html",
-   "_source": "https://jmlr.org/papers/v24/20-238.html"
+   "_source": "https://jmlr.org/papers/v24/20-238.html",
+   "license": "CC BY 4.0 (JMLR policy, volume 24; corroborated on sampled volume PDFs, not per paper)",
+   "license_url": "https://www.jmlr.org/",
+   "license_checked": "2026-10-01"
   },
   "jmlr-v24-20-608-a-line-search-descent-algorithm-for-strict-saddle-functions-with-compl": {
    "id": "jmlr-v24-20-608-a-line-search-descent-algorithm-for-strict-saddle-functions-with-compl",
@@ -7782,7 +8205,10 @@
    "issue": "10",
    "page": "1-34",
    "URL": "http://jmlr.org/papers/v24/20-608.html",
-   "_source": "https://jmlr.org/papers/v24/20-608.html"
+   "_source": "https://jmlr.org/papers/v24/20-608.html",
+   "license": "CC BY 4.0 (JMLR policy, volume 24; corroborated on sampled volume PDFs, not per paper)",
+   "license_url": "https://www.jmlr.org/",
+   "license_checked": "2026-10-01"
   },
   "jmlr-v24-21-0321-python-package-for-causal-discovery-based-on-lingam": {
    "id": "jmlr-v24-21-0321-python-package-for-causal-discovery-based-on-lingam",
@@ -7822,7 +8248,10 @@
    "issue": "14",
    "page": "1-8",
    "URL": "http://jmlr.org/papers/v24/21-0321.html",
-   "_source": "https://jmlr.org/papers/v24/21-0321.html"
+   "_source": "https://jmlr.org/papers/v24/21-0321.html",
+   "license": "CC BY 4.0 (JMLR policy, volume 24; corroborated on sampled volume PDFs, not per paper)",
+   "license_url": "https://www.jmlr.org/",
+   "license_checked": "2026-10-01"
   },
   "jmlr-v24-21-0505-learning-mean-field-games-with-discounted-and-average-costs": {
    "id": "jmlr-v24-21-0505-learning-mean-field-games-with-discounted-and-average-costs",
@@ -7854,7 +8283,10 @@
    "issue": "17",
    "page": "1-59",
    "URL": "http://jmlr.org/papers/v24/21-0505.html",
-   "_source": "https://jmlr.org/papers/v24/21-0505.html"
+   "_source": "https://jmlr.org/papers/v24/21-0505.html",
+   "license": "CC BY 4.0 (JMLR policy, volume 24; corroborated on sampled volume PDFs, not per paper)",
+   "license_url": "https://www.jmlr.org/",
+   "license_checked": "2026-10-01"
   },
   "jmlr-v24-21-0844-interpolating-classifiers-make-few-mistakes": {
    "id": "jmlr-v24-21-0844-interpolating-classifiers-make-few-mistakes",
@@ -7882,7 +8314,10 @@
    "issue": "20",
    "page": "1-27",
    "URL": "http://jmlr.org/papers/v24/21-0844.html",
-   "_source": "https://jmlr.org/papers/v24/21-0844.html"
+   "_source": "https://jmlr.org/papers/v24/21-0844.html",
+   "license": "CC BY 4.0 (JMLR policy, volume 24; corroborated on sampled volume PDFs, not per paper)",
+   "license_url": "https://www.jmlr.org/",
+   "license_checked": "2026-10-01"
   },
   "jmlr-v24-21-0949-lower-bounds-and-accelerated-algorithms-for-bilevel-optimization": {
    "id": "jmlr-v24-21-0949-lower-bounds-and-accelerated-algorithms-for-bilevel-optimization",
@@ -7910,7 +8345,10 @@
    "issue": "22",
    "page": "1-56",
    "URL": "http://jmlr.org/papers/v24/21-0949.html",
-   "_source": "https://jmlr.org/papers/v24/21-0949.html"
+   "_source": "https://jmlr.org/papers/v24/21-0949.html",
+   "license": "CC BY 4.0 (JMLR policy, volume 24; corroborated on sampled volume PDFs, not per paper)",
+   "license_url": "https://www.jmlr.org/",
+   "license_checked": "2026-10-01"
   },
   "jmlr-v24-21-1518-hiclass-a-python-library-for-local-hierarchical-classification-compati": {
    "id": "jmlr-v24-21-1518-hiclass-a-python-library-for-local-hierarchical-classification-compati",
@@ -7942,7 +8380,10 @@
    "issue": "29",
    "page": "1-17",
    "URL": "http://jmlr.org/papers/v24/21-1518.html",
-   "_source": "https://jmlr.org/papers/v24/21-1518.html"
+   "_source": "https://jmlr.org/papers/v24/21-1518.html",
+   "license": "CC BY 4.0 (JMLR policy, volume 24; corroborated on sampled volume PDFs, not per paper)",
+   "license_url": "https://www.jmlr.org/",
+   "license_checked": "2026-10-01"
   },
   "neurips2023-00296c0e10-path-following-algorithms-for-ell-2-regularized-m-estimation-with-appr": {
    "id": "neurips2023-00296c0e10-path-following-algorithms-for-ell-2-regularized-m-estimation-with-appr",
@@ -7972,7 +8413,10 @@
    "page": "73-83",
    "DOI": "10.52202/075280-0005",
    "URL": "https://papers.nips.cc/paper_files/paper/2023/hash/00296c0e10cd24d415c2db63ea2a2c68-Abstract-Conference.html",
-   "_source": "https://papers.nips.cc/paper_files/paper/2023/hash/00296c0e10cd24d415c2db63ea2a2c68-Abstract-Conference.html"
+   "_source": "https://papers.nips.cc/paper_files/paper/2023/hash/00296c0e10cd24d415c2db63ea2a2c68-Abstract-Conference.html",
+   "license": "No open license stated (authors keep copyright; NeurIPS holds a non-exclusive license)",
+   "license_url": "https://neurips.cc/FAQ/Copyright",
+   "license_checked": "2026-10-01"
   },
   "neurips2023-00b67df240-adaptive-selective-sampling-for-online-prediction-with-experts": {
    "id": "neurips2023-00b67df240-adaptive-selective-sampling-for-online-prediction-with-experts",
@@ -8006,7 +8450,10 @@
    "page": "134-154",
    "DOI": "10.52202/075280-0008",
    "URL": "https://papers.nips.cc/paper_files/paper/2023/hash/00b67df24009747e8bbed4c2c6f9c825-Abstract-Conference.html",
-   "_source": "https://papers.nips.cc/paper_files/paper/2023/hash/00b67df24009747e8bbed4c2c6f9c825-Abstract-Conference.html"
+   "_source": "https://papers.nips.cc/paper_files/paper/2023/hash/00b67df24009747e8bbed4c2c6f9c825-Abstract-Conference.html",
+   "license": "No open license stated (authors keep copyright; NeurIPS holds a non-exclusive license)",
+   "license_url": "https://neurips.cc/FAQ/Copyright",
+   "license_checked": "2026-10-01"
   },
   "neurips2023-01772a8b04-antn-bridging-autoregressive-neural-networks-and-tensor-networks-for-q": {
    "id": "neurips2023-01772a8b04-antn-bridging-autoregressive-neural-networks-and-tensor-networks-for-q",
@@ -8048,7 +8495,10 @@
    "page": "450-476",
    "DOI": "10.52202/075280-0022",
    "URL": "https://papers.nips.cc/paper_files/paper/2023/hash/01772a8b0420baec00c4d59fe2fbace6-Abstract-Conference.html",
-   "_source": "https://papers.nips.cc/paper_files/paper/2023/hash/01772a8b0420baec00c4d59fe2fbace6-Abstract-Conference.html"
+   "_source": "https://papers.nips.cc/paper_files/paper/2023/hash/01772a8b0420baec00c4d59fe2fbace6-Abstract-Conference.html",
+   "license": "No open license stated (authors keep copyright; NeurIPS holds a non-exclusive license)",
+   "license_url": "https://neurips.cc/FAQ/Copyright",
+   "license_checked": "2026-10-01"
   },
   "neurips2023-01ecd39ca4-hyperbolic-vae-via-latent-gaussian-distributions": {
    "id": "neurips2023-01ecd39ca4-hyperbolic-vae-via-latent-gaussian-distributions",
@@ -8082,7 +8532,10 @@
    "page": "569-588",
    "DOI": "10.52202/075280-0027",
    "URL": "https://papers.nips.cc/paper_files/paper/2023/hash/01ecd39ca49ddecc5729ca996304781b-Abstract-Conference.html",
-   "_source": "https://papers.nips.cc/paper_files/paper/2023/hash/01ecd39ca49ddecc5729ca996304781b-Abstract-Conference.html"
+   "_source": "https://papers.nips.cc/paper_files/paper/2023/hash/01ecd39ca49ddecc5729ca996304781b-Abstract-Conference.html",
+   "license": "No open license stated (authors keep copyright; NeurIPS holds a non-exclusive license)",
+   "license_url": "https://neurips.cc/FAQ/Copyright",
+   "license_checked": "2026-10-01"
   },
   "neurips2023-02763667a5-smoothing-the-landscape-boosts-the-signal-for-sgd-optimal-sample-compl": {
    "id": "neurips2023-02763667a5-smoothing-the-landscape-boosts-the-signal-for-sgd-optimal-sample-compl",
@@ -8120,7 +8573,10 @@
    "page": "752-784",
    "DOI": "10.52202/075280-0035",
    "URL": "https://papers.nips.cc/paper_files/paper/2023/hash/02763667a5761ff92bb15d8751bcd223-Abstract-Conference.html",
-   "_source": "https://papers.nips.cc/paper_files/paper/2023/hash/02763667a5761ff92bb15d8751bcd223-Abstract-Conference.html"
+   "_source": "https://papers.nips.cc/paper_files/paper/2023/hash/02763667a5761ff92bb15d8751bcd223-Abstract-Conference.html",
+   "license": "No open license stated (authors keep copyright; NeurIPS holds a non-exclusive license)",
+   "license_url": "https://neurips.cc/FAQ/Copyright",
+   "license_checked": "2026-10-01"
   },
   "neurips2023-029f699912-conformal-prediction-sets-for-ordinal-classification": {
    "id": "neurips2023-029f699912-conformal-prediction-sets-for-ordinal-classification",
@@ -8154,7 +8610,10 @@
    "page": "879-899",
    "DOI": "10.52202/075280-0041",
    "URL": "https://papers.nips.cc/paper_files/paper/2023/hash/029f699912bf3db747fe110948cc6169-Abstract-Conference.html",
-   "_source": "https://papers.nips.cc/paper_files/paper/2023/hash/029f699912bf3db747fe110948cc6169-Abstract-Conference.html"
+   "_source": "https://papers.nips.cc/paper_files/paper/2023/hash/029f699912bf3db747fe110948cc6169-Abstract-Conference.html",
+   "license": "No open license stated (authors keep copyright; NeurIPS holds a non-exclusive license)",
+   "license_url": "https://neurips.cc/FAQ/Copyright",
+   "license_checked": "2026-10-01"
   },
   "neurips2023-02a589ef9a-minimax-optimal-location-estimation": {
    "id": "neurips2023-02a589ef9a-minimax-optimal-location-estimation",
@@ -8192,7 +8651,10 @@
    "page": "900-915",
    "DOI": "10.52202/075280-0042",
    "URL": "https://papers.nips.cc/paper_files/paper/2023/hash/02a589ef9a4f6f1e2dcc1cfb3b978a51-Abstract-Conference.html",
-   "_source": "https://papers.nips.cc/paper_files/paper/2023/hash/02a589ef9a4f6f1e2dcc1cfb3b978a51-Abstract-Conference.html"
+   "_source": "https://papers.nips.cc/paper_files/paper/2023/hash/02a589ef9a4f6f1e2dcc1cfb3b978a51-Abstract-Conference.html",
+   "license": "No open license stated (authors keep copyright; NeurIPS holds a non-exclusive license)",
+   "license_url": "https://neurips.cc/FAQ/Copyright",
+   "license_checked": "2026-10-01"
   },
   "neurips2023-02a92b5267-tight-bounds-for-volumetric-spanners-and-applications": {
    "id": "neurips2023-02a92b5267-tight-bounds-for-volumetric-spanners-and-applications",
@@ -8226,7 +8688,10 @@
    "page": "916-930",
    "DOI": "10.52202/075280-0043",
    "URL": "https://papers.nips.cc/paper_files/paper/2023/hash/02a92b52670752daf17b53f04f1ab405-Abstract-Conference.html",
-   "_source": "https://papers.nips.cc/paper_files/paper/2023/hash/02a92b52670752daf17b53f04f1ab405-Abstract-Conference.html"
+   "_source": "https://papers.nips.cc/paper_files/paper/2023/hash/02a92b52670752daf17b53f04f1ab405-Abstract-Conference.html",
+   "license": "No open license stated (authors keep copyright; NeurIPS holds a non-exclusive license)",
+   "license_url": "https://neurips.cc/FAQ/Copyright",
+   "license_checked": "2026-10-01"
   },
   "neurips2023-0326188674-projection-free-online-convex-optimization-via-efficient-newton-iterat": {
    "id": "neurips2023-0326188674-projection-free-online-convex-optimization-via-efficient-newton-iterat",
@@ -8256,7 +8721,10 @@
    "page": "986-1008",
    "DOI": "10.52202/075280-0047",
    "URL": "https://papers.nips.cc/paper_files/paper/2023/hash/03261886741f1f21f52f2a2d570616a2-Abstract-Conference.html",
-   "_source": "https://papers.nips.cc/paper_files/paper/2023/hash/03261886741f1f21f52f2a2d570616a2-Abstract-Conference.html"
+   "_source": "https://papers.nips.cc/paper_files/paper/2023/hash/03261886741f1f21f52f2a2d570616a2-Abstract-Conference.html",
+   "license": "No open license stated (authors keep copyright; NeurIPS holds a non-exclusive license)",
+   "license_url": "https://neurips.cc/FAQ/Copyright",
+   "license_checked": "2026-10-01"
   },
   "neurips2023-0354767c63-sharpness-minimization-algorithms-do-not-only-minimize-sharpness-to-ac": {
    "id": "neurips2023-0354767c63-sharpness-minimization-algorithms-do-not-only-minimize-sharpness-to-ac",
@@ -8290,7 +8758,10 @@
    "page": "1024-1035",
    "DOI": "10.52202/075280-0049",
    "URL": "https://papers.nips.cc/paper_files/paper/2023/hash/0354767c6386386be17cabe4fc59711b-Abstract-Conference.html",
-   "_source": "https://papers.nips.cc/paper_files/paper/2023/hash/0354767c6386386be17cabe4fc59711b-Abstract-Conference.html"
+   "_source": "https://papers.nips.cc/paper_files/paper/2023/hash/0354767c6386386be17cabe4fc59711b-Abstract-Conference.html",
+   "license": "No open license stated (authors keep copyright; NeurIPS holds a non-exclusive license)",
+   "license_url": "https://neurips.cc/FAQ/Copyright",
+   "license_checked": "2026-10-01"
   },
   "neurips2023-03b1043052-agnostic-multi-group-active-learning": {
    "id": "neurips2023-03b1043052-agnostic-multi-group-active-learning",
@@ -8320,7 +8791,10 @@
    "page": "1100-1118",
    "DOI": "10.52202/075280-0053",
    "URL": "https://papers.nips.cc/paper_files/paper/2023/hash/03b1043052700b1a471996b0baf309d4-Abstract-Conference.html",
-   "_source": "https://papers.nips.cc/paper_files/paper/2023/hash/03b1043052700b1a471996b0baf309d4-Abstract-Conference.html"
+   "_source": "https://papers.nips.cc/paper_files/paper/2023/hash/03b1043052700b1a471996b0baf309d4-Abstract-Conference.html",
+   "license": "No open license stated (authors keep copyright; NeurIPS holds a non-exclusive license)",
+   "license_url": "https://neurips.cc/FAQ/Copyright",
+   "license_checked": "2026-10-01"
   },
   "neurips2023-040ace837d-towards-higher-ranks-via-adversarial-weight-pruning": {
    "id": "neurips2023-040ace837d-towards-higher-ranks-via-adversarial-weight-pruning",
@@ -8362,7 +8836,10 @@
    "page": "1189-1207",
    "DOI": "10.52202/075280-0057",
    "URL": "https://papers.nips.cc/paper_files/paper/2023/hash/040ace837dd270a87055bb10dd7c0392-Abstract-Conference.html",
-   "_source": "https://papers.nips.cc/paper_files/paper/2023/hash/040ace837dd270a87055bb10dd7c0392-Abstract-Conference.html"
+   "_source": "https://papers.nips.cc/paper_files/paper/2023/hash/040ace837dd270a87055bb10dd7c0392-Abstract-Conference.html",
+   "license": "No open license stated (authors keep copyright; NeurIPS holds a non-exclusive license)",
+   "license_url": "https://neurips.cc/FAQ/Copyright",
+   "license_checked": "2026-10-01"
   },
   "neurips2023-045c87def0-passive-learning-of-active-causal-strategies-in-agents-and-language-mo": {
    "id": "neurips2023-045c87def0-passive-learning-of-active-causal-strategies-in-agents-and-language-mo",
@@ -8404,7 +8881,10 @@
    "page": "1283-1297",
    "DOI": "10.52202/075280-0062",
    "URL": "https://papers.nips.cc/paper_files/paper/2023/hash/045c87def0c02e3ad0d3d849766d7f1e-Abstract-Conference.html",
-   "_source": "https://papers.nips.cc/paper_files/paper/2023/hash/045c87def0c02e3ad0d3d849766d7f1e-Abstract-Conference.html"
+   "_source": "https://papers.nips.cc/paper_files/paper/2023/hash/045c87def0c02e3ad0d3d849766d7f1e-Abstract-Conference.html",
+   "license": "No open license stated (authors keep copyright; NeurIPS holds a non-exclusive license)",
+   "license_url": "https://neurips.cc/FAQ/Copyright",
+   "license_checked": "2026-10-01"
   },
   "neurips2023-047397849f-zero-regret-performative-prediction-under-inequality-constraints": {
    "id": "neurips2023-047397849f-zero-regret-performative-prediction-under-inequality-constraints",
@@ -8434,7 +8914,10 @@
    "page": "1298-1308",
    "DOI": "10.52202/075280-0063",
    "URL": "https://papers.nips.cc/paper_files/paper/2023/hash/047397849f63b4fcfced4ff720159f3d-Abstract-Conference.html",
-   "_source": "https://papers.nips.cc/paper_files/paper/2023/hash/047397849f63b4fcfced4ff720159f3d-Abstract-Conference.html"
+   "_source": "https://papers.nips.cc/paper_files/paper/2023/hash/047397849f63b4fcfced4ff720159f3d-Abstract-Conference.html",
+   "license": "No open license stated (authors keep copyright; NeurIPS holds a non-exclusive license)",
+   "license_url": "https://neurips.cc/FAQ/Copyright",
+   "license_checked": "2026-10-01"
   },
   "neurips2023-050f8591be-multiclass-boosting-simple-and-intuitive-weak-learning-criteria": {
    "id": "neurips2023-050f8591be-multiclass-boosting-simple-and-intuitive-weak-learning-criteria",
@@ -8472,7 +8955,10 @@
    "page": "1403-1425",
    "DOI": "10.52202/075280-0070",
    "URL": "https://papers.nips.cc/paper_files/paper/2023/hash/050f8591be3874b52fdac4e1060eeb29-Abstract-Conference.html",
-   "_source": "https://papers.nips.cc/paper_files/paper/2023/hash/050f8591be3874b52fdac4e1060eeb29-Abstract-Conference.html"
+   "_source": "https://papers.nips.cc/paper_files/paper/2023/hash/050f8591be3874b52fdac4e1060eeb29-Abstract-Conference.html",
+   "license": "No open license stated (authors keep copyright; NeurIPS holds a non-exclusive license)",
+   "license_url": "https://neurips.cc/FAQ/Copyright",
+   "license_checked": "2026-10-01"
   },
   "pmlr-v235-abhyankar24a-infercept-efficient-intercept-support-for-augmented-large-language-mod": {
    "id": "pmlr-v235-abhyankar24a-infercept-efficient-intercept-support-for-augmented-large-language-mod",
@@ -8513,7 +8999,10 @@
    "page": "81-95",
    "URL": "https://proceedings.mlr.press/v235/abhyankar24a.html",
    "publisher": "PMLR",
-   "_source": "https://proceedings.mlr.press/v235/abhyankar24a.html"
+   "_source": "https://proceedings.mlr.press/v235/abhyankar24a.html",
+   "license": "CC BY 4.0 (PMLR publication agreement; not shown on the paper page)",
+   "license_url": "https://proceedings.mlr.press/pmlr-license-agreement.html",
+   "license_checked": "2026-10-01"
   },
   "pmlr-v235-afshani24a-optimal-coresets-for-low-dimensional-geometric-median": {
    "id": "pmlr-v235-afshani24a-optimal-coresets-for-low-dimensional-geometric-median",
@@ -8542,7 +9031,10 @@
    "page": "262-270",
    "URL": "https://proceedings.mlr.press/v235/afshani24a.html",
    "publisher": "PMLR",
-   "_source": "https://proceedings.mlr.press/v235/afshani24a.html"
+   "_source": "https://proceedings.mlr.press/v235/afshani24a.html",
+   "license": "CC BY 4.0 (PMLR publication agreement; not shown on the paper page)",
+   "license_url": "https://proceedings.mlr.press/pmlr-license-agreement.html",
+   "license_checked": "2026-10-01"
   },
   "pmlr-v235-agarwal24c-probabilistic-generating-circuits-demystified": {
    "id": "pmlr-v235-agarwal24c-probabilistic-generating-circuits-demystified",
@@ -8571,7 +9063,10 @@
    "page": "329-342",
    "URL": "https://proceedings.mlr.press/v235/agarwal24c.html",
    "publisher": "PMLR",
-   "_source": "https://proceedings.mlr.press/v235/agarwal24c.html"
+   "_source": "https://proceedings.mlr.press/v235/agarwal24c.html",
+   "license": "CC BY 4.0 (PMLR publication agreement; not shown on the paper page)",
+   "license_url": "https://proceedings.mlr.press/pmlr-license-agreement.html",
+   "license_checked": "2026-10-01"
   },
   "pmlr-v235-agarwal24d-improved-differentially-private-and-lazy-online-convex-optimization-lo": {
    "id": "pmlr-v235-agarwal24d-improved-differentially-private-and-lazy-online-convex-optimization-lo",
@@ -8608,7 +9103,10 @@
    "page": "343-361",
    "URL": "https://proceedings.mlr.press/v235/agarwal24d.html",
    "publisher": "PMLR",
-   "_source": "https://proceedings.mlr.press/v235/agarwal24d.html"
+   "_source": "https://proceedings.mlr.press/v235/agarwal24d.html",
+   "license": "CC BY 4.0 (PMLR publication agreement; not shown on the paper page)",
+   "license_url": "https://proceedings.mlr.press/pmlr-license-agreement.html",
+   "license_checked": "2026-10-01"
   },
   "pmlr-v235-agarwal24e-the-non-linear-f-design-and-applications-to-interactive-learning": {
    "id": "pmlr-v235-agarwal24e-the-non-linear-f-design-and-applications-to-interactive-learning",
@@ -8645,7 +9143,10 @@
    "page": "362-396",
    "URL": "https://proceedings.mlr.press/v235/agarwal24e.html",
    "publisher": "PMLR",
-   "_source": "https://proceedings.mlr.press/v235/agarwal24e.html"
+   "_source": "https://proceedings.mlr.press/v235/agarwal24e.html",
+   "license": "CC BY 4.0 (PMLR publication agreement; not shown on the paper page)",
+   "license_url": "https://proceedings.mlr.press/pmlr-license-agreement.html",
+   "license_checked": "2026-10-01"
   },
   "pmlr-v235-agrawal24a-policy-evaluation-for-variance-in-average-reward-reinforcement-learnin": {
    "id": "pmlr-v235-agrawal24a-policy-evaluation-for-variance-in-average-reward-reinforcement-learnin",
@@ -8678,7 +9179,10 @@
    "page": "471-502",
    "URL": "https://proceedings.mlr.press/v235/agrawal24a.html",
    "publisher": "PMLR",
-   "_source": "https://proceedings.mlr.press/v235/agrawal24a.html"
+   "_source": "https://proceedings.mlr.press/v235/agrawal24a.html",
+   "license": "CC BY 4.0 (PMLR publication agreement; not shown on the paper page)",
+   "license_url": "https://proceedings.mlr.press/pmlr-license-agreement.html",
+   "license_checked": "2026-10-01"
   },
   "pmlr-v235-ahn24b-understanding-adam-optimizer-via-online-learning-of-updates-adam-is-ft": {
    "id": "pmlr-v235-ahn24b-understanding-adam-optimizer-via-online-learning-of-updates-adam-is-ft",
@@ -8715,7 +9219,10 @@
    "page": "619-640",
    "URL": "https://proceedings.mlr.press/v235/ahn24b.html",
    "publisher": "PMLR",
-   "_source": "https://proceedings.mlr.press/v235/ahn24b.html"
+   "_source": "https://proceedings.mlr.press/v235/ahn24b.html",
+   "license": "CC BY 4.0 (PMLR publication agreement; not shown on the paper page)",
+   "license_url": "https://proceedings.mlr.press/pmlr-license-agreement.html",
+   "license_checked": "2026-10-01"
   },
   "pmlr-v235-akbari24a-triple-changes-estimator-for-targeted-policies": {
    "id": "pmlr-v235-akbari24a-triple-changes-estimator-for-targeted-policies",
@@ -8744,7 +9251,10 @@
    "page": "666-695",
    "URL": "https://proceedings.mlr.press/v235/akbari24a.html",
    "publisher": "PMLR",
-   "_source": "https://proceedings.mlr.press/v235/akbari24a.html"
+   "_source": "https://proceedings.mlr.press/v235/akbari24a.html",
+   "license": "CC BY 4.0 (PMLR publication agreement; not shown on the paper page)",
+   "license_url": "https://proceedings.mlr.press/pmlr-license-agreement.html",
+   "license_checked": "2026-10-01"
   },
   "pmlr-v235-alacaoglu24a-revisiting-inexact-fixed-point-iterations-for-min-max-problems-stochas": {
    "id": "pmlr-v235-alacaoglu24a-revisiting-inexact-fixed-point-iterations-for-min-max-problems-stochas",
@@ -8777,7 +9287,10 @@
    "page": "840-878",
    "URL": "https://proceedings.mlr.press/v235/alacaoglu24a.html",
    "publisher": "PMLR",
-   "_source": "https://proceedings.mlr.press/v235/alacaoglu24a.html"
+   "_source": "https://proceedings.mlr.press/v235/alacaoglu24a.html",
+   "license": "CC BY 4.0 (PMLR publication agreement; not shown on the paper page)",
+   "license_url": "https://proceedings.mlr.press/pmlr-license-agreement.html",
+   "license_checked": "2026-10-01"
   },
   "pmlr-v235-alamdari24a-remembering-to-be-fair-non-markovian-fairness-in-sequential-decision-m": {
    "id": "pmlr-v235-alamdari24a-remembering-to-be-fair-non-markovian-fairness-in-sequential-decision-m",
@@ -8814,7 +9327,10 @@
    "page": "906-920",
    "URL": "https://proceedings.mlr.press/v235/alamdari24a.html",
    "publisher": "PMLR",
-   "_source": "https://proceedings.mlr.press/v235/alamdari24a.html"
+   "_source": "https://proceedings.mlr.press/v235/alamdari24a.html",
+   "license": "CC BY 4.0 (PMLR publication agreement; not shown on the paper page)",
+   "license_url": "https://proceedings.mlr.press/pmlr-license-agreement.html",
+   "license_checked": "2026-10-01"
   },
   "pmlr-v235-alder24a-energy-efficient-gaussian-processes-using-low-precision-arithmetic": {
    "id": "pmlr-v235-alder24a-energy-efficient-gaussian-processes-using-low-precision-arithmetic",
@@ -8843,7 +9359,10 @@
    "page": "955-975",
    "URL": "https://proceedings.mlr.press/v235/alder24a.html",
    "publisher": "PMLR",
-   "_source": "https://proceedings.mlr.press/v235/alder24a.html"
+   "_source": "https://proceedings.mlr.press/v235/alder24a.html",
+   "license": "CC BY 4.0 (PMLR publication agreement; not shown on the paper page)",
+   "license_url": "https://proceedings.mlr.press/pmlr-license-agreement.html",
+   "license_checked": "2026-10-01"
   },
   "pmlr-v235-alishahi24a-no-dimensional-sampling-coresets-for-classification": {
    "id": "pmlr-v235-alishahi24a-no-dimensional-sampling-coresets-for-classification",
@@ -8872,7 +9391,10 @@
    "page": "1008-1049",
    "URL": "https://proceedings.mlr.press/v235/alishahi24a.html",
    "publisher": "PMLR",
-   "_source": "https://proceedings.mlr.press/v235/alishahi24a.html"
+   "_source": "https://proceedings.mlr.press/v235/alishahi24a.html",
+   "license": "CC BY 4.0 (PMLR publication agreement; not shown on the paper page)",
+   "license_url": "https://proceedings.mlr.press/pmlr-license-agreement.html",
+   "license_checked": "2026-10-01"
   },
   "pmlr-v235-allamanis24a-unsupervised-evaluation-of-code-llms-with-round-trip-correctness": {
    "id": "pmlr-v235-allamanis24a-unsupervised-evaluation-of-code-llms-with-round-trip-correctness",
@@ -8905,7 +9427,10 @@
    "page": "1050-1066",
    "URL": "https://proceedings.mlr.press/v235/allamanis24a.html",
    "publisher": "PMLR",
-   "_source": "https://proceedings.mlr.press/v235/allamanis24a.html"
+   "_source": "https://proceedings.mlr.press/v235/allamanis24a.html",
+   "license": "CC BY 4.0 (PMLR publication agreement; not shown on the paper page)",
+   "license_url": "https://proceedings.mlr.press/pmlr-license-agreement.html",
+   "license_checked": "2026-10-01"
   },
   "pmlr-v235-allouah24a-byzantine-robust-federated-learning-impact-of-client-subsampling-and-l": {
    "id": "pmlr-v235-allouah24a-byzantine-robust-federated-learning-impact-of-client-subsampling-and-l",
@@ -8954,7 +9479,10 @@
    "page": "1078-1114",
    "URL": "https://proceedings.mlr.press/v235/allouah24a.html",
    "publisher": "PMLR",
-   "_source": "https://proceedings.mlr.press/v235/allouah24a.html"
+   "_source": "https://proceedings.mlr.press/v235/allouah24a.html",
+   "license": "CC BY 4.0 (PMLR publication agreement; not shown on the paper page)",
+   "license_url": "https://proceedings.mlr.press/pmlr-license-agreement.html",
+   "license_checked": "2026-10-01"
   },
   "pmlr-v235-allouah24b-the-privacy-power-of-correlated-noise-in-decentralized-learning": {
    "id": "pmlr-v235-allouah24b-the-privacy-power-of-correlated-noise-in-decentralized-learning",
@@ -8995,7 +9523,10 @@
    "page": "1115-1143",
    "URL": "https://proceedings.mlr.press/v235/allouah24b.html",
    "publisher": "PMLR",
-   "_source": "https://proceedings.mlr.press/v235/allouah24b.html"
+   "_source": "https://proceedings.mlr.press/v235/allouah24b.html",
+   "license": "CC BY 4.0 (PMLR publication agreement; not shown on the paper page)",
+   "license_url": "https://proceedings.mlr.press/pmlr-license-agreement.html",
+   "license_checked": "2026-10-01"
   },
   "pmlr-v235-alvarado24a-hyperbolic-optimizer-as-a-dynamical-system": {
    "id": "pmlr-v235-alvarado24a-hyperbolic-optimizer-as-a-dynamical-system",
@@ -9024,7 +9555,10 @@
    "page": "1243-1260",
    "URL": "https://proceedings.mlr.press/v235/alvarado24a.html",
    "publisher": "PMLR",
-   "_source": "https://proceedings.mlr.press/v235/alvarado24a.html"
+   "_source": "https://proceedings.mlr.press/v235/alvarado24a.html",
+   "license": "CC BY 4.0 (PMLR publication agreement; not shown on the paper page)",
+   "license_url": "https://proceedings.mlr.press/pmlr-license-agreement.html",
+   "license_checked": "2026-10-01"
   },
   "pmlr-v235-ameen24a-robust-graph-matching-when-nodes-are-corrupt": {
    "id": "pmlr-v235-ameen24a-robust-graph-matching-when-nodes-are-corrupt",
@@ -9053,7 +9587,10 @@
    "page": "1276-1305",
    "URL": "https://proceedings.mlr.press/v235/ameen24a.html",
    "publisher": "PMLR",
-   "_source": "https://proceedings.mlr.press/v235/ameen24a.html"
+   "_source": "https://proceedings.mlr.press/v235/ameen24a.html",
+   "license": "CC BY 4.0 (PMLR publication agreement; not shown on the paper page)",
+   "license_url": "https://proceedings.mlr.press/pmlr-license-agreement.html",
+   "license_checked": "2026-10-01"
   },
   "pmlr-v235-aminian24a-generalization-error-of-graph-neural-networks-in-the-mean-field-regime": {
    "id": "pmlr-v235-aminian24a-generalization-error-of-graph-neural-networks-in-the-mean-field-regime",
@@ -9094,7 +9631,10 @@
    "page": "1359-1391",
    "URL": "https://proceedings.mlr.press/v235/aminian24a.html",
    "publisher": "PMLR",
-   "_source": "https://proceedings.mlr.press/v235/aminian24a.html"
+   "_source": "https://proceedings.mlr.press/v235/aminian24a.html",
+   "license": "CC BY 4.0 (PMLR publication agreement; not shown on the paper page)",
+   "license_url": "https://proceedings.mlr.press/pmlr-license-agreement.html",
+   "license_checked": "2026-10-01"
   },
   "pmlr-v235-asi24a-private-vector-mean-estimation-in-the-shuffle-model-optimal-rates-requ": {
    "id": "pmlr-v235-asi24a-private-vector-mean-estimation-in-the-shuffle-model-optimal-rates-requ",
@@ -9139,7 +9679,10 @@
    "page": "1945-1970",
    "URL": "https://proceedings.mlr.press/v235/asi24a.html",
    "publisher": "PMLR",
-   "_source": "https://proceedings.mlr.press/v235/asi24a.html"
+   "_source": "https://proceedings.mlr.press/v235/asi24a.html",
+   "license": "CC BY 4.0 (PMLR publication agreement; not shown on the paper page)",
+   "license_url": "https://proceedings.mlr.press/pmlr-license-agreement.html",
+   "license_checked": "2026-10-01"
   },
   "pmlr-v235-attali24a-delaunay-graph-addressing-over-squashing-and-over-smoothing-using-dela": {
    "id": "pmlr-v235-attali24a-delaunay-graph-addressing-over-squashing-and-over-smoothing-using-dela",
@@ -9172,7 +9715,10 @@
    "page": "1992-2008",
    "URL": "https://proceedings.mlr.press/v235/attali24a.html",
    "publisher": "PMLR",
-   "_source": "https://proceedings.mlr.press/v235/attali24a.html"
+   "_source": "https://proceedings.mlr.press/v235/attali24a.html",
+   "license": "CC BY 4.0 (PMLR publication agreement; not shown on the paper page)",
+   "license_url": "https://proceedings.mlr.press/pmlr-license-agreement.html",
+   "license_checked": "2026-10-01"
   },
   "pmlr-v235-attia24a-how-free-is-parameter-free-stochastic-optimization": {
    "id": "pmlr-v235-attia24a-how-free-is-parameter-free-stochastic-optimization",
@@ -9201,7 +9747,10 @@
    "page": "2009-2034",
    "URL": "https://proceedings.mlr.press/v235/attia24a.html",
    "publisher": "PMLR",
-   "_source": "https://proceedings.mlr.press/v235/attia24a.html"
+   "_source": "https://proceedings.mlr.press/v235/attia24a.html",
+   "license": "CC BY 4.0 (PMLR publication agreement; not shown on the paper page)",
+   "license_url": "https://proceedings.mlr.press/pmlr-license-agreement.html",
+   "license_checked": "2026-10-01"
   },
   "pmlr-v235-attias24a-information-complexity-of-stochastic-convex-optimization-applications": {
    "id": "pmlr-v235-attias24a-information-complexity-of-stochastic-convex-optimization-applications",
@@ -9242,7 +9791,10 @@
    "page": "2035-2068",
    "URL": "https://proceedings.mlr.press/v235/attias24a.html",
    "publisher": "PMLR",
-   "_source": "https://proceedings.mlr.press/v235/attias24a.html"
+   "_source": "https://proceedings.mlr.press/v235/attias24a.html",
+   "license": "CC BY 4.0 (PMLR publication agreement; not shown on the paper page)",
+   "license_url": "https://proceedings.mlr.press/pmlr-license-agreement.html",
+   "license_checked": "2026-10-01"
   },
   "pmlr-v235-attias24b-agnostic-sample-compression-schemes-for-regression": {
    "id": "pmlr-v235-attias24b-agnostic-sample-compression-schemes-for-regression",
@@ -9279,7 +9831,10 @@
    "page": "2069-2085",
    "URL": "https://proceedings.mlr.press/v235/attias24b.html",
    "publisher": "PMLR",
-   "_source": "https://proceedings.mlr.press/v235/attias24b.html"
+   "_source": "https://proceedings.mlr.press/v235/attias24b.html",
+   "license": "CC BY 4.0 (PMLR publication agreement; not shown on the paper page)",
+   "license_url": "https://proceedings.mlr.press/pmlr-license-agreement.html",
+   "license_checked": "2026-10-01"
   },
   "pmlr-v235-axiotis24a-data-efficient-learning-via-clustering-based-sensitivity-sampling-foun": {
    "id": "pmlr-v235-axiotis24a-data-efficient-learning-via-clustering-based-sensitivity-sampling-foun",
@@ -9332,7 +9887,10 @@
    "page": "2086-2107",
    "URL": "https://proceedings.mlr.press/v235/axiotis24a.html",
    "publisher": "PMLR",
-   "_source": "https://proceedings.mlr.press/v235/axiotis24a.html"
+   "_source": "https://proceedings.mlr.press/v235/axiotis24a.html",
+   "license": "CC BY 4.0 (PMLR publication agreement; not shown on the paper page)",
+   "license_url": "https://proceedings.mlr.press/pmlr-license-agreement.html",
+   "license_checked": "2026-10-01"
   },
   "pmlr-v235-ayme24a-random-features-models-a-way-to-study-the-success-of-naive-imputation": {
    "id": "pmlr-v235-ayme24a-random-features-models-a-way-to-study-the-success-of-naive-imputation",
@@ -9369,7 +9927,10 @@
    "page": "2108-2134",
    "URL": "https://proceedings.mlr.press/v235/ayme24a.html",
    "publisher": "PMLR",
-   "_source": "https://proceedings.mlr.press/v235/ayme24a.html"
+   "_source": "https://proceedings.mlr.press/v235/ayme24a.html",
+   "license": "CC BY 4.0 (PMLR publication agreement; not shown on the paper page)",
+   "license_url": "https://proceedings.mlr.press/pmlr-license-agreement.html",
+   "license_checked": "2026-10-01"
   },
   "pmlr-v238-abedsoltan24a-on-the-nystrom-approximation-for-preconditioning-in-kernel-machines": {
    "id": "pmlr-v238-abedsoltan24a-on-the-nystrom-approximation-for-preconditioning-in-kernel-machines",
@@ -9406,7 +9967,10 @@
    "page": "3718-3726",
    "URL": "https://proceedings.mlr.press/v238/abedsoltan24a.html",
    "publisher": "PMLR",
-   "_source": "https://proceedings.mlr.press/v238/abedsoltan24a.html"
+   "_source": "https://proceedings.mlr.press/v238/abedsoltan24a.html",
+   "license": "CC BY 4.0 (PMLR publication agreement; not shown on the paper page)",
+   "license_url": "https://proceedings.mlr.press/pmlr-license-agreement.html",
+   "license_checked": "2026-10-01"
   },
   "pmlr-v238-abernethy24a-lexicographic-optimization-algorithms-and-stability": {
    "id": "pmlr-v238-abernethy24a-lexicographic-optimization-algorithms-and-stability",
@@ -9439,7 +10003,10 @@
    "page": "2503-2511",
    "URL": "https://proceedings.mlr.press/v238/abernethy24a.html",
    "publisher": "PMLR",
-   "_source": "https://proceedings.mlr.press/v238/abernethy24a.html"
+   "_source": "https://proceedings.mlr.press/v238/abernethy24a.html",
+   "license": "CC BY 4.0 (PMLR publication agreement; not shown on the paper page)",
+   "license_url": "https://proceedings.mlr.press/pmlr-license-agreement.html",
+   "license_checked": "2026-10-01"
   },
   "pmlr-v238-adibi24a-stochastic-approximation-with-delayed-updates-finite-time-rates": {
    "id": "pmlr-v238-adibi24a-stochastic-approximation-with-delayed-updates-finite-time-rates",
@@ -9492,7 +10059,10 @@
    "page": "2746-2754",
    "URL": "https://proceedings.mlr.press/v238/adibi24a.html",
    "publisher": "PMLR",
-   "_source": "https://proceedings.mlr.press/v238/adibi24a.html"
+   "_source": "https://proceedings.mlr.press/v238/adibi24a.html",
+   "license": "CC BY 4.0 (PMLR publication agreement; not shown on the paper page)",
+   "license_url": "https://proceedings.mlr.press/pmlr-license-agreement.html",
+   "license_checked": "2026-10-01"
   },
   "pmlr-v238-ahmadi24a-agnostic-multi-robust-learning-using-erm": {
    "id": "pmlr-v238-ahmadi24a-agnostic-multi-robust-learning-using-erm",
@@ -9529,7 +10099,10 @@
    "page": "2242-2250",
    "URL": "https://proceedings.mlr.press/v238/ahmadi24a.html",
    "publisher": "PMLR",
-   "_source": "https://proceedings.mlr.press/v238/ahmadi24a.html"
+   "_source": "https://proceedings.mlr.press/v238/ahmadi24a.html",
+   "license": "CC BY 4.0 (PMLR publication agreement; not shown on the paper page)",
+   "license_url": "https://proceedings.mlr.press/pmlr-license-agreement.html",
+   "license_checked": "2026-10-01"
   },
   "pmlr-v238-alacaoglu24a-complexity-of-single-loop-algorithms-for-nonlinear-programming": {
    "id": "pmlr-v238-alacaoglu24a-complexity-of-single-loop-algorithms-for-nonlinear-programming",
@@ -9558,7 +10131,10 @@
    "page": "4627-4635",
    "URL": "https://proceedings.mlr.press/v238/alacaoglu24a.html",
    "publisher": "PMLR",
-   "_source": "https://proceedings.mlr.press/v238/alacaoglu24a.html"
+   "_source": "https://proceedings.mlr.press/v238/alacaoglu24a.html",
+   "license": "CC BY 4.0 (PMLR publication agreement; not shown on the paper page)",
+   "license_url": "https://proceedings.mlr.press/pmlr-license-agreement.html",
+   "license_checked": "2026-10-01"
   },
   "pmlr-v238-alizadeh24a-pessimistic-off-policy-multi-objective-optimization": {
    "id": "pmlr-v238-alizadeh24a-pessimistic-off-policy-multi-objective-optimization",
@@ -9603,7 +10179,10 @@
    "page": "2980-2988",
    "URL": "https://proceedings.mlr.press/v238/alizadeh24a.html",
    "publisher": "PMLR",
-   "_source": "https://proceedings.mlr.press/v238/alizadeh24a.html"
+   "_source": "https://proceedings.mlr.press/v238/alizadeh24a.html",
+   "license": "CC BY 4.0 (PMLR publication agreement; not shown on the paper page)",
+   "license_url": "https://proceedings.mlr.press/pmlr-license-agreement.html",
+   "license_checked": "2026-10-01"
   },
   "respan-2026-05-23-llm-monitoring-metrics-alerts": {
    "id": "respan-2026-05-23-llm-monitoring-metrics-alerts",
@@ -9626,7 +10205,9 @@
    },
    "container-title": "Respan",
    "URL": "https://www.respan.ai/articles/llm-monitoring",
-   "_source": "provenance record (original fetch)"
+   "_source": "provenance record (original fetch)",
+   "license": "No license stated on the source page (all rights reserved by default)",
+   "license_checked": "2026-10-01"
   },
   "techcrunch-2026-08-25-keenable-web-index-ai-agents": {
    "id": "techcrunch-2026-08-25-keenable-web-index-ai-agents",
@@ -9743,7 +10324,10 @@
    "_source": "https://arxiv.org/abs/2606.08919",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2606.08919"
+   "DOI": "10.48550/arXiv.2606.08919",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
   },
   "arxiv-2608.23642-ai-agents-push-humans-out-of-the-loop": {
    "id": "arxiv-2608.23642-ai-agents-push-humans-out-of-the-loop",
@@ -9776,7 +10360,199 @@
    "_source": "https://arxiv.org/abs/2608.23642",
    "genre": "Preprint",
    "publisher": "arXiv",
-   "DOI": "10.48550/arXiv.2608.23642"
+   "DOI": "10.48550/arXiv.2608.23642",
+   "license": "CC BY 4.0",
+   "license_url": "http://creativecommons.org/licenses/by/4.0/",
+   "license_checked": "2026-10-01"
+  },
+  "arxiv-2606.19544-reliability-without-validity-llm-as-a-judge": {
+   "id": "arxiv-2606.19544-reliability-without-validity-llm-as-a-judge",
+   "type": "article",
+   "title": "Reliability without Validity: A Systematic, Large-Scale Evaluation of LLM-as-a-Judge Models Across Agreement, Consistency, and Bias",
+   "author": [
+    {
+     "family": "Norman",
+     "given": "Justin D."
+    },
+    {
+     "family": "Rivera",
+     "given": "Michael U."
+    },
+    {
+     "family": "Hughes",
+     "given": "D. Alex"
+    }
+   ],
+   "issued": {
+    "date-parts": [
+     [
+      2026,
+      6,
+      17
+     ]
+    ]
+   },
+   "URL": "https://arxiv.org/abs/2606.19544",
+   "_source": "https://arxiv.org/abs/2606.19544",
+   "genre": "Preprint",
+   "publisher": "arXiv",
+   "DOI": "10.48550/arXiv.2606.19544",
+   "license": "CC BY 4.0"
+  },
+  "arxiv-2602.00758-temporal-leakage-date-filtered-web-retrieval": {
+   "id": "arxiv-2602.00758-temporal-leakage-date-filtered-web-retrieval",
+   "type": "article",
+   "title": "Temporal Leakage in Search-Engine Date-Filtered Web Retrieval: A Retrospective Forecasting Case Study",
+   "author": [
+    {
+     "family": "Lahib",
+     "given": "Ali El"
+    },
+    {
+     "family": "Xia",
+     "given": "Ying-Jieh"
+    },
+    {
+     "family": "Li",
+     "given": "Zehan"
+    },
+    {
+     "family": "Wang",
+     "given": "Yuxuan"
+    },
+    {
+     "family": "Pi",
+     "given": "Xinyu"
+    }
+   ],
+   "issued": {
+    "date-parts": [
+     [
+      2026,
+      1,
+      31
+     ]
+    ]
+   },
+   "URL": "https://arxiv.org/abs/2602.00758",
+   "_source": "https://arxiv.org/abs/2602.00758",
+   "genre": "Preprint",
+   "publisher": "arXiv",
+   "DOI": "10.48550/arXiv.2602.00758",
+   "license": "CC BY 4.0"
+  },
+  "arxiv-2602.14233-evaluating-llms-in-finance-explicit-bias": {
+   "id": "arxiv-2602.14233-evaluating-llms-in-finance-explicit-bias",
+   "type": "article",
+   "title": "Evaluating LLMs in Finance Requires Explicit Bias Consideration",
+   "author": [
+    {
+     "family": "Kong",
+     "given": "Yaxuan"
+    },
+    {
+     "family": "Lee",
+     "given": "Hoyoung"
+    },
+    {
+     "family": "Hwang",
+     "given": "Yoontae"
+    },
+    {
+     "family": "Lopez-Lira",
+     "given": "Alejandro"
+    },
+    {
+     "family": "Levy",
+     "given": "Bradford"
+    },
+    {
+     "family": "Mehta",
+     "given": "Dhagash"
+    },
+    {
+     "family": "Wen",
+     "given": "Qingsong"
+    },
+    {
+     "family": "Choi",
+     "given": "Chanyeol"
+    },
+    {
+     "family": "Lee",
+     "given": "Yongjae"
+    },
+    {
+     "family": "Zohren",
+     "given": "Stefan"
+    }
+   ],
+   "issued": {
+    "date-parts": [
+     [
+      2026,
+      2,
+      15
+     ]
+    ]
+   },
+   "URL": "https://arxiv.org/abs/2602.14233",
+   "_source": "https://arxiv.org/abs/2602.14233",
+   "genre": "Preprint",
+   "publisher": "arXiv",
+   "DOI": "10.48550/arXiv.2602.14233",
+   "license": "CC BY 4.0"
+  },
+  "oneuptime-2026-08-31-measure-llm-eval-variance-thresholds": {
+   "id": "oneuptime-2026-08-31-measure-llm-eval-variance-thresholds",
+   "type": "post-weblog",
+   "title": "Why LLM Eval Scores Change: Measure Variance Before Setting Thresholds",
+   "author": [
+    {
+     "family": "Dhandala",
+     "given": "Nawaz"
+    }
+   ],
+   "issued": {
+    "date-parts": [
+     [
+      2026,
+      8,
+      31
+     ]
+    ]
+   },
+   "container-title": "OneUptime Blog",
+   "URL": "https://github.com/OneUptime/blog/blob/93f3f3bce3459df2f417fe8d15f2532bd5a5dd32/posts/2026-08-31-measure-llm-eval-variance-thresholds/README.md",
+   "_source": "https://raw.githubusercontent.com/OneUptime/blog/93f3f3bce3459df2f417fe8d15f2532bd5a5dd32/posts/2026-08-31-measure-llm-eval-variance-thresholds/README.md",
+   "license": "CC BY 4.0 (OneUptime/blog repository LICENSE)",
+   "website_url": "https://oneuptime.com/blog/post/2026-08-31-measure-llm-eval-variance-thresholds/view",
+   "original_source_commit": "93f3f3bce3459df2f417fe8d15f2532bd5a5dd32"
+  },
+  "nvidia-aiperf-multi-run-confidence-reporting": {
+   "id": "nvidia-aiperf-multi-run-confidence-reporting",
+   "type": "webpage",
+   "title": "Multi-Run Confidence Reporting",
+   "author": [
+    {
+     "literal": "NVIDIA Corporation"
+    }
+   ],
+   "issued": {
+    "date-parts": [
+     [
+      2026,
+      5,
+      15
+     ]
+    ]
+   },
+   "container-title": "NVIDIA AIPerf Documentation",
+   "URL": "https://github.com/ai-dynamo/aiperf/blob/94a910263d9ce224c0e53144838357b6402cf9ed/docs/tutorials/multi-run-confidence.md",
+   "_source": "https://raw.githubusercontent.com/ai-dynamo/aiperf/94a910263d9ce224c0e53144838357b6402cf9ed/docs/tutorials/multi-run-confidence.md",
+   "license": "Apache-2.0 (SPDX header in file; ai-dynamo/aiperf repository)",
+   "website_url": "https://docs.nvidia.com/aiperf/tutorials/metrics-analysis/multi-run-confidence-reporting",
+   "original_source_commit": "94a910263d9ce224c0e53144838357b6402cf9ed"
   }
  }
 }

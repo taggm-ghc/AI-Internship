@@ -46,9 +46,25 @@ import time
 from pathlib import Path
 
 import httpx
+from dotenv import load_dotenv
 
 WORKDIR = Path(__file__).resolve().parent
 GOLDEN_SET_PATH = WORKDIR / "config" / "golden_eval_set.json"
+
+load_dotenv(WORKDIR / ".env")
+
+
+def debug_headers_from_env() -> dict:
+    """X-Debug-Key header from DEBUG_API_KEY (p3m3 item #62: /debug/* is
+    key-gated). Fails loudly rather than sending an unauthenticated call that
+    would 401 halfway through a paid eval run."""
+    key = os.getenv("DEBUG_API_KEY", "").strip()
+    if not key:
+        raise SystemExit(
+            "DEBUG_API_KEY is not set. golden_eval.py calls /debug/retrieve, which now requires the "
+            "X-Debug-Key header; set DEBUG_API_KEY (e.g. in .env) to the server's debug key and re-run."
+        )
+    return {"X-Debug-Key": key}
 
 _STOPWORDS = {
     "the", "a", "an", "is", "are", "was", "were", "be", "been", "to", "of", "in",
@@ -143,7 +159,7 @@ def content_overlap_check(answer_text: str, cited_texts: list[str]) -> tuple[boo
 
 def run_one(base: str, case: dict) -> dict:
     retrieve = httpx.get(
-        f"{base}/debug/retrieve", params={"query": case["question"], "top_k": 5}, timeout=30.0
+        f"{base}/debug/retrieve", params={"query": case["question"], "top_k": 5}, headers=debug_headers_from_env(), timeout=30.0
     ).json()
     retrieved_doc_ids = [r["document_id"] for r in retrieve]
 
@@ -199,7 +215,7 @@ def run_one(base: str, case: dict) -> dict:
     content_overlap_ok, content_overlap_ratio = None, None
     if case["expected_status"] == "supported" and citations:
         overfetch = httpx.get(
-            f"{base}/debug/retrieve", params={"query": case["question"], "top_k": 15}, timeout=30.0
+            f"{base}/debug/retrieve", params={"query": case["question"], "top_k": 15}, headers=debug_headers_from_env(), timeout=30.0
         ).json()
         text_by_id = {r["chunk_id"]: r["text"] for r in overfetch}
         cited_texts = [text_by_id[c] for c in citations if c in text_by_id]
@@ -236,6 +252,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
+    debug_headers_from_env()  # fail fast, before any spend, if the key is missing
     golden_set = load_golden_set()
 
     # Pre-flight (2026-09-19, Gap 1) -- checked before the server even

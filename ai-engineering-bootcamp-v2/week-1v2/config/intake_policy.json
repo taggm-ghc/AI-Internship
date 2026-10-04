@@ -1,0 +1,41 @@
+{
+  "_comment": "Intake gateway policy (item #66). max_redirects 3 (raised from 0 on 2026-10-04 so doi.org, http->https and moved pages work); each hop is fully re-validated by policy.check_redirect; 0 refuses all redirects. Empty allowed_host_suffixes = any public host not denied. quarantine_dir: env INTAKE_QUARANTINE_DIR overrides; must be outside /tmp. total_deadline_s caps connect+all reads+redirects (monotonic). raw files live in quarantine_dir/raw (0700), never printed.",
+  "allowed_schemes": [
+    "https"
+  ],
+  "allowed_ports": [
+    443
+  ],
+  "allowed_host_suffixes": [],
+  "denied_host_suffixes": [
+    "localhost",
+    "local",
+    "internal",
+    "localdomain",
+    "lan",
+    "home.arpa",
+    "metadata.google.internal"
+  ],
+  "extra_blocked_networks": [
+    "100.64.0.0/10",
+    "198.18.0.0/15",
+    "64:ff9b::/96",
+    "2002::/16",
+    "2001::/32"
+  ],
+  "max_redirects": 3,
+  "max_bytes": 15728640,
+  "timeout_s": 15,
+  "chunk_bytes": 65536,
+  "allowed_content_types": [
+    "text/html",
+    "application/xhtml+xml",
+    "application/pdf",
+    "text/plain",
+    "text/markdown"
+  ],
+  "user_agent": "BABO-IntakeGateway/1.0 (research intake; non-interactive; contact: repo owner)",
+  "quarantine_dir": "~/tmp/intake_quarantine",
+  "total_deadline_s": 30,
+  "raw_subdir": "raw"
+}

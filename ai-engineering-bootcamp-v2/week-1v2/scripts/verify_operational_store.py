@@ -10,6 +10,12 @@ BASE=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(BASE))
 from dotenv import load_dotenv
 load_dotenv(BASE/'.env')
+import os
+def debug_headers():
+    key=os.getenv('DEBUG_API_KEY','').strip()
+    if not key:
+        raise SystemExit('DEBUG_API_KEY is not set; /debug/* now requires the X-Debug-Key header. Set it (e.g. in .env) and re-run.')
+    return {'X-Debug-Key':key}
 from sqlalchemy import text
 from db import get_engine
 from operational_store import PgCollection, put_artifact
@@ -80,10 +86,10 @@ def verify():
                 assert response.status_code==200
                 assert len(col.get(where={'document_id':doc_id})['ids'])==1,'Trailing stale chunks remain'
                 assert PgCollection('week2_rag_documents',test_engine).get(ids=[doc_id])['ids']==[doc_id]
-                found=client.get('/debug/retrieve',params={'query':'probe','document_id':doc_id})
+                found=client.get('/debug/retrieve',params={'query':'probe','document_id':doc_id},headers=debug_headers())
                 assert found.status_code==200 and len(found.json())==1
                 assert found.json()[0]['document_id']==doc_id and found.json()[0]['distance']==0
-                missing=client.get('/debug/retrieve',params={'query':'probe','document_id':'__nonexistent__'})
+                missing=client.get('/debug/retrieve',params={'query':'probe','document_id':'__nonexistent__'},headers=debug_headers())
                 assert missing.json()==[]
                 bad=client.post('/ingest',json={'document_id':doc_id,'text':'   '})
                 assert bad.status_code==400

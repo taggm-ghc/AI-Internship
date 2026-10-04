@@ -1,0 +1,118 @@
+{
+  "_comment": "Gate 4 licence detection patterns and verdict mapping (item #66). Regexes are case-insensitive. Hosting-site licence metadata is unreliable (audits: >70% omitted, >50% wrong), so claims on host_domains are low-confidence holds.",
+  "confidence": {"structured": 0.95, "url": 0.8, "cued": 0.65, "declared": 0.6, "host": 0.3},
+  "verdicts": {"none": "hold", "conflict": "hold", "host": "hold"},
+  "nd_policy": "reject",
+  "nc_only_policy": "ok",
+  "_nc_note": "User decision 2026-10-03: plain NC and NC-SA accepted; only ND, no-educational-use and strictly-for-fee are rejected. Set nc_only_policy to hold or reject to flip.",
+  "hidden": {
+    "attrs": ["hidden"],
+    "attr_values": [{"attr": "aria-hidden", "values": ["true"]}],
+    "tags": ["noscript", "template"],
+    "style_regexes": ["display\\s*:\\s*none", "visibility\\s*:\\s*(?:hidden|collapse)", "opacity\\s*:\\s*0(?:\\.0+)?\\s*(?:;|$)", "font-size\\s*:\\s*0(?:px|pt|em|rem|%)?\\s*(?:;|$)"],
+    "void_tags": ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"]
+  },
+  "restriction_strip_regex": "[\\u200b-\\u200f\\u2060\\ufeff\\u00ad]",
+  "restrictions": [
+    {
+      "id": "no-educational-use",
+      "name": "Educational use forbidden",
+      "reject_regexes": [
+        "(?<![A-Za-z])(?:no|not\\s+for|not\\s+permitted\\s+for|not\\s+allowed\\s+for|prohibited\\s+for|forbidden\\s+for|not\\s+licen[sc]ed\\s+for|excludes?)\\s+(?:any\\s+)?(?:educational|teaching|classroom|academic\\s+teaching)\\s+(?:use|purposes?)(?!\\s+(?:restrictions?|limitations?))",
+        "(?:educational|teaching|classroom)\\s+(?:use|purposes?)\\s+(?:is\\s+|are\\s+)?(?:strictly\\s+)?(?:prohibited|forbidden|not\\s+(?:permitted|allowed))"
+      ],
+      "hold_regexes": [
+        "(?:educational|teaching|classroom)\\s+(?:use|purposes?)[^.\\n]{0,60}(?:unless|except|subject\\s+to|requires?|permission|prior\\s+(?:written\\s+)?consent)"
+      ],
+      "permit_regexes": [
+        "(?<!no\\s)(?<!not\\s)(?<!never\\s)(?:educational|teaching|classroom)\\s+(?:use|purposes?)\\s+(?:is\\s+|are\\s+)?(?:permitted|allowed|welcome|free|granted)",
+        "(?<!no\\s)(?<!not\\s)(?<!never\\s)(?:free|permitted|allowed|granted|available)\\s+(?:for|to)\\s+(?:educational|teaching|classroom)",
+        "(?:educational|teaching|classroom)\\s+(?:use|purposes?)\\s+(?:is\\s+|are\\s+)?not\\s+(?:prohibited|forbidden|restricted)"
+      ],
+      "reason": "licence text forbids educational use"
+    },
+    {
+      "id": "strictly-for-fee",
+      "name": "Strictly paid / for-fee use only",
+      "reject_regexes": [
+        "(?:strictly|solely|exclusively|only)\\s+(?:available\\s+)?(?:for|to|against)\\s+(?:a\\s+|the\\s+)?(?:fee|payment|paying\\s+(?:customers?|users?|subscribers?)|paid\\s+(?:users?|subscribers?|customers?))",
+        "(?:available|licen[sc]ed|provided)\\s+(?:strictly|solely|exclusively|only)\\s+(?:for|to)\\s+(?:a\\s+)?(?:fee|payment|paying|paid)",
+        "paid[\\s\\-]+(?:access|subscribers?|licen[sc]es?|use)\\s+only",
+        "(?<![A-Za-z])paid[\\s\\-]only(?![A-Za-z])"
+      ],
+      "hold_regexes": [
+        "(?<!no\\s)(?<!not\\s)(?<!never\\s)(?:subscription|purchase|payment|fee)\\s+(?:is\\s+)?required",
+        "licen[sc]ing\\s+fees?\\s+(?:apply|applies|may\\s+apply)",
+        "commercial\\s+licen[sc]e\\s+(?:available|required)"
+      ],
+      "permit_regexes": [
+        "free\\s+of\\s+charge",
+        "(?<![A-Za-z])no\\s+(?:fee|charge|payment)",
+        "without\\s+(?:a\\s+)?(?:fee|charge|payment)",
+        "free\\s+(?:to\\s+(?:use|read|access)|for\\s+(?:educational|personal|research))",
+        "open[\\s\\-]access"
+      ],
+      "reason": "licence text restricts use to paid/for-fee access"
+    }
+  ],
+  "cue_window": 80,
+  "cue_tail": "(?:creative\\s+commons\\s+)?",
+  "cues": [
+    "licen[sc]ed?\\s+(?:under|via|with|as)(?:\\s+(?:the|a|an))?(?:\\s+terms\\s+of(?:\\s+the)?)?",
+    "(?:released|distributed|available|published|made\\s+available|open[\\s\\-]access(?:\\s+article)?)\\s+(?:under|via)(?:\\s+(?:the|a|an))?(?:\\s+terms\\s+of(?:\\s+the)?)?",
+    "under\\s+the\\s+terms\\s+of(?:\\s+the)?",
+    "licen[sc]e\\s*[:=\\-\\u2013\\u2014]?",
+    "SPDX-License-Identifier\\s*:"
+  ],
+  "meta_names": ["license", "licence", "dc.rights", "dc.rights.license", "dcterms.license", "dcterms.rights", "citation_license", "og:license"],
+  "link_rels": ["license"],
+  "link_itemprops": ["license"],
+  "jsonld_license_regex": "\"license\"\\s*:\\s*\"([^\"]+)\"",
+  "spdx_tag_regex": "SPDX-License-Identifier\\s*:\\s*([^\\n<\"]{1,120})",
+  "host_domains": ["huggingface.co", "kaggle.com", "paperswithcode.com", "researchgate.net", "semanticscholar.org", "core.ac.uk", "scholar.archive.org", "academia.edu", "openreview.net", "zenodo.org", "figshare.com", "dataverse.harvard.edu"],
+  "registry_url_patterns": [],
+  "cc_versions": ["1.0", "2.0", "2.5", "3.0", "4.0"],
+  "cc_url_regex": "creativecommons\\.org/(?P<kind>licenses|publicdomain)/(?P<code>[a-z0-9\\-]+)(?:/(?P<version>\\d\\.\\d))?",
+  "cc_url_template": "https://creativecommons.org/{kind}/{code}/{version}",
+  "cc_version_after_regex": "^[\\s,\\-_]*(?:v(?:ersion|er)?\\.?\\s*)?(\\d\\.\\d)(?!\\d)",
+  "cc_codes": {
+    "by": {"id": "CC-BY", "kind": "licenses", "name": "Creative Commons Attribution", "nc": false, "nd": false, "verdict": "ok"},
+    "by-sa": {"id": "CC-BY-SA", "kind": "licenses", "name": "Creative Commons Attribution-ShareAlike", "nc": false, "nd": false, "verdict": "ok"},
+    "by-nc": {"id": "CC-BY-NC", "kind": "licenses", "name": "Creative Commons Attribution-NonCommercial", "nc": true, "nd": false, "verdict": "ok"},
+    "by-nc-sa": {"id": "CC-BY-NC-SA", "kind": "licenses", "name": "Creative Commons Attribution-NonCommercial-ShareAlike", "nc": true, "nd": false, "verdict": "ok"},
+    "by-nd": {"id": "CC-BY-ND", "kind": "licenses", "name": "Creative Commons Attribution-NoDerivatives", "nc": false, "nd": true, "verdict": "ok"},
+    "by-nc-nd": {"id": "CC-BY-NC-ND", "kind": "licenses", "name": "Creative Commons Attribution-NonCommercial-NoDerivatives", "nc": true, "nd": true, "verdict": "ok"},
+    "zero": {"id": "CC0", "kind": "publicdomain", "name": "CC0 Public Domain Dedication", "nc": false, "nd": false, "verdict": "ok"},
+    "mark": {"id": "LicenseRef-CC-PDM", "kind": "publicdomain", "name": "Public Domain Mark", "nc": false, "nd": false, "verdict": "ok"}
+  },
+  "cc_names": [
+    {"code": "by-nc-nd", "regexes": ["(?<![A-Za-z0-9])CC[\\s\\-_]*BY[\\s\\-_]*NC[\\s\\-_]*ND(?![A-Za-z])", "Attribution[\\s\\-\\u2010-\\u2014]*Non[\\s\\-\\u2010-\\u2014]?Commercial[\\s\\-\\u2010-\\u2014]*No[\\s\\-\\u2010-\\u2014]?Deriv(?:ative)?s?"]},
+    {"code": "by-nc-sa", "regexes": ["(?<![A-Za-z0-9])CC[\\s\\-_]*BY[\\s\\-_]*NC[\\s\\-_]*SA(?![A-Za-z])", "Attribution[\\s\\-\\u2010-\\u2014]*Non[\\s\\-\\u2010-\\u2014]?Commercial[\\s\\-\\u2010-\\u2014]*Share[\\s\\-\\u2010-\\u2014]?Alike"]},
+    {"code": "by-nc", "regexes": ["(?<![A-Za-z0-9])CC[\\s\\-_]*BY[\\s\\-_]*NC(?![A-Za-z])", "Attribution[\\s\\-\\u2010-\\u2014]*Non[\\s\\-\\u2010-\\u2014]?Commercial"]},
+    {"code": "by-nd", "regexes": ["(?<![A-Za-z0-9])CC[\\s\\-_]*BY[\\s\\-_]*ND(?![A-Za-z])", "Attribution[\\s\\-\\u2010-\\u2014]*No[\\s\\-\\u2010-\\u2014]?Deriv(?:ative)?s?"]},
+    {"code": "by-sa", "regexes": ["(?<![A-Za-z0-9])CC[\\s\\-_]*BY[\\s\\-_]*SA(?![A-Za-z])", "Attribution[\\s\\-\\u2010-\\u2014]*Share[\\s\\-\\u2010-\\u2014]?Alike"]},
+    {"code": "by", "regexes": ["(?<![A-Za-z0-9])CC[\\s\\-_]*BY(?![A-Za-z])", "Creative\\s+Commons\\s+Attribution(?![A-Za-z])"]},
+    {"code": "zero", "regexes": ["(?<![A-Za-z0-9])CC[\\s\\-_]*0(?![0-9A-Za-z])", "(?<![A-Za-z0-9])CC[\\s\\-_]*Zero(?![A-Za-z])", "Creative\\s+Commons\\s+Zero"]}
+  ],
+  "alias_prefix": "(?<![A-Za-z0-9])",
+  "alias_suffix": "(?![A-Za-z0-9_]|-[A-Za-z0-9])",
+  "spdx_url_template": "https://spdx.org/licenses/{spdx}.html",
+  "spdx": {
+    "MIT": {"name": "MIT License", "aliases": ["MIT licen[sc]e", "MIT"], "verdict": "ok"},
+    "Apache-2.0": {"name": "Apache License 2.0", "aliases": ["Apache-2\\.0", "Apache\\s+Licen[sc]e,?\\s+(?:Version\\s+|v)?2\\.0", "Apache\\s+2\\.0"], "verdict": "ok"},
+    "BSD-2-Clause": {"name": "BSD 2-Clause License", "aliases": ["BSD-2-Clause", "2-clause\\s+BSD", "BSD\\s+2-Clause"], "verdict": "ok"},
+    "BSD-3-Clause": {"name": "BSD 3-Clause License", "aliases": ["BSD-3-Clause", "3-clause\\s+BSD", "BSD\\s+3-Clause", "new\\s+BSD"], "verdict": "ok"},
+    "ISC": {"name": "ISC License", "aliases": ["ISC licen[sc]e", "ISC"], "verdict": "ok"},
+    "MPL-2.0": {"name": "Mozilla Public License 2.0", "aliases": ["MPL-2\\.0", "Mozilla\\s+Public\\s+Licen[sc]e(?:,?\\s+(?:Version\\s+|v)?2\\.0)?"], "verdict": "hold", "reason": "weak copyleft"},
+    "Unlicense": {"name": "The Unlicense", "aliases": ["Unlicense"], "verdict": "ok"},
+    "GPL-2.0": {"name": "GNU General Public License v2", "aliases": ["GPL-2\\.0(?:-only|-or-later|\\+)?", "GPL\\s*v?2"], "verdict": "hold", "reason": "copyleft"},
+    "GPL-3.0": {"name": "GNU General Public License v3", "aliases": ["GPL-3\\.0(?:-only|-or-later|\\+)?", "GPL\\s*v?3", "GNU\\s+General\\s+Public\\s+Licen[sc]e(?:,?\\s+(?:Version\\s+|v)3)?"], "verdict": "hold", "reason": "copyleft"},
+    "LGPL-3.0": {"name": "GNU Lesser General Public License v3", "aliases": ["LGPL-3\\.0(?:-only|-or-later|\\+)?", "LGPL\\s*v?3", "GNU\\s+Lesser\\s+General\\s+Public\\s+Licen[sc]e"], "verdict": "hold", "reason": "copyleft"},
+    "AGPL-3.0": {"name": "GNU Affero General Public License v3", "aliases": ["AGPL-3\\.0(?:-only|-or-later|\\+)?", "AGPL\\s*v?3", "GNU\\s+Affero\\s+General\\s+Public\\s+Licen[sc]e"], "verdict": "hold", "reason": "network copyleft"}
+  },
+  "other": [
+    {"id": "arxiv-nonexclusive", "regex": "arxiv\\.org/licenses/nonexclusive-distrib/(?P<version>\\d\\.\\d)", "spdx": "LicenseRef-arXiv-nonexclusive-distrib", "name": "arXiv.org perpetual, non-exclusive licence to distribute", "nc": false, "nd": false, "verdict": "hold", "needs_cue": false, "tier": "url", "source": "registry-pattern", "reason": "arXiv non-exclusive distribution licence is not an open licence; authors retain copyright"},
+    {"id": "all-rights-reserved", "regex": "all\\s+rights\\s+reserved", "spdx": null, "name": "All rights reserved", "nc": false, "nd": false, "verdict": "hold", "needs_cue": false, "tier": "cued", "source": "page", "reason": "all-rights-reserved notice"},
+    {"id": "noncommercial-only", "regex": "(?:for\\s+)?(?:non[\\s\\-]?commercial|academic|research)\\s+(?:use|purposes?)\\s+only", "spdx": null, "name": "Custom non-commercial / research-only terms", "nc": true, "nd": false, "verdict": "hold", "needs_cue": false, "tier": "cued", "source": "page", "reason": "custom use restriction"}
+  ]
+}

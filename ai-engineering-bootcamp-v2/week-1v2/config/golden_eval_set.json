@@ -3,12 +3,6 @@
   "rebuilt_for_corpus": "250-document-full-rebuild-2026-09-19",
   "entries": [
     {
-      "question": "Does weight-free knowledge editing actually erase the original fact from a model, or does a trace of it remain?",
-      "expected_status": "supported",
-      "expected_document_id": "arxiv-2609.18985-suppressed-not-erased-knowledge-editing",
-      "note": "Replaces the NIST AI RMF question 2026-09-19 -- nist-ai-rmf-1.0 was excluded by the 700KB-cap corpus expansion (moved to ingestion_quarantine/dropped/). Live-verified via /debug/retrieve (top-1 distance 0.5665, correct document dominates top-3) and /ask (status=supported, correct citations) before being written in, same methodology as every prior golden-set replacement."
-    },
-    {
       "question": "When is graph structure worth its cost in retrieval-augmented generation?",
       "expected_status": "insufficient",
       "expected_document_id": null,
@@ -61,6 +55,15 @@
       "expected_status": "supported",
       "expected_document_id": "arxiv-2607.01852-evaluating-chunking-strategies-rag-academic-texts",
       "note": "Added 2026-09-18 alongside the corpus swap that replaced arxiv-2609.18366 with this document (see ingestion_quarantine/README.md's status note) -- a question sourced from and verified against the new document specifically, not a generic filler case. Verified live 3/3 (model=gpt-4.1-nano): retrieval top-5 all from this document (top distance 0.549), /ask status=supported every run, citations always include this document_id, and the generated answer correctly states the paper's actual finding ('cluster-based chunking did not outperform simpler strategies') rather than a plausible-sounding but unverified paraphrase. Document survived the 700KB-cap expansion (2026-09-19), still valid."
+    }
+  ],
+  "purged_entries": [
+    {
+      "question": "Does weight-free knowledge editing actually erase the original fact from a model, or does a trace of it remain?",
+      "expected_status": "supported",
+      "expected_document_id": "arxiv-2609.18985-suppressed-not-erased-knowledge-editing",
+      "note": "Replaces the NIST AI RMF question 2026-09-19 -- nist-ai-rmf-1.0 was excluded by the 700KB-cap corpus expansion (moved to ingestion_quarantine/dropped/). Live-verified via /debug/retrieve (top-1 distance 0.5665, correct document dominates top-3) and /ask (status=supported, correct citations) before being written in, same methodology as every prior golden-set replacement.",
+      "purged_note": "Removed 2026-10-01: source licensed CC BY-NC-ND 4.0, purged from the corpus (p3m3 item #63). Kept here for the audit trail; not scored."
     }
   ]
 }

@@ -16,7 +16,7 @@ Fictional internal policy pack for TAI / AI Engineering Week 2 (RAG).
 ## Download
 
 - Individual files in this folder
-- Zip of the whole pack: [`northwind-sample-docs.zip`](./northwind-sample-docs.zip)
+- A zip of the whole pack is not in this folder (the previously linked `northwind-sample-docs.zip` does not exist); build one from the six `.txt` files if needed
 
 ## Suggested golden-set questions
 
@@ -25,3 +25,5 @@ Fictional internal policy pack for TAI / AI Engineering Week 2 (RAG).
 3. How quickly must a lost laptop be reported? → POL-207  
 4. What is the WB-9 payload limit? → SPEC-WB9  
 5. What is the parental leave policy? → **refuse** (not in corpus)
+
+2026-10-01: course material for this program; it must remain in the repo (the raw-external-sources-out-of-repo rule does not apply to it).

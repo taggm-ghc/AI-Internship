@@ -36,6 +36,13 @@ def default_api_base_url() -> str:
         return "http://127.0.0.1:8000"
 
 
+def debug_headers(key: str | None) -> dict | None:
+    """{"X-Debug-Key": key} only when key is non-empty, else None (so no
+    header is sent at all). Pure helper, no Streamlit imports."""
+    key = (key or "").strip()
+    return {"X-Debug-Key": key} if key else None
+
+
 def build_payload(
     question: str, model: str | None, force_bad: bool, provider: str | None = None, rag_mode: str = "auto"
 ) -> dict:
@@ -194,7 +201,7 @@ def call_json(method: str, url: str, payload: dict | None = None, headers: dict 
                 # short timeout here misreported that wakeup delay as a
                 # generic HTTPError instead of ever reaching the clearer
                 # cold-start message below.
-                response = httpx.get(url, timeout=65.0)
+                response = httpx.get(url, headers=headers, timeout=65.0)
         except httpx.ConnectError:
             return 0, {"error": unreachable_message(url)}
         except httpx.TimeoutException:

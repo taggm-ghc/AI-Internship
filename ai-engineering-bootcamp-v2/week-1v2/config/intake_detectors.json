@@ -1,0 +1,97 @@
+{
+  "extract": {
+    "html_types": ["text/html", "application/xhtml+xml"],
+    "pdf_types": ["application/pdf"],
+    "text_types": ["text/plain", "text/markdown", "text/x-markdown"],
+    "max_input_bytes": 5000000,
+    "max_chars": 200000,
+    "max_raw_chars": 800000,
+    "invisible_categories": ["Cf", "Co"],
+    "invisible_ranges": [[65024, 65039], [917760, 917999]],
+    "pdf": {"timeout_s": 30, "rlimit_as_mb": 1024, "rlimit_cpu_s": 20},
+    "drop_tags": ["script", "style"],
+    "hidden_tags": ["noscript", "template"],
+    "void_tags": ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"],
+    "auto_close_tags": ["p", "li", "td", "th", "tr", "option", "dt", "dd"],
+    "block_tags": ["p", "div", "section", "article", "header", "footer", "nav", "aside", "main", "li", "ul", "ol", "table", "tr", "h1", "h2", "h3", "h4", "h5", "h6", "pre", "blockquote", "br", "hr", "form", "figure", "figcaption", "dt", "dd"],
+    "hidden_attrs": ["hidden"],
+    "hidden_attr_values": [{"attr": "aria-hidden", "values": ["true"]}, {"attr": "type", "values": ["hidden"], "tags": ["input"]}],
+    "text_attrs": ["alt", "title", "aria-label", "placeholder"],
+    "text_attr_prefixes": ["data-"],
+    "meta_tags": ["meta"],
+    "style_rules": [
+      {"prop": "display", "values": ["none"]},
+      {"prop": "visibility", "values": ["hidden", "collapse"]},
+      {"prop": "opacity", "eq": 0},
+      {"prop": "font-size", "eq": 0},
+      {"prop": "text-indent", "lt": -999},
+      {"prop": "left", "lt": -999},
+      {"prop": "top", "lt": -999},
+      {"prop": "right", "lt": -999},
+      {"prop": "margin-left", "lt": -999}
+    ]
+  },
+  "detectors": {
+    "injection_phrases": [
+      "ignore previous instructions", "ignore all previous instructions", "ignore the above",
+      "disregard previous instructions", "disregard the above", "forget your instructions",
+      "you are now", "new instructions:", "system prompt:", "reveal your instructions",
+      "print your system prompt", "pretend you are", "override your instructions",
+      "do not tell the user", "act as an unrestricted"
+    ],
+    "action_phrases": ["as much content from", "all docs in the", "all documents in the corpus", "find and provide", "give me all", "dump the"],
+    "delimiter_patterns": [
+      "</?\\s*retrieved_context\\b",
+      "<\\|[a-z_]{2,30}\\|>",
+      "\\[/?inst\\]",
+      "<</?sys>>",
+      "</?\\s*(system|assistant|developer)\\s*>",
+      "(begin|end)[ _-]untrusted"
+    ],
+    "role_line_patterns": [
+      "^\\s*(system|assistant|developer)\\s*:",
+      "^\\s*#{2,}\\s*(instructions?|system prompt)\\b"
+    ],
+    "hidden_delta": {"min_raw_chars": 200, "fraction": 0.5},
+    "blob": {"base64_min_run": 200, "hex_min_run": 128, "min_total_chars": 200},
+    "url_patterns": ["\\bjavascript:\\S", "\\bvbscript:\\S", "\\bdata:[a-z]+/[a-z0-9.+-]+\\s*[;,]"],
+    "link_density": {"min_chars": 200, "fraction": 0.4},
+    "mixed_script": {"scripts": ["LATIN", "CYRILLIC", "GREEK"], "min_words": 2},
+    "repeated_instructions": {
+      "phrases": ["you must", "you should", "you will", "always ", "never ", "do not ", "make sure", "from now on"],
+      "min_count": 10,
+      "per_1000_words": 25
+    },
+    "md_exfil": {"image_pattern": "!\\[[^\\]]*\\]\\((https?://[^)\\s]*\\?[^)\\s]*)\\)", "link_query_pattern": "\\]\\((https?://[^)\\s?]*\\?[^)\\s]{100,})\\)"},
+    "invisible_categories": ["Cf", "Co"],
+    "invisible_ranges": [[65024, 65039], [917760, 917999]],
+    "variation_smuggling": {"ranges": [[65024, 65039], [917760, 917999]], "min_count": 8},
+    "tag_char_range": [917504, 917631]
+  },
+  "decide": {
+    "verdict_order": ["reject", "hold", "label", "allow"],
+    "flag_verdicts": {
+      "delimiter_forgery": "reject",
+      "hidden_payload": "reject",
+      "unicode_tag_smuggling": "reject",
+      "encoded_blob": "hold",
+      "data_javascript_url": "hold",
+      "md_image_exfil": "hold",
+      "hidden_delta_high": "hold",
+      "injection_phrases": "label",
+      "role_marker": "label",
+      "invisible_unicode": "label",
+      "variation_selector_smuggling": "hold",
+      "high_link_density": "label",
+      "homoglyph_mixed_script": "label",
+      "repeated_instructions": "label",
+      "long_query_link": "label"
+    },
+    "score_rules": [
+      {"score": "injection_phrase_count", "gte": 8, "verdict": "hold"}
+    ],
+    "licence_status_verdicts": {"ok": "allow", "unlicensed": "hold", "unknown": "hold", "reject": "reject"},
+    "licence_unmapped_verdict": "hold",
+    "empty_report_verdict": "hold"
+  }
+}

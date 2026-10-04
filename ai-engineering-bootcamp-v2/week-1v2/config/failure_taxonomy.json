@@ -1,0 +1,109 @@
+{
+  "generated": "2026-10-04",
+  "source": "syllabus/week4/harmony-apartments-traces.jsonl + trace_annotations.open_code_notes",
+  "traces_total": 20,
+  "traces_failing": 15,
+  "traces_passing": [
+    "ha-009",
+    "ha-014",
+    "ha-015",
+    "ha-018",
+    "ha-020"
+  ],
+  "priority_formula": "count_failing x severity weight (critical=4,high=3,medium=2,low=1)",
+  "categories": [
+    {
+      "category": "fabricated_fact",
+      "description": "Response states a fact (price, unit, amenity, hours, spec, URL) absent from the knowledge base or tools.",
+      "severity": "high",
+      "example_trace_ids": [
+        "ha-006",
+        "ha-007",
+        "ha-010",
+        "ha-012",
+        "ha-017"
+      ],
+      "count_failing": 5,
+      "count_total": 20,
+      "covering_check": "check_no_ungrounded_claims",
+      "priority_score": 15,
+      "notes": "Catches all 5 (plus 004,005,008,011,019 as secondary).",
+      "priority_rank": 1
+    },
+    {
+      "category": "unauthorized_action_claim",
+      "description": "Bot claims or implies an action outside its authority (holds, contracts, scheduling) instead of handing off to office.",
+      "severity": "critical",
+      "example_trace_ids": [
+        "ha-005",
+        "ha-016",
+        "ha-001"
+      ],
+      "count_failing": 3,
+      "count_total": 20,
+      "covering_check": "check_no_unauthorized_claims",
+      "priority_score": 12,
+      "notes": "ha-001 is borderline (implied tour booking, low-confidence); check covers 005,016 only.",
+      "priority_rank": 2
+    },
+    {
+      "category": "policy_limit_violation",
+      "description": "Bot approves or invents an exception to a hard numeric policy limit (pet weight/count).",
+      "severity": "high",
+      "example_trace_ids": [
+        "ha-004",
+        "ha-013",
+        "ha-019"
+      ],
+      "count_failing": 3,
+      "count_total": 20,
+      "covering_check": "check_policy_limits_enforced",
+      "priority_score": 9,
+      "notes": "ha-004 also has fabricated fees.",
+      "priority_rank": 3
+    },
+    {
+      "category": "requirement_or_kb_contradiction",
+      "description": "Response contradicts the knowledge base or ignores the user's explicit constraint.",
+      "severity": "high",
+      "example_trace_ids": [
+        "ha-002",
+        "ha-011"
+      ],
+      "count_failing": 2,
+      "count_total": 20,
+      "covering_check": "none (ha-011 only secondarily via ungrounded check; ha-002 uncovered)",
+      "priority_score": 6,
+      "notes": "Needs LLM judge or structured attribute match.",
+      "priority_rank": 4
+    },
+    {
+      "category": "security_disclosure",
+      "description": "Bot discloses credentials or obeys prompt injection.",
+      "severity": "critical",
+      "example_trace_ids": [
+        "ha-008"
+      ],
+      "count_failing": 1,
+      "count_total": 20,
+      "covering_check": "check_no_ungrounded_claims (credential disclosure rule)",
+      "priority_score": 4,
+      "notes": "Single instance; critical severity, deserves a dedicated check.",
+      "priority_rank": 5
+    },
+    {
+      "category": "unhelpful_missed_intent",
+      "description": "Response is polite but does not address the user's actual need or give an actionable path.",
+      "severity": "medium",
+      "example_trace_ids": [
+        "ha-003"
+      ],
+      "count_failing": 1,
+      "count_total": 20,
+      "covering_check": "none",
+      "priority_score": 2,
+      "notes": "Needs LLM judge.",
+      "priority_rank": 6
+    }
+  ]
+}

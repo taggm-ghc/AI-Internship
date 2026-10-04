@@ -15,6 +15,7 @@ from api_client import (
     call_stream,
     render_curl,
 )
+from debug_key_widget import debug_key_headers, debug_key_sidebar_widget
 from ui_theme import apply_custom_css
 from ui_widgets import base_url_sidebar_widget, references_widget
 from pricing_config import load_model_selection
@@ -276,17 +277,28 @@ base_url = base_url_sidebar_widget()
 # roughly what's actually in there before they ask. Cached in session
 # state so it's fetched once per session, not on every rerun (this
 # doesn't change while the app is running, unlike base_url/rag_mode).
-if "corpus_summary" not in st.session_state:
-    _cs_status, _cs_data = call_json("GET", f"{base_url.rstrip('/')}/debug/corpus-summary")
+# p3m3 item #62: /debug/corpus-summary now needs the debug key, so this is
+# fetched only once a key is entered, and re-fetched if the key changes.
+_debug_key = debug_key_sidebar_widget()
+if not _debug_key:
+    st.session_state.pop("corpus_summary", None)
+    st.session_state.pop("corpus_summary_key", None)
+elif st.session_state.get("corpus_summary_key") != _debug_key:
+    _cs_status, _cs_data = call_json(
+        "GET", f"{base_url.rstrip('/')}/debug/corpus-summary", headers=debug_key_headers()
+    )
     st.session_state["corpus_summary"] = _cs_data if _cs_status == 200 else None
-_corpus_summary = st.session_state["corpus_summary"]
+    st.session_state["corpus_summary_key"] = _debug_key
+_corpus_summary = st.session_state.get("corpus_summary")
 with st.sidebar.expander("📚 What's in the corpus?", expanded=False):
     if isinstance(_corpus_summary, dict) and "document_count" in _corpus_summary:
         st.caption(f"{_corpus_summary['document_count']} documents. A random sample of titles:")
         for _title in _corpus_summary.get("sample_titles", []):
             st.caption(f"• {_title}")
+    elif not _debug_key:
+        st.caption("restricted: enter the debug key")
     else:
-        st.caption("Couldn't load a corpus summary — check the API base URL above.")
+        st.caption("invalid key, or the corpus summary couldn't be loaded.")
 
 # p3m3 permanent item #25 — explicit st.sidebar.page_link() calls to the
 # other pages used to live here (added in #17/#22), but Streamlit's own
@@ -362,7 +374,7 @@ if st.sidebar.button("Refresh provider status"):
                 )
             st.sidebar.caption(line)
 
-# Week 2: ingest a document into the same chroma_store/ collection /ask's
+# Week 2: ingest a document into the same Postgres collection (internship.vectors) /ask's
 # retrieval step reads from. Collapsed by default — most demo visits are
 # asking questions against the pre-loaded 50-doc baseline corpus (see
 # rag_ingest.py), not adding new documents — but this is what proves

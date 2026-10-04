@@ -149,7 +149,25 @@ def _parenthetical(cites: list[dict], suffix: dict) -> str:
     return "; ".join(f"{a} {', '.join(ys)}" if a.endswith(",\u201d") else f"{a}, {', '.join(ys)}" for a, ys in groups)
 
 
+def _rights_note(item: dict) -> str:
+    """Short trailing note after the APA reference: licence (linked when a URL
+    is recorded) and an excerpt marker. Omitted entirely when the record has
+    neither (e.g. news pages). Not part of APA itself (p3m3 item #62, G7)."""
+    bits = []
+    lic = (item.get("license") or "").strip()
+    if lic:
+        url = (item.get("license_url") or "").strip()
+        bits.append(f"License: [{lic}]({url})" if url else f"License: {lic}")
+    if item.get("excerpt"):
+        bits.append("excerpt")
+    return f" ({'; '.join(bits)})" if bits else ""
+
+
 def reference_entry(item: dict, suffix: str = "") -> str:
+    return _apa_entry(item, suffix) + _rights_note(item)
+
+
+def _apa_entry(item: dict, suffix: str = "") -> str:
     authors = [_ref_name(a) for a in (item.get("author") or [])]
     if len(authors) > 20:
         authors = authors[:19] + ["…"] + authors[-1:]

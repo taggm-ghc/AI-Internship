@@ -14,5 +14,6 @@ pypdf==6.19.0
 python-dotenv==1.2.3
 rank-bm25==0.2.2
 slowapi==0.1.10
+limits==5.8.0
 sqlalchemy==2.0.36
 streamlit==1.63.0

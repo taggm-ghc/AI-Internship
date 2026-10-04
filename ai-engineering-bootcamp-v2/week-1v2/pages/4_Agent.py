@@ -10,6 +10,7 @@ own trace verbatim, not a manufactured summary of it.
 import streamlit as st
 
 from api_client import call_json
+from debug_key_widget import debug_key_headers, debug_key_sidebar_widget
 from ui_theme import apply_custom_css
 from ui_widgets import base_url_sidebar_widget, references_widget
 
@@ -24,6 +25,7 @@ st.caption(
 )
 
 base_url = base_url_sidebar_widget()
+debug_key = debug_key_sidebar_widget()
 
 question = st.text_input(
     "Ask the agent something",
@@ -33,7 +35,7 @@ run_clicked = st.button("Run", type="primary", disabled=not question.strip())
 
 if run_clicked:
     with st.spinner("Running the agent loop..."):
-        status, data = call_json("POST", f"{base_url.rstrip('/')}/agent", {"question": question})
+        status, data = call_json("POST", f"{base_url.rstrip('/')}/agent", {"question": question}, headers=debug_key_headers())
 
     if status != 200 or not isinstance(data, dict):
         st.error("Request failed" if status == 0 else f"HTTP {status}")
@@ -61,26 +63,30 @@ if run_clicked:
         st.info("Grounding: answered from the model's general knowledge. The corpus was not searched.")
     references_widget(data.get("references", []))
 
-    trace = data.get("trace", [])
-    tool_calls_made = sum(1 for step in trace if step.get("role") == "assistant_tool_call")
-    st.caption(
-        f"Agent-vs-workflow: this run made {tool_calls_made} tool call(s) — "
-        + ("it chose to search the corpus." if tool_calls_made else "it answered directly, without searching the corpus.")
-    )
+    trace = data.get("trace") or []
+    if not trace:
+        # Without a valid debug key the API returns trace: [] (p3m3 #62).
+        st.info("Trace restricted")
+    else:
+        tool_calls_made = sum(1 for step in trace if step.get("role") == "assistant_tool_call")
+        st.caption(
+            f"Agent-vs-workflow: this run made {tool_calls_made} tool call(s) — "
+            + ("it chose to search the corpus." if tool_calls_made else "it answered directly, without searching the corpus.")
+        )
 
-    with st.expander("Think -> Act -> Observe trace", expanded=True):
-        for step in trace:
-            role = step.get("role")
-            if role == "user":
-                st.markdown(f"**User:** {step.get('content')}")
-            elif role == "assistant_tool_call":
-                for call in step.get("tool_calls") or []:
-                    st.markdown(f"**Think -> Act:** calls `{call['name']}({call['args']})`")
-            elif role == "tool_result":
-                st.markdown("**Observe:**")
-                st.text((step.get("content") or "")[:2000])
-            elif role == "assistant":
-                st.markdown(f"**Decide again (final answer):** {step.get('content')}")
+        with st.expander("Think -> Act -> Observe trace", expanded=True):
+            for step in trace:
+                role = step.get("role")
+                if role == "user":
+                    st.markdown(f"**User:** {step.get('content')}")
+                elif role == "assistant_tool_call":
+                    for call in step.get("tool_calls") or []:
+                        st.markdown(f"**Think -> Act:** calls `{call['name']}({call['args']})`")
+                elif role == "tool_result":
+                    st.markdown("**Observe:**")
+                    st.text((step.get("content") or "")[:2000])
+                elif role == "assistant":
+                    st.markdown(f"**Decide again (final answer):** {step.get('content')}")
 
     with st.expander("Raw response"):
         st.json(data)

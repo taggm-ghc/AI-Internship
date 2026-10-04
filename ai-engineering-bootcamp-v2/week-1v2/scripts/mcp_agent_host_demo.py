@@ -34,7 +34,7 @@ except ImportError as e:
     sys.exit(1)
 
 try:
-    from langchain_mcp import AsyncMultiServerMCPClient
+    from langchain_mcp_adapters.client import MultiServerMCPClient
 except ImportError:
     print("Error: langchain-mcp-adapters not installed.")
     print("Install with: pip install langchain-mcp-adapters==0.3.2")
@@ -54,7 +54,7 @@ AGENT_SYSTEM_PROMPT = SystemMessage(content=(
 
 async def get_mcp_tools():
     """Initialize the MCP client and discover tools from the corpus server."""
-    client = AsyncMultiServerMCPClient(
+    client = MultiServerMCPClient(
         servers={
             "corpus": {
                 "command": str(BASE / ".venv" / "bin" / "python"),

@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+# RETRACTED 2026-10-04 - THIS WAS A SIMULATION, NOT A MEASUREMENT.
+# It copied baseline rows and flipped a hardcoded list of trace ids (AFTER_FIX_PASS) to PASS,
+# labelled run_label="after_fix". No fix was applied and nothing was measured. Kept only as a
+# record. The measured replacement is grounding_gate.py + scripts/check_functions.py --apply-fix
+# (run_label "after_fix_measured"). Running this file is disabled.
+raise SystemExit("retired simulation (retracted 2026-10-04); use scripts/check_functions.py --apply-fix")
 """
 Generate after_fix scenario for Phase 4.3: simulates post-generation grounding gate.
 

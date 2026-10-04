@@ -38,7 +38,7 @@ def embed_chunks(client: OpenAI, chunks: list[str]) -> list[list[float]]:
 def ingest_all() -> dict:
     """Explicit re-embedding from canonical PostgreSQL document text.
 
-    Initial local-file/Chroma migration uses scripts/migrate_operational_store.py
+    The one-time migration from the legacy local store used scripts/migrate_operational_store.py
     and does not call an embedding API. This operation intentionally does.
     """
     from sqlalchemy import text

@@ -55,3 +55,6 @@ langchain-mcp-adapters==0.3.2
 # or the models it serves, belongs in this repo's requirements files (see
 # providers.py's live-discovery design for why model names in particular
 # are deliberately kept out of code, config, and git history here).
+
+# Test runner (tests are dev-only; the deployed image does not need it)
+pytest==9.1.1
