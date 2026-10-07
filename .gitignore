@@ -1,6 +1,10 @@
 # Secrets — never commit API keys or local credentials
-.env
-.env.local
+# Environment files: never commit real ones; only blank templates (*.example, *.template, *.sample, *.dist).
+.env*
+!.env*.example
+!.env*.template
+!.env*.sample
+!.env*.dist
 *.pem
 *-prv
 *-prv/
@@ -56,3 +60,9 @@ _FOSSIL_
 
 # local Claude permission backups (contain local paths/allow rules)
 .claude/*.bak*
+
+# R1 rule 2026-10-05: personal posts (LinkedIn, Maven course posts, build-in-public), drafts or final, are never committed.
+*linkedin-post*
+*linkedin*post*.md
+*build-in-public-post*.md
+*maven-post*.md
