@@ -26,3 +26,7 @@ ENV/
 .DS_Store
 Thumbs.db
 
+
+# Local scratch folders: never commit (R1 2026-10-07)
+tmp/
+temp/

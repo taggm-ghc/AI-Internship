@@ -3,3 +3,7 @@ node_modules/
 .env.local
 *.tsbuildinfo
 next-env.d.ts
+
+# Local scratch folders: never commit (R1 2026-10-07)
+tmp/
+temp/

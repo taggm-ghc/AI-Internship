@@ -4,3 +4,7 @@ __pycache__/
 .venv/
 venv*/
 
+
+# Local scratch folders: never commit (R1 2026-10-07)
+tmp/
+temp/

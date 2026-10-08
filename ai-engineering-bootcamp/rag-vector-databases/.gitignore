@@ -38,3 +38,7 @@ Thumbs.db
 sample_*.txt
 *.pdf
 
+
+# Local scratch folders: never commit (R1 2026-10-07)
+tmp/
+temp/
