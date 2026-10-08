@@ -34,8 +34,9 @@ are traceable.
 | POST | `/ingest`, `/ingest/batch`, `/ingest-pdf` | Add documents to the corpus |
 | GET/POST | `/ingest/versions`, `/ingest/versions/diff`, `/ingest/versions/accept` | Review and accept staged re-ingests |
 | GET | `/stats/summary` | Public, aggregate-only operational stats (counts, rates, latency percentiles, cost totals; small cells suppressed) |
+| GET | `/corpus-summary` | Public, read-only corpus orientation (document count plus a corpus-level description; no titles, URLs, chunks, events or IPs) |
 | GET | `/debug/retrieve` | Raw retrieval (top-k chunks + distances), no LLM involved. **Requires `X-Debug-Key`** |
-| GET | `/debug/similar-documents`, `/debug/corpus-summary`, `/debug/events` | Corpus and observability introspection. **Require `X-Debug-Key`** |
+| GET | `/debug/similar-documents`, `/debug/corpus-summary`, `/debug/events` | Raw corpus and observability introspection. **Require `X-Debug-Key`** |
 | POST | `/summarize`, `/analyze-sentiment` | Session 1 structured-output siblings of `/ask` |
 
 `/ask` returns `answer` (a structured object), `tokens_used`, `model`,

@@ -41,6 +41,7 @@ PUBLIC_ROUTES = {
     "/openapi.json", "/docs", "/docs/oauth2-redirect", "/redoc",
     "/health", "/providers/status", "/summarize", "/analyze-sentiment",
     "/ask", "/ask/stream", "/agent", "/stats/summary",
+    "/corpus-summary",
     "/ingest", "/ingest/batch", "/ingest-pdf",
     "/ingest/versions", "/ingest/versions/diff",
     # Public route with its own fail-closed X-Ingest-Key check (not the debug key).
@@ -186,6 +187,39 @@ class DebugAccess(_Base):
         self.use_key(DIGEST)
         for _ in range(8):
             self.assertEqual(self.client.get("/debug/events", headers={"X-Debug-Key": TEST_KEY}).status_code, 200)
+
+
+class PublicCorpusSummary(_Base):
+    def setUp(self):
+        super().setUp()
+        _stub_debug_backends(self)
+        main._CORPUS_SUMMARY_CACHE = None
+        self.addCleanup(lambda: setattr(main, "_CORPUS_SUMMARY_CACHE", None))
+        overview = mock.patch.object(
+            main,
+            "corpus_overview",
+            return_value={"document_count": 3, "corpus_updated_at": "2026-10-07T00:00:00+00:00"},
+        )
+        summary = mock.patch.object(main, "_generate_corpus_summary", return_value="agentic test summary")
+        overview.start()
+        summary.start()
+        self.addCleanup(overview.stop)
+        self.addCleanup(summary.stop)
+
+    def test_summary_is_public_but_bounded(self):
+        response = self.client.get("/corpus-summary")
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["document_count"], 3)
+        self.assertEqual(body["summary"], "agentic test summary")
+        self.assertEqual(body["corpus_updated_at"], "2026-10-07T00:00:00+00:00")
+        self.assertEqual(body["summary_source"], "agentic_model")
+        self.assertTrue(body["summary_generated_at"])
+
+    def test_summary_does_not_return_source_details(self):
+        body = self.client.get("/corpus-summary").json()
+        self.assertNotIn("sample_titles", body)
+        self.assertNotIn("source_url", body)
 
 
 AGENT_RESULT = {

@@ -11,6 +11,9 @@ import re
 import secrets
 import tempfile
 import time
+import json
+import threading
+from datetime import datetime, timezone
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -81,8 +84,11 @@ from operational_audit import OperationalAuditMiddleware
 from operational_store import (
     record_event,
     put_artifact,
+    get_artifact,
     query_events,
     corpus_summary,
+    corpus_overview,
+    corpus_profile,
     document_exists,
     find_live_document_by_content_sha,
     find_source_identity,
@@ -1508,6 +1514,109 @@ class CorpusSummary(BaseModel):
 MAX_SAMPLE_SIZE = 50
 
 
+def _corpus_summary_response(sample_size: int) -> CorpusSummary:
+    if sample_size < 1 or sample_size > MAX_SAMPLE_SIZE:
+        raise HTTPException(status_code=400, detail=f"sample_size must be between 1 and {MAX_SAMPLE_SIZE}")
+    return CorpusSummary(**corpus_summary(sample_size=sample_size))
+
+
+class PublicCorpusSummary(BaseModel):
+    """Public corpus orientation (p3m3 item #80): counts and a model-written description; no titles, URLs,
+    chunks, events or IPs."""
+    document_count: int
+    corpus_updated_at: str | None = None
+    summary: str
+    topics: list[str] = []
+    summary_generated_at: str
+    summary_source: str  # "agentic_model" | "deterministic_fallback"
+    summary_model: str | None = None
+
+
+CORPUS_SUMMARY_ARTIFACT = "corpus/public-summary.json"
+CORPUS_SUMMARY_RETRY_S = 300  # after a failed generation, serve the fallback and retry no sooner than this
+_CORPUS_SUMMARY_CACHE: dict | None = None
+_CORPUS_SUMMARY_LOCK = threading.Lock()
+_CORPUS_SUMMARY_RETRY_AT = 0.0
+
+
+def _generate_corpus_summary(overview: dict):
+    """One structured model call through the provider chain (free tier first). Returns (summary, topics, model)."""
+    import corpus_description as cd
+    profile = corpus_profile()
+    parsed, _t, _pt, _ct, provider, model_name = providers.call_structured_with_fallback(
+        cd.messages_for(profile, overview["document_count"]), cd.CorpusDescription)
+    topics = [cd.sanitise(t, 60) for t in parsed.topics[: cd.MAX_TOPICS] if cd.sanitise(t, 60)]
+    return cd.sanitise(parsed.summary), topics, f"{provider}:{model_name}"
+
+
+def _corpus_stamp(overview: dict) -> tuple:
+    return (overview.get("document_count"), overview.get("corpus_updated_at"))
+
+
+def _is_fresh(record: dict | None, overview: dict) -> bool:
+    """A cached description is reused only for the same corpus count, corpus change time and prompt version
+    (a record without a prompt version predates versioning and is regenerated)."""
+    import corpus_description as cd
+    return bool(record) and _corpus_stamp(record) == _corpus_stamp(overview) \
+        and record.get("prompt_version") == cd.PROMPT_VERSION
+
+
+def _current_corpus_summary() -> dict:
+    """Cached description, regenerated only when the corpus count or MAX(updated_at) differs from the cached one.
+    Cache order: process memory, then internship.artifacts (survives restarts), then a fresh generation."""
+    global _CORPUS_SUMMARY_CACHE, _CORPUS_SUMMARY_RETRY_AT
+    overview = corpus_overview()
+    if _is_fresh(_CORPUS_SUMMARY_CACHE, overview):
+        return _CORPUS_SUMMARY_CACHE
+    with _CORPUS_SUMMARY_LOCK:
+        if _is_fresh(_CORPUS_SUMMARY_CACHE, overview):
+            return _CORPUS_SUMMARY_CACHE
+        try:
+            stored = get_artifact(CORPUS_SUMMARY_ARTIFACT)
+            stored = json.loads(stored) if stored else None
+        except Exception:  # noqa: BLE001  (a missing or unreadable artifact just means regenerate)
+            stored = None
+        if _is_fresh(stored, overview):
+            _CORPUS_SUMMARY_CACHE = stored
+            return stored
+        now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        if time.monotonic() >= _CORPUS_SUMMARY_RETRY_AT:
+            try:
+                generated = _generate_corpus_summary(overview)
+                summary, topics, model_label = (generated, [], None) if isinstance(generated, str) else generated
+                import corpus_description as cd
+                record = {**overview, "summary": summary, "topics": topics, "summary_generated_at": now,
+                          "summary_source": "agentic_model", "summary_model": model_label,
+                          "prompt_version": cd.PROMPT_VERSION}
+                _CORPUS_SUMMARY_CACHE = record
+                try:
+                    put_artifact(CORPUS_SUMMARY_ARTIFACT, json.dumps(record).encode("utf-8"))
+                except Exception as exc:  # noqa: BLE001  (memory cache still serves; logged by class)
+                    logger.warning("corpus summary artifact write failed (%s)", type(exc).__name__)
+                return record
+            except Exception as exc:  # noqa: BLE001  (fallback below; retry after the cooldown)
+                logger.warning("corpus summary generation failed (%s)", type(exc).__name__)
+                _CORPUS_SUMMARY_RETRY_AT = time.monotonic() + CORPUS_SUMMARY_RETRY_S
+        import corpus_description as cd
+        try:
+            text_ = cd.fallback_summary(corpus_profile(), overview["document_count"])
+        except Exception:  # noqa: BLE001
+            text_ = f"{overview['document_count']} documents. A written description is temporarily unavailable."
+        return {**overview, "summary": text_, "topics": [], "summary_generated_at": now,
+                "summary_source": "deterministic_fallback", "summary_model": None}
+
+
+CORPUS_SUMMARY_RATE_LIMIT = "30/minute;600/hour"  # same as /stats/summary
+
+
+@app.get("/corpus-summary")
+@limiter.limit(CORPUS_SUMMARY_RATE_LIMIT)
+def public_corpus_summary(request: Request) -> PublicCorpusSummary:
+    """Public corpus orientation (p3m3 item #80, R1 2026-10-07): document count, corpus change time and a
+    model-written description, regenerated only when the corpus changes. Titles stay behind the debug key."""
+    return PublicCorpusSummary(**_current_corpus_summary())
+
+
 @debug_router.get("/corpus-summary")
 def debug_corpus_summary(sample_size: int = 10) -> CorpusSummary:
     """Read-only corpus hint — added 2026-09-22 (p3m3 permanent item #20)
@@ -1518,9 +1627,7 @@ def debug_corpus_summary(sample_size: int = 10) -> CorpusSummary:
     this doesn't fix that path, it helps a user avoid triggering it. No
     LLM/embedding call, no OpenAI key required, not subject to
     ASK_RATE_LIMIT, same as /debug/events."""
-    if sample_size < 1 or sample_size > MAX_SAMPLE_SIZE:
-        raise HTTPException(status_code=400, detail=f"sample_size must be between 1 and {MAX_SAMPLE_SIZE}")
-    return CorpusSummary(**corpus_summary(sample_size=sample_size))
+    return _corpus_summary_response(sample_size)
 
 
 # Included after every debug route above is declared (older FastAPI copies a

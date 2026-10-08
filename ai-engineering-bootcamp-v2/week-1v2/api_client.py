@@ -193,6 +193,79 @@ def call_stream(url: str, payload: dict) -> tuple[int, str, str | None, bool | N
     return response.status_code, response.text, served_by, grounded, citations, skills_used
 
 
+def failure_reason(status: int, data) -> str:
+    """The specific reason a call_json result failed, host-free (call_json's own messages use _where)."""
+    if isinstance(data, dict) and isinstance(data.get("error"), str):
+        return data["error"]
+    if isinstance(data, dict) and isinstance(data.get("detail"), str):
+        return f"HTTP {status}: {data['detail']}"
+    return f"HTTP {status}" if status else "No response from the configured API."
+
+
+TRIAGE_TIMEOUT_S = 65.0  # same budget as call_json's GET: a Render free-tier wake can take up to a minute
+
+
+def triage_api(base_url: str, failing_path: str, http_get=None) -> list[dict]:
+    """Walk the request path in order and stop at the earliest failing step (p3m3 item #81, R1 2026-10-07).
+
+    Steps: address configured -> reachable -> awake (not timing out or edge-bounced) -> app healthy (/health)
+    -> the failing request retried once. Each step is {step, ok, detail}; details never contain the host."""
+    get = http_get or (lambda url: httpx.get(url, timeout=TRIAGE_TIMEOUT_S))
+    steps = []
+
+    def add(step, ok, detail):
+        steps.append({"step": step, "ok": ok, "detail": detail})
+        return ok
+
+    base = (base_url or "").strip().rstrip("/")
+    if not add("1. API address configured", base.lower().startswith(("http://", "https://")),
+               "set" if base.lower().startswith(("http://", "https://")) else
+               "no usable API address: set the API Base URL (local) or API_BASE_URL (deployed UI)"):
+        return steps
+    try:
+        r = get(f"{base}/health")
+    except httpx.ConnectError:
+        add("2. API reachable", False, "nothing answered at the configured address (wrong address, or the "
+            "service is stopped or suspended)")
+        return steps
+    except httpx.TimeoutException:
+        add("2. API reachable", True, "the address accepted the connection")
+        add("3. API awake", False, f"no reply within {TRIAGE_TIMEOUT_S:.0f}s; a Render free-tier service may "
+            "still be waking up - wait a minute and retry")
+        return steps
+    except httpx.HTTPError as exc:
+        add("2. API reachable", False, f"request failed ({type(exc).__name__})")
+        return steps
+    add("2. API reachable", True, "the address answered")
+    if is_cold_start_bounce(r.status_code, r.text):
+        add("3. API awake", False, "Render answered for the service with a bare 429: it is still waking up - "
+            "retry in a minute")
+        return steps
+    add("3. API awake", True, f"replied in {r.elapsed.total_seconds():.1f}s" if getattr(r, "elapsed", None) else "replied")
+    try:
+        healthy = r.status_code == 200 and r.json().get("status") == "ok"
+    except (ValueError, AttributeError):
+        healthy = False
+    if not add("4. App healthy", healthy, "/health ok" if healthy else f"/health returned HTTP {r.status_code}; "
+               "the app is running but unhealthy - its log will say why"):
+        return steps
+    try:
+        again = get(f"{base}{failing_path}")
+        ok = again.status_code < 400
+        detail = ("works now (it was most likely waking up)" if ok else
+                  f"HTTP 404 while the app is healthy: the deployed API has no {failing_path} - it is probably "
+                  "older than this UI; redeploy the API" if again.status_code == 404 else
+                  f"still fails with HTTP {again.status_code} while the app is healthy - a problem in that endpoint")
+        add(f"5. {failing_path} retried", ok, detail)
+    except httpx.HTTPError as exc:
+        add(f"5. {failing_path} retried", False, f"failed again ({type(exc).__name__})")
+    return steps
+
+
+def earliest_failure(steps: list[dict]) -> dict | None:
+    return next((s for s in steps if not s["ok"]), None)
+
+
 def call_json(method: str, url: str, payload: dict | None = None, headers: dict | None = None) -> tuple[int, dict | str]:
     response = None
     for delay in (0.0,) + COLD_START_RETRY_DELAYS_S:

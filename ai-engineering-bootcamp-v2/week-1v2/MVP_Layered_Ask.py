@@ -9,13 +9,15 @@ import altair as alt
 import streamlit as st
 
 from api_client import (
+    earliest_failure,
+    failure_reason,
+    triage_api,
     build_payload,
     build_stream_payload,
     call_json,
     call_stream,
     render_curl,
 )
-from debug_key_widget import debug_key_headers, debug_key_sidebar_widget
 from ui_theme import apply_custom_css
 from ui_widgets import base_url_sidebar_widget, references_widget
 from pricing_config import load_model_selection
@@ -277,28 +279,29 @@ base_url = base_url_sidebar_widget()
 # roughly what's actually in there before they ask. Cached in session
 # state so it's fetched once per session, not on every rerun (this
 # doesn't change while the app is running, unlike base_url/rag_mode).
-# p3m3 item #62: /debug/corpus-summary now needs the debug key, so this is
-# fetched only once a key is entered, and re-fetched if the key changes.
-_debug_key = debug_key_sidebar_widget()
-if not _debug_key:
-    st.session_state.pop("corpus_summary", None)
-    st.session_state.pop("corpus_summary_key", None)
-elif st.session_state.get("corpus_summary_key") != _debug_key:
-    _cs_status, _cs_data = call_json(
-        "GET", f"{base_url.rstrip('/')}/debug/corpus-summary", headers=debug_key_headers()
-    )
-    st.session_state["corpus_summary"] = _cs_data if _cs_status == 200 else None
-    st.session_state["corpus_summary_key"] = _debug_key
-_corpus_summary = st.session_state.get("corpus_summary")
+# Public orientation hint: only the raw retrieval/events/trace routes need the
+# debug key. This endpoint returns a count and corpus-level description, not
+# titles, source URLs, chunk text,
+# IPs, request events or agent traces. The endpoint checks the corpus
+# timestamp on every request and regenerates the cached agentic summary when
+# that timestamp changes.
+_cs_status, _cs_data = call_json("GET", f"{base_url.rstrip('/')}/corpus-summary")
+_corpus_summary = _cs_data if _cs_status == 200 else None
 with st.sidebar.expander("📚 What's in the corpus?", expanded=False):
-    if isinstance(_corpus_summary, dict) and "document_count" in _corpus_summary:
-        st.caption(f"{_corpus_summary['document_count']} documents. A random sample of titles:")
-        for _title in _corpus_summary.get("sample_titles", []):
-            st.caption(f"• {_title}")
-    elif not _debug_key:
-        st.caption("restricted: enter the debug key")
+    if isinstance(_corpus_summary, dict) and "summary" in _corpus_summary:
+        st.caption(
+            f"{_corpus_summary.get('document_count', '?')} documents. "
+            f"Corpus updated: {_corpus_summary.get('corpus_updated_at') or 'unknown'}."
+        )
+        st.caption(_corpus_summary["summary"])
+        if _corpus_summary.get("topics"):
+            st.caption("Topics: " + ", ".join(str(t) for t in _corpus_summary["topics"]))
+        st.caption(
+            f"Summary refreshed: {_corpus_summary.get('summary_generated_at', 'unknown')} "
+            f"({_corpus_summary.get('summary_source', 'unknown')})."
+        )
     else:
-        st.caption("invalid key, or the corpus summary couldn't be loaded.")
+        st.caption("Corpus summary unavailable.")
 
 # p3m3 permanent item #25 — explicit st.sidebar.page_link() calls to the
 # other pages used to live here (added in #17/#22), but Streamlit's own
@@ -332,7 +335,15 @@ st.sidebar.markdown("### Provider status")
 if st.sidebar.button("Refresh provider status"):
     status, providers_data = call_json("GET", f"{base_url.rstrip('/')}/providers/status")
     if not isinstance(providers_data, list):
-        st.sidebar.error(f"HTTP {status}" if status else "Not connected")
+        # p3m3 item #81 (R1 2026-10-07): say why, then check the API itself instead of a bare connection-failure label
+        st.sidebar.error("Provider status unavailable. " + failure_reason(status, providers_data))
+        with st.sidebar.status("Triaging the API connection…", expanded=True) as _triage_box:
+            _steps = triage_api(base_url, "/providers/status")
+            for _s in _steps:
+                st.write(("✅ " if _s["ok"] else "❌ ") + f"{_s['step']}: {_s['detail']}")
+            _first = earliest_failure(_steps)
+            _triage_box.update(label=(f"Earliest failure: {_first['step']}" if _first else "All checks passed"),
+                               state="error" if _first else "complete")
     else:
         st.session_state["provider_status"] = providers_data
         for entry in providers_data:
@@ -356,8 +367,13 @@ if st.sidebar.button("Refresh provider status"):
             # unknown.
             served_url = entry.get("base_url") or "(OpenAI SDK default)"
             compat = entry.get("compatible_with", "?")
+            # p3m3 item #82: a missing or expired key links to the provider's own key page (URL from config)
+            _cred_url = str(entry.get("credential_url") or "")
+            _state_text = (f"[{state}]({_cred_url}) — get a key" if _cred_url.startswith("https://")
+                           and state.startswith("unavailable") and ("credential" in state or "key_expired" in state)
+                           else state)
             line = (
-                f"{icon} **{label}** — {entry.get('model', '?')} ({state})\n\n"
+                f"{icon} **{label}** — {entry.get('model', '?')} ({_state_text})\n\n"
                 f"{served_url} · {compat}-compatible"
             )
             # None unless this entry has a free_entitlement_* allowance —
@@ -559,10 +575,12 @@ with main_col:
 
     health_col, _ = st.columns(2)
     with health_col:
-        if st.button("Check API health"):
-            status, health_data = call_json("GET", f"{base_url.rstrip('/')}/health")
-            st.markdown(f"**HTTP {status}**" if status else "**Not connected**")
-            st.json(health_data)
+        if st.button("Check API health"):  # p3m3 item #81: ordered triage to the earliest failing step
+            _steps = triage_api(base_url, "/health")
+            _first = earliest_failure(_steps)
+            st.markdown(f"**Earliest failure: {_first['step']}**" if _first else "**API healthy**")
+            for _s in _steps:
+                st.write(("✅ " if _s["ok"] else "❌ ") + f"{_s['step']}: {_s['detail']}")
 
     if submitted:
         if is_stream:

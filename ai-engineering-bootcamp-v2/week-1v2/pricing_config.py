@@ -75,6 +75,9 @@ class ProviderConfig(BaseModel):
     # (not just a new provider_chain row) before this field could honestly
     # say otherwise.
     compatible_with: str = "openai"
+    # p3m3 item #82 (R1 2026-10-07): the provider's own page for creating an API key, linked from the
+    # Streamlit provider-status line when the credential is missing or expired. Data, not code.
+    credential_url: str | None = None
     # "strict" only for a provider/model independently confirmed (from that
     # provider's own docs, not an aggregator) to support schema-constrained
     # structured output the way this project's /ask-family endpoints need.

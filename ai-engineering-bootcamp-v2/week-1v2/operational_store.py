@@ -104,6 +104,17 @@ def corpus_summary(sample_size=10):
     }
 
 
+def corpus_overview():
+    """Return only public corpus-version metadata, never titles or content."""
+    with get_engine().connect() as conn:
+        row = conn.execute(text(
+            'SELECT COUNT(*) AS document_count, MAX(updated_at) AS updated_at '
+            'FROM internship.documents'
+        )).one()
+    updated_at = row.updated_at.isoformat() if row.updated_at is not None else None
+    return {'document_count': int(row.document_count or 0), 'corpus_updated_at': updated_at}
+
+
 def find_live_document_by_content_sha(content_sha256, exclude_document_id=None):
     """Cross-document exact-duplicate check: returns the document_id of a live
     document (other than exclude_document_id) whose recorded
@@ -334,6 +345,38 @@ def accept_document_version(document_id, version, accepted_by):
             {"by": accepted_by, "id": document_id, "v": version},
         )
     return version_row
+
+
+def get_artifact(path):
+    """Payload bytes stored at `path` in internship.artifacts, or None (p3m3 item #80)."""
+    with get_engine().connect() as conn:
+        row = conn.execute(text('SELECT payload FROM internship.artifacts WHERE path=:p'), {'p': path}).first()
+    return bytes(row[0]) if row else None
+
+
+def corpus_profile(max_titles=150):
+    """Metadata the corpus description is written from (p3m3 item #80): titles (a stable sample), and counts by
+    provenance type, licence, source host and publication year. Never chunk or document text."""
+    with get_engine().connect() as conn:
+        titles = [r[0] for r in conn.execute(text(
+            "SELECT provenance->>'title' FROM internship.documents WHERE provenance->>'title' IS NOT NULL "
+            "ORDER BY md5(document_id) LIMIT :n"), {'n': max_titles})]
+
+        def counts(expr, n=8):
+            return {str(r[0]): int(r[1]) for r in conn.execute(text(
+                f"SELECT {expr} AS k, count(*) FROM internship.documents GROUP BY 1 ORDER BY 2 DESC LIMIT :n"),
+                {'n': n}) if r[0]}
+        years = conn.execute(text(
+            "SELECT min(substring(provenance->>'published_at' from '^[0-9]{4}')), "
+            "max(substring(provenance->>'published_at' from '^[0-9]{4}')) FROM internship.documents")).one()
+        return {
+            'titles': titles,
+            'provenance_types': counts("provenance->>'provenance_type'"),
+            'licences': counts("provenance->>'license'"),
+            'source_hosts': counts("substring(coalesce(provenance->>'source_url', provenance->>'fetched_from') "
+                                   "from '^https?://([^/]+)')"),
+            'published_years': [years[0], years[1]],
+        }
 
 
 def put_artifact(path, payload, conn=None):

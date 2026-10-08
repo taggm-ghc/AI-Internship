@@ -23,7 +23,8 @@
       "rationale": "Confirmed directly from Groq's own docs (not an aggregator) to support strict JSON-schema structured output — one of only three models Groq lists for that mode. OpenAI-SDK-compatible via base_url, no bespoke client needed. Also has a 30-requests/minute burst limit alongside the 1,000/day figure tracked here.",
       "source_url": "https://console.groq.com/docs/structured-outputs",
       "notes": "Rate limits per https://console.groq.com/docs/rate-limits. Pricing (config/model-pricing.json) sourced from secondary aggregators after console.groq.com/docs/pricing returned 404 on direct fetch — needs reconfirmation before being treated as authoritative. reasoning_effort=low added 2026-09-25 (p3m3 #50): gpt-oss's hidden reasoning shares the 1,000-token completion budget. At the default effort it used a median 776 (max 995) completion tokens on the /ask prompt, and intermittently failed with 400 json_validate_failed; at low, a median 200.",
-      "reasoning_effort": "low"
+      "reasoning_effort": "low",
+      "credential_url": "https://console.groq.com/keys"
     },
     {
       "provider": "gemini",
@@ -37,7 +38,8 @@
       "free_entitlement_period": "minute",
       "rationale": "Google's own OpenAI-compatibility docs demonstrate .parse() with a Pydantic schema against this exact model. Highest free rate limit (60 RPM) of any candidate in this chain.",
       "source_url": "https://ai.google.dev/gemini-api/docs/openai",
-      "notes": "Exact current free-tier model ID drifted once already during this session's own research (gemini-2.5-flash -> gemini-3.8-flash) — reconfirm against Google's current docs before relying on this string long-term."
+      "notes": "Exact current free-tier model ID drifted once already during this session's own research (gemini-2.5-flash -> gemini-3.8-flash) — reconfirm against Google's current docs before relying on this string long-term.",
+      "credential_url": "https://aistudio.google.com/app/apikey"
     },
     {
       "provider": "mistral",
@@ -51,7 +53,8 @@
       "free_entitlement_period": "month",
       "rationale": "Mistral's free 'Experiment' tier covers all API models under one rate-limited allowance rather than a single distinct free model, so this is a representative small/cheap pick, not a Mistral-designated 'free model.' API-level JSON-schema mode exists per Mistral's docs, but per-model strict-mode support wasn't independently confirmed this session — usable in /ask/stream's chain now, promotable to structured once confirmed.",
       "source_url": "https://docs.mistral.ai/capabilities/structured_output",
-      "notes": "structured_output left 'unverified' deliberately, not assumed strict."
+      "notes": "structured_output left 'unverified' deliberately, not assumed strict.",
+      "credential_url": "https://console.mistral.ai/api-keys"
     },
     {
       "provider": "openrouter",
@@ -65,7 +68,8 @@
       "free_entitlement_period": "day",
       "rationale": "Aggregates 25+ free models behind one key — useful as a fallback if a single upstream free provider is down. The free-model list changes regularly per OpenRouter's own description; this specific model ID needs reconfirming against OpenRouter's live free-models page before relying on it.",
       "source_url": "https://openrouter.ai/collections/free-models",
-      "notes": "structured_output left 'unverified': OpenRouter passes response_format through to whichever upstream model serves the request, so support depends on that model, not confirmed independently here."
+      "notes": "structured_output left 'unverified': OpenRouter passes response_format through to whichever upstream model serves the request, so support depends on that model, not confirmed independently here.",
+      "credential_url": "https://openrouter.ai/settings/keys"
     },
     {
       "provider": "sambanova",
@@ -79,7 +83,8 @@
       "free_entitlement_period": "day",
       "rationale": "Confirmed OpenAI-SDK-compatible base_url from SambaNova's own docs. Free-tier allowance figures for SambaNova varied across sources checked this session (200,000 tokens/day in one pass, 20 requests/day in another) — tracked here as the more conservative figure, but flagged as needing reconfirmation, not treated as settled.",
       "source_url": "https://docs.sambanova.ai/docs/en/features/openai-compatibility",
-      "notes": "structured_output left 'unverified' — not independently confirmed this session."
+      "notes": "structured_output left 'unverified' — not independently confirmed this session.",
+      "credential_url": "https://cloud.sambanova.ai/apis"
     },
     {
       "provider": "cloudflare",
@@ -96,7 +101,8 @@
       "free_entitlement_period": "day",
       "rationale": "Confirmed OpenAI-compatible endpoint from Cloudflare's own docs. Needs two credentials (an API token and an account ID), one more than every other entry in this chain. Entitlement is measured in Cloudflare's own 'Neurons' unit, not requests or tokens directly — deliberately tracked as its own unit rather than converted to a guessed request/token equivalent.",
       "source_url": "https://developers.cloudflare.com/workers-ai/configuration/open-ai-compatibility/",
-      "notes": "base_url's {CLOUDFLARE_ACCOUNT_ID} placeholder is substituted at request time by providers._resolve_base_url() from the CLOUDFLARE_ACCOUNT_ID env var named in extra_env above. Untestable end-to-end without real Cloudflare credentials, which aren't configured in this project's .env."
+      "notes": "base_url's {CLOUDFLARE_ACCOUNT_ID} placeholder is substituted at request time by providers._resolve_base_url() from the CLOUDFLARE_ACCOUNT_ID env var named in extra_env above. Untestable end-to-end without real Cloudflare credentials, which aren't configured in this project's .env.",
+      "credential_url": "https://dash.cloudflare.com/profile/api-tokens"
     },
     {
       "provider": "openai",
@@ -110,7 +116,8 @@
       "free_entitlement_period": null,
       "rationale": "Always-trusted terminal fallback: if every free provider above is unconfigured, cooling down, or fails, this is the paid path the assignment's own wallet-safety controls already cover. Matches selected_model above.",
       "source_url": "https://platform.openai.com/docs/api-reference",
-      "notes": "No free_entitlement fields: this is the paid path by design, not a free tier."
+      "notes": "No free_entitlement fields: this is the paid path by design, not a free tier.",
+      "credential_url": "https://platform.openai.com/api-keys"
     }
   ]
 }

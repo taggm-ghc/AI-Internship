@@ -618,6 +618,7 @@ def get_provider_status() -> list[dict]:
                 # ProviderConfig.base_url), not "unknown."
                 "base_url": provider.base_url,
                 "compatible_with": provider.compatible_with,
+                "credential_url": getattr(provider, "credential_url", None),  # p3m3 item #82
                 "structured_output": provider.structured_output,
                 "supports_streaming": provider.supports_streaming,
                 "key_expires": key_expires,
