@@ -81,6 +81,20 @@ def test_retention_and_decision_label():
     assert s["replaced_text"] == "9/20" and "9/20 replies fully replaced" in s["detail"] and "44%" in s["detail"]
 
 
+def test_generated_tldr_uses_measured_runs():
+    b, a = _run("baseline", [True, False]), _run("after_fix_measured", [True, True])
+    text = v.generated_tldr(b, a)
+    assert "1/2 baseline traces passed" in text
+    assert "2/2 after the fix" in text
+    assert "SHIP by checks - see caveats" in text
+
+
+def test_generated_tldr_baseline_only():
+    text = v.generated_tldr(_run("baseline", [False]))
+    assert "0/1 traces pass all checks" in text
+    assert "No measured after-fix run is available" in text
+
+
 def test_page_renders_real_results():
     from streamlit.testing.v1 import AppTest
     at = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "pages" / "5_Trace_Eval.py"), default_timeout=60)

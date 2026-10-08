@@ -22,6 +22,7 @@ secrets.toml
 # Planning
 p3m3/
 syllabus/
+CODEX.md
 
 # Python
 __pycache__/

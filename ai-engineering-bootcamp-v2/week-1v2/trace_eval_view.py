@@ -149,3 +149,37 @@ def retention_summary(run):
                        f"{r.get('responses_modified')}/{total} modified, "
                        f"{r.get('responses_unchanged')}/{total} unchanged; mean sentence retention "
                        f"{'n/a' if msr is None else f'{msr:.0%}'}")}
+
+
+def generated_tldr(base, after=None):
+    """Create a concise evidence summary from the loaded measured run(s).
+
+    This is deliberately data-derived rather than another model judgement: the
+    page must not turn a retracted or simulated result into a new claim.
+    """
+    before_rate = overall_rate_pct(base)
+    before = base.get("overall", {})
+    if after is None:
+        return (f"Baseline: {before.get('pass', 0)}/{before.get('total', 0)} traces pass "
+                f"all checks ({before_rate:.1f}%), so the checks currently say BLOCK. "
+                "No measured after-fix run is available.")
+
+    delta = overall_delta(base, after)
+    after_rate = delta["after"]
+    after_overall = after.get("overall", {})
+    retention = retention_summary(after)
+    replacement = ""
+    if retention:
+        raw_retention = after.get("retention") or {}
+        replacement = (f" The gate fully replaced {retention['replaced_text']} replies "
+                       f"and modified {raw_retention.get('responses_modified', 'some')} of "
+                       f"{after_overall.get('total', 0)}.")
+    limitation = (after.get("fix") or {}).get("limitations")
+    caveat = "" if not limitation else f" Main caveat: {limitation}"
+    return (f"Measured result: {before.get('pass', 0)}/{before.get('total', 0)} "
+            f"baseline traces passed ({before_rate:.1f}%), versus "
+            f"{after_overall.get('pass', 0)}/{after_overall.get('total', 0)} after the fix "
+            f"({after_rate:.1f}%, {delta['delta_pp']:+.1f} percentage points). "
+            f"The checks therefore classify the after-fix run as "
+            f"{decision_label(decision_for_rate(after_rate), after, after=True)}."
+            f"{replacement}{caveat}")

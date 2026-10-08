@@ -82,6 +82,9 @@ if base is None:
 st.caption(f"Data source: {source}. Baseline generated: {base.get('generated_at')}; "
            f"traces: {base.get('source_traces')}")
 
+st.info(f"**TL;DR — generated from the measured results**\n\n{tv.generated_tldr(base, after)}")
+st.caption("This summary is assembled from the loaded result JSON/DB contract; it is not a new model judgement.")
+
 # ---- Fix description + limitations (prominent) ----
 fix = (after or {}).get("fix")
 st.divider()
@@ -172,4 +175,3 @@ with st.expander("All traces, baseline check matrix"):
     st.dataframe(pd.DataFrame(
         [{"trace_id": t["trace_id"], **{k: v.get("status") for k, v in t["checks"].items()}}
          for t in base["traces"]]), use_container_width=True, hide_index=True)
-
