@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "config_version": "6",
+  "config_version": "3",
   "profiles": {
     "rapid": {
       "max_calls_per_plan": 6,
@@ -12,7 +12,7 @@
       "verifier_scope": "load_bearing"
     },
     "standard": {
-      "max_calls_per_plan": 32,
+      "max_calls_per_plan": 12,
       "angles": [
         "support",
         "against",
@@ -23,17 +23,16 @@
     }
   },
   "budgets": {
-    "researcher_calls": 8,
-    "adversarial_calls": 8,
-    "red_team_calls": 8,
+    "researcher_calls": 4,
+    "adversarial_calls": 4,
+    "red_team_calls": 4,
     "verifier_calls": 1,
-    "verifier_slack": 4,
+    "verifier_slack": 2,
     "synthesizer_turns": 10,
     "researcher_max_turns": 25,
     "adversarial_max_turns": 25,
     "verifier_max_turns": 25,
-    "synthesizer_max_turns": 25,
-    "redteam_max_turns": 25
+    "synthesizer_max_turns": 25
   },
   "recursion": {
     "max_depth": 3,
@@ -102,13 +101,6 @@
         "SUMMARY",
         "all rows are search[- ]summary"
       ]
-    ],
-    "numeric_rows_require_fulltext": true,
-    "numeric_row_strengths": [
-      "measured"
-    ],
-    "header_optional_keys": [
-      "children"
     ]
   },
   "quote_max_words": 25,
@@ -149,15 +141,6 @@
     "competing"
   ],
   "min_antagonistic_per_subclaim": 1,
-  "min_fulltext_antagonistic_per_subclaim": 1,
-  "gaps_require_dated_queries": true,
-  "gap_reasons": [
-    "searched-none-found",
-    "budget-exhausted"
-  ],
-  "red_team_file_required_for_profile": [
-    "standard"
-  ],
   "reliability_order": [
     "low",
     "medium",
@@ -211,15 +194,13 @@
     "researcher": "sonnet",
     "adversarial": "opus",
     "verifier": "opus",
-    "synthesizer": "opus",
-    "redteam": "opus"
+    "synthesizer": "opus"
   },
   "agent_files": {
     "researcher": "researcher",
     "adversarial-researcher": "adversarial",
     "citation-verifier": "verifier",
-    "synthesizer": "synthesizer",
-    "redteam-researcher": "redteam"
+    "synthesizer": "synthesizer"
   },
   "allowed_tools": {
     "researcher": [
@@ -240,7 +221,9 @@
       "WebFetch",
       "Agent",
       "mcp__research-run-write-adversarial-writer__submit_findings",
-      "mcp__research-run-read-adversarial-writer__lint_findings"
+      "mcp__research-run-read-adversarial-writer__lint_findings",
+      "mcp__research-run-write-redteam-writer__submit_findings",
+      "mcp__research-run-read-redteam-writer__lint_findings"
     ],
     "verifier": [
       "Read",
@@ -256,16 +239,6 @@
       "mcp__research-run-read-synthesizer-reader__list_findings",
       "mcp__research-run-read-synthesizer-reader__read_finding",
       "mcp__research-run-read-synthesizer-reader__lint_findings"
-    ],
-    "redteam": [
-      "Read",
-      "Grep",
-      "Glob",
-      "WebSearch",
-      "WebFetch",
-      "Agent",
-      "mcp__research-run-write-redteam-writer__submit_findings",
-      "mcp__research-run-read-redteam-writer__lint_findings"
     ]
   },
   "spawn_tool": "Agent",
@@ -273,8 +246,7 @@
     "researcher": true,
     "adversarial": true,
     "verifier": true,
-    "synthesizer": false,
-    "redteam": true
+    "synthesizer": false
   },
   "required_disallowed_tools": {
     "researcher": [],
@@ -282,8 +254,7 @@
     "verifier": [],
     "synthesizer": [
       "Agent"
-    ],
-    "redteam": []
+    ]
   },
   "spawner_forbidden_tools": [
     "Write",
@@ -306,45 +277,5 @@
   "verification": {
     "human_spot_check_count": 2
   },
-  "findings_dir": "scratchpad",
-  "role_consistency": {
-    "researcher": {
-      "file_kind": "researcher",
-      "roles": [
-        "researcher"
-      ],
-      "id_codes": [
-        "R"
-      ],
-      "angles_forbidden": [
-        "red_team"
-      ]
-    },
-    "adversarial": {
-      "file_kind": "adversarial",
-      "roles": [
-        "adversarial-researcher"
-      ],
-      "id_codes": [
-        "A"
-      ],
-      "angles_forbidden": [
-        "red_team"
-      ]
-    },
-    "redteam": {
-      "file_kind": "redteam",
-      "roles": [
-        "adversarial-researcher",
-        "redteam-researcher",
-        "redteam"
-      ],
-      "id_codes": [
-        "T"
-      ],
-      "angles_required": [
-        "red_team"
-      ]
-    }
-  }
+  "findings_dir": "scratchpad"
 }

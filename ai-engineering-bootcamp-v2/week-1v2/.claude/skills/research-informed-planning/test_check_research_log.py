@@ -406,3 +406,373 @@ def test_patterns_are_full_match_not_prefix(tmp_path, sha):
         rc, out, _ = run([write(tmp_path, "p.md", doc(sha, [r]))])
         assert rc == 1, out
     assert crl.re.fullmatch(r"^[0-9]{4}$", "2023\n") is None
+
+
+# ---------------------------------------------------------------- v5 rules (#95): F12, F14, R01
+GOOD_GAP = '- S1: searched `mttr critique` on 2026-10-09, searched-none-found'
+
+
+def v5doc(sha, rows, gaps="", cv="5", role="adversarial-researcher", angle="against"):
+    verdicts = ["| S1 | qualified | - | RH-A-S1 |"]
+    return doc(sha, rows=rows, gaps=gaps, verdicts=verdicts,
+               hdr=header(sha, role=role, angle=angle, config_version=cv))
+
+
+def test_f12_fulltext_antagonistic_row_passes(tmp_path, sha):
+    f = write(tmp_path, "ok.md", v5doc(sha, [row(id="RH-A-S1", read="READ-VERBATIM")]))
+    rc, out, _ = run([f])
+    assert rc == 0, out
+
+
+def test_f12_summary_only_antagonistic_fails(tmp_path, sha):
+    r = row(id="RH-A-S1", read="SUMMARY", quote='~"paraphrase"', url="https://example.com/a", rel="low")
+    f = write(tmp_path, "bad.md", v5doc(sha, [r], gaps="- BUDGET REACHED 4/4."))
+    rc, out, _ = run([f])
+    assert rc == 1 and "F12" in out, out
+
+
+def test_f12_dated_gap_line_satisfies(tmp_path, sha):
+    r = row(id="RH-A-S1", read="SUMMARY", quote='~"paraphrase"', url="https://example.com/a", rel="low")
+    f = write(tmp_path, "gap.md", v5doc(sha, [r], gaps=GOOD_GAP))
+    rc, out, _ = run([f])
+    assert rc == 0, out
+
+
+def test_f12_supporting_fulltext_row_does_not_count(tmp_path, sha):
+    r = row(id="RH-A-S1", read="READ-VERBATIM", stance="for")
+    f = write(tmp_path, "for.md", v5doc(sha, [r]))
+    rc, out, _ = run([f])
+    assert "F12" in out and "F10" in out
+
+
+@pytest.mark.parametrize("gap,missing", [
+    ("- S1: no evidence found within budget", "query"),
+    ('- S1: searched `x` , searched-none-found', "date"),
+    ('- S1: searched `x` on 2026-10-09', "reason"),
+    ('- S1: searched `x` on 2026-10-09, because', "reason"),
+])
+def test_f14_malformed_gap_line(tmp_path, sha, gap, missing):
+    r = row(id="RH-A-S1", read="READ-VERBATIM")
+    f = write(tmp_path, "g.md", v5doc(sha, [r], gaps=gap))
+    rc, out, _ = run([f])
+    assert rc == 1 and "F14" in out and missing in out, out
+
+
+def test_f14_quoted_query_and_budget_exhausted_ok(tmp_path, sha):
+    r = row(id="RH-A-S1", read="READ-VERBATIM")
+    gap = '- S1: query "mttr critique" 2026-10-09 budget-exhausted'
+    f = write(tmp_path, "g.md", v5doc(sha, [r], gaps=gap))
+    assert run([f])[0] == 0
+
+
+def test_f14_unlabelled_gap_lines_are_not_checked(tmp_path, sha):
+    r = row(id="RH-A-S1", read="READ-VERBATIM")
+    f = write(tmp_path, "g.md", v5doc(sha, [r], gaps="- BUDGET REACHED 4/4. Unknown: S1 evidence"))
+    assert run([f])[0] == 0
+
+
+def test_v4_files_unaffected_by_v5_rules(tmp_path, sha):
+    r = row(id="RH-A-S1", read="SUMMARY", quote='~"paraphrase"', url="https://example.com/a", rel="low")
+    f = write(tmp_path, "v4.md", v5doc(sha, [r], gaps="- S1: no evidence found within budget", cv="4"))
+    rc, out, _ = run([f])
+    assert rc == 0 and "F12" not in out and "F14" not in out, out
+
+
+def test_v5_rules_skip_researcher_files(tmp_path, sha):
+    r = row(id="RH-R-S1", read="SUMMARY", quote='~"paraphrase"', url="https://example.com/a", rel="low")
+    f = write(tmp_path, "r.md", v5doc(sha, [r], gaps="- S1: no evidence", role="researcher", angle="support"))
+    rc, out, _ = run([f])
+    assert "F12" not in out and "F14" not in out
+
+
+def test_v5_rules_skipped_when_config_lacks_keys(tmp_path):
+    cfg = json.loads(CONFIG.read_text())
+    for k in ("min_fulltext_antagonistic_per_subclaim", "gap_reasons"):
+        del cfg[k]
+    cp = tmp_path / "old.json"
+    cp.write_text(json.dumps(cfg))
+    fp = crl.load_config(cp)[1]
+    r = row(id="RH-A-S1", read="SUMMARY", quote='~"paraphrase"', url="https://example.com/a", rel="low")
+    f = write(tmp_path, "x.md", v5doc(fp, [r], gaps="- S1: nothing"))
+    rc, out, _ = run([f, "--config", cp])
+    assert "F12" not in out and "F14" not in out, out
+
+
+def test_real_config_is_v6_and_v5_snapshot_has_new_keys():
+    cfg = crl.load_config(CONFIG)[0]
+    assert cfg["config_version"] == "6"
+    v5 = json.loads((HERE / "research_config.v5.json").read_text())
+    assert v5["config_version"] == "5"
+    for k in ("min_fulltext_antagonistic_per_subclaim", "gaps_require_dated_queries", "red_team_file_required_for_profile", "gap_reasons"):
+        assert k in v5 and k in cfg, k
+    assert cfg["min_fulltext_antagonistic_per_subclaim"] == 1
+    assert cfg["gaps_require_dated_queries"] is True
+    assert cfg["red_team_file_required_for_profile"] == ["standard"]
+    v4 = json.loads((HERE / "research_config.v4.json").read_text())
+    assert v4["config_version"] == "4" and "gap_reasons" not in v4
+
+
+def _run_dir(tmp_path, with_t, profile="standard"):
+    d = tmp_path / "scratch"
+    d.mkdir()
+    s = fingerprint()
+    (d / "RH-spec.json").write_text(json.dumps({"profile": profile}))
+    (d / "RH-researcher-1.md").write_text(doc(s), encoding="utf-8")
+    if with_t:
+        (d / "RH-redteam-1.md").write_text(
+            doc(s, rows=[row(id="RH-Ta-S1")], hdr=header(s, role="adversarial-researcher", angle="red_team")),
+            encoding="utf-8")
+    return d
+
+
+def test_r01_standard_run_without_t_file_fails(tmp_path):
+    d = _run_dir(tmp_path, with_t=False)
+    rc, out, err = run(["--run", "RH", "--findings-dir", d])
+    assert rc == 1 and "R01" in out and "red_team_file=no" in err, (out, err)
+
+
+def test_r01_standard_run_with_t_file_passes(tmp_path):
+    d = _run_dir(tmp_path, with_t=True)
+    rc, out, err = run(["--run", "RH", "--findings-dir", d])
+    assert rc == 0 and "red_team_file=yes" in err, (out, err)
+
+
+def test_r01_rapid_profile_not_required(tmp_path):
+    d = _run_dir(tmp_path, with_t=False, profile="rapid")
+    assert run(["--run", "RH", "--findings-dir", d])[0] == 0
+
+
+def test_r01_profile_flag_overrides_and_unknown_profile_is_usage_error(tmp_path):
+    d = _run_dir(tmp_path, with_t=False, profile="rapid")
+    assert run(["--run", "RH", "--findings-dir", d, "--profile", "standard"])[0] == 1
+    (d / "RH-spec.json").unlink()
+    rc, _, err = run(["--run", "RH", "--findings-dir", d])
+    assert rc == 2 and "profile unknown" in err
+
+
+def test_run_without_findings_dir_is_usage_error(tmp_path):
+    assert run(["--run", "RH"])[0] == 2
+
+
+def test_latest_version_prefers_highest_vN(tmp_path):
+    for n in ("a.md", "a.md.v1", "a.md.v2", "a.md.v10", "b.md"):
+        (tmp_path / n).write_text("x")
+    assert crl.latest_version(tmp_path / "a.md").name == "a.md.v10"
+    assert crl.latest_version(tmp_path / "b.md").name == "b.md"
+
+
+# ---------------------------------------------------------------- #96 (b): F11 sites, L01, F06 contradiction
+def test_f11_each_emit_site_by_message(tmp_path, sha):
+    cases = {
+        "no '## Verdicts' table": doc(sha).split("## Verdicts")[0],
+        "unknown sub-claim": doc(sha, verdicts=["| S1 | survived | RH-R-S1 | - |", "| S7 | qualified | - | - |"]),
+        "not in ['survived'": doc(sha, verdicts=["| S1 | maybe | RH-R-S1 | - |"]),
+        "not in the source table": doc(sha, verdicts=["| S1 | survived | RH-R-S99 | - |"]),  # S99 = deliberate unknown id
+        "rests only on": doc(sha, [row(read="SUMMARY", quote="-")]),
+        "cites no supporting": doc(sha, verdicts=["| S1 | survived | - | - |"]),
+        "has no verdict row": doc(sha, verdicts=["| S9 | qualified | - | - |"]),
+        "expected 4": doc(sha, verdicts=["| S1 | survived |"]),
+    }
+    for needle, text in cases.items():
+        f = write(tmp_path, "v.md", text)
+        rc, out, _ = run([f])
+        assert rc == 1 and "F11" in out and needle in out, (needle, out)
+
+
+def test_l01_multi_url_row_warns_and_never_fails(tmp_path):
+    t = tmp_path / "old.md"
+    t.write_text("| # | URL | Title | Read/Search |\n|---|---|---|---|\n"
+                 "| 2 | https://b.example/x ; https://c.example/y | B | SEARCH SUMMARY only |\n")
+    rc, out, _ = run([t, "--legacy"])
+    assert rc == 0 and "L01 (warning)" in out
+    rc, out, _ = run([t, "--legacy", "--strict"])
+    assert rc == 1 and "L01" in out
+
+
+def test_f06_verbatim_row_with_tilde_quote_is_contradiction(tmp_path, sha):
+    f = write(tmp_path, "q.md", doc(sha, [row(read="READ-VERBATIM", quote='~"paraphrase"')]))
+    rc, out, _ = run([f])
+    assert rc == 1 and "F06" in out and "must not carry" in out
+
+
+def test_f06_quote_marks_without_tilde_on_nonverbatim_row(tmp_path, sha):
+    f = write(tmp_path, "q.md", doc(sha, [row(read="READ-SUMMARIZER", quote='"x"')]))
+    rc, out, _ = run([f])
+    assert rc == 1 and "F06" in out and "must start with" in out
+
+
+# ---------------------------------------------------------------- #96 (b): v6 form rules (staged config)
+STAGED = HERE / "research_config.v6-staged.json"
+
+
+def v6(sha6, name="RH-researcher-1.md", ids=("RH-R-S1",), role="researcher", angle="support", cv="6", **hover):
+    rows = [row(id=i, stance="against") for i in ids]
+    verdicts = ["| S1 | qualified | - | " + ids[0] + " |"]
+    return name, doc(sha6, rows, verdicts=verdicts,
+                     hdr=header(sha6, role=role, angle=angle, config_version=cv, **hover))
+
+
+def run6(tmp_path, name, text):
+    f = write(tmp_path, name, text)
+    return run([f, "--config", STAGED])
+
+
+def sha6():
+    return fingerprint(STAGED)
+
+
+def test_staged_config_is_v6_and_live_untouched():
+    cfg = crl.load_config(STAGED)[0]
+    assert cfg["config_version"] == "6" and "children" in cfg["lint"]["header_optional_keys"]
+    live = crl.load_config(CONFIG)[0]
+    assert live["config_version"] in ("5", "6")
+
+
+def test_v6_clean_files_pass_for_each_role_kind(tmp_path):
+    s = sha6()
+    for args in [
+        dict(),
+        dict(name="RH-adversarial-1.md", ids=("RH-A-S1",), role="adversarial-researcher", angle="against"),
+        dict(name="RH-redteam-1.md", ids=("RH-Ta-S1",), role="adversarial-researcher", angle="red_team"),
+        dict(name="RH-redteam-1.md", ids=("RH-Ta-S1",), role="redteam-researcher", angle="red_team"),
+    ]:
+        name, text = v6(s, **args)
+        rc, out, _ = run6(tmp_path, name, text)
+        assert rc == 0, (args, out)
+
+
+def test_f15_unknown_header_key_error_but_children_declared(tmp_path):
+    s = sha6()
+    name, text = v6(s, children=0)
+    rc, out, _ = run6(tmp_path, name, text)
+    assert rc == 0, out
+    name, text = v6(s, bogus=1)
+    rc, out, _ = run6(tmp_path, name, text)
+    assert rc == 1 and "F15" in out and "bogus" in out
+
+
+def test_f15_f16_not_applied_to_v5_file_header(tmp_path):
+    s = sha6()
+    name, text = v6(s, cv="5", bogus=1, role="adversarial-researcher", angle="red_team")
+    rc, out, _ = run6(tmp_path, name, text)  # researcher file name + id, wrong role: ignored for v5 header
+    assert "F15" not in out and "F16" not in out, out
+
+
+def test_f15_f16_not_applied_when_config_is_older(tmp_path):
+    cfg = json.loads(STAGED.read_text())
+    cfg["config_version"] = "5"
+    cp = write(tmp_path, "c5.json", json.dumps(cfg))
+    s = fingerprint(cp)
+    name, text = v6(s, bogus=1, role="adversarial-researcher")
+    f = write(tmp_path, name, text)
+    rc, out, _ = run([f, "--config", cp])
+    assert "F15" not in out and "F16" not in out, out
+
+
+@pytest.mark.parametrize("kw,needle", [
+    (dict(role="adversarial-researcher"), "file name kind 'researcher'"),                # researcher file, A role
+    (dict(name="RH-redteam-1.md", ids=("RH-Ta-S1",), role="researcher", angle="red_team"), "expects header role"),
+    (dict(name="RH-redteam-1.md", ids=("RH-Ta-S1",), role="adversarial-researcher", angle="against"), "angle"),
+    (dict(ids=("RH-Ta-S1",)), "source id role code 'T'"),                                # T id in researcher file
+    (dict(name="RH-adversarial-1.md", ids=("RH-R-S1",), role="adversarial-researcher", angle="against"), "role code 'R'"),
+    (dict(name="RH-researcher-1.md", ids=("RH-R-S1", "RH-A-S2")), "mix role codes"),
+])
+def test_f16_role_consistency(tmp_path, kw, needle):
+    s = sha6()
+    name, text = v6(s, **kw)
+    rc, out, _ = run6(tmp_path, name, text)
+    assert rc == 1 and "F16" in out and needle in out, out
+
+
+# ---------------------------------------------------------------- #96 (a): context-aware P03 numbers
+def _numbers(text):
+    return crl.claim_numbers(text)
+
+
+@pytest.mark.parametrize("text", [
+    "Follow R1-1 and D-028 here", "H3a, W2b and S2 are labels", "see CWE-209 and gpt-4.1", "per section 7.2 and §3",
+    "Sections 3 and 4 apply", "dated 2026-10-09 in 2026", "run `pytest -k 12345`", "see [x](https://a.example/p/4567)",
+    "due by 10-07", "(1) first, (2) second", "retry on 4xx and 5xx", "RFC 7231 and ISO 31000", "Use 30 questions [design: eval size]",
+    "1. Item text",
+])
+def test_p03_context_exempt(text):
+    assert _numbers(text) == [], text
+
+
+@pytest.mark.parametrize("text,want", [
+    ("72% of pushes", ["72"]), ("we use 30 questions", ["30"]), ("4.99M tokens", ["4.99"]),
+    ("2000 questions were asked", ["2000"]), ("took 2026ms", ["2026"]), ("Table 3 shows 31% in S2", ["31"]),
+    ("R1-1 gives 27% and 12 hits", ["27", "12"]), ("top-5%", ["5"]),
+    ("Use 30 questions [design: n]. But 72% held", ["72"]),
+])
+def test_p03_real_numbers_still_flagged(text, want):
+    assert _numbers(text) == want, text
+
+
+def test_p03_plan_mode_end_to_end(tmp_path, sha):
+    f = write(tmp_path, "f.md", doc(sha, [row(quote='"31% of pushes"')]))
+    ok = plan(tmp_path, "Per D-028 and section 2 (2026-10-09) pushes were 31% [src:RH-R-S1]\n")
+    assert run([f, "--plan", ok])[0] == 0
+    bad = plan(tmp_path, "Per D-028 and section 2 pushes were 13% [src:RH-R-S1]\n")
+    rc, out, _ = run([f, "--plan", bad])
+    assert rc == 1 and "P03" in out and "'13'" in out
+    des = plan(tmp_path, "Use 30 questions [design: eval size] [src:RH-R-S1]\n")
+    assert run([f, "--plan", des])[0] == 0
+
+
+# ---------------------------------------------------------------- PR-96-01 C1: F17 numeric rows need a full-text read
+def _f17_doc(s, read, quote, strength, cv="6"):
+    r = row(id="RH-R-S1", read=read, quote=quote, strength=strength, stance="against")
+    return "RH-researcher-1.md", doc(s, [r], verdicts=["| S1 | qualified | - | RH-R-S1 |"],
+                                     hdr=header(s, role="researcher", angle="support", config_version=cv))
+
+
+@pytest.mark.parametrize("read,quote,strength,fails", [
+    ("SUMMARY", '~"Of 259 studies, 13 disseminated practices"', "survey", True),       # number in snippet row
+    ("SUMMARY", '"short quote"', "measured", True),                                    # measured in snippet row
+    ("TITLE-ONLY", '~"72% improved"', "survey", True),
+    ("FETCH-FAILED", '~"4.99M users"', "survey", True),
+    ("READ-SUMMARIZER", '~"Of 259 studies, 13 disseminated"', "measured", False),     # full-text read ok
+    ("READ-VERBATIM", '"Of 259 studies"', "measured", False),
+    ("SUMMARY", '~"published in 2023 by the group"', "survey", False),                 # bare year only
+    ("SUMMARY", '~"see RFC 7231 and D-028 and R1-1"', "survey", False),               # ids/labels not counted
+    ("SUMMARY", '~"no figures here"', "survey", False),
+])
+def test_f17_numeric_or_measured_rows_need_fulltext(tmp_path, read, quote, strength, fails):
+    s = sha6()
+    name, text = _f17_doc(s, read, quote, strength)
+    rc, out, _ = run6(tmp_path, name, text)
+    assert ("F17" in out) is fails, out
+    if fails:
+        assert rc == 1 and "fetch the page" in out and "RH-R-S1" in out
+
+
+def test_f17_not_applied_to_v5_header_or_v5_config(tmp_path):
+    s = sha6()
+    name, text = _f17_doc(s, "SUMMARY", '~"Of 259 studies"', "measured", cv="5")
+    rc, out, _ = run6(tmp_path, name, text)
+    assert "F17" not in out, out
+    cfg = json.loads(STAGED.read_text())
+    cfg["config_version"] = "5"
+    cp = write(tmp_path, "c5.json", json.dumps(cfg))
+    name, text = _f17_doc(fingerprint(cp), "SUMMARY", '~"Of 259 studies"', "measured")
+    f = write(tmp_path, name, text)
+    rc, out, _ = run([f, "--config", cp])
+    assert "F17" not in out, out
+
+
+def test_f17_off_when_config_key_false(tmp_path):
+    cfg = json.loads(STAGED.read_text())
+    cfg["lint"]["numeric_rows_require_fulltext"] = False
+    cp = write(tmp_path, "c6off.json", json.dumps(cfg))
+    name, text = _f17_doc(fingerprint(cp), "SUMMARY", '~"Of 259 studies"', "measured")
+    f = write(tmp_path, name, text)
+    rc, out, _ = run([f, "--config", cp])
+    assert "F17" not in out, out
+
+
+def test_numeric_row_reason_helper():
+    cfg = crl.load_config(STAGED)[0]
+    assert crl.numeric_row_reason({"quote": '~"in 2023"', "strength": "survey"}, cfg) is None
+    assert "259" in crl.numeric_row_reason({"quote": '~"259 studies"', "strength": "survey"}, cfg)
+    assert "measured" in crl.numeric_row_reason({"quote": '"x"', "strength": "measured"}, cfg)

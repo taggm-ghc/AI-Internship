@@ -30,6 +30,23 @@ URL_RE = re.compile(r"https?://[^\s|;,<>\"')\]]+")
 SRC_TAG_RE = re.compile(r"\[src:([^\]]+)\]")
 MEASURED_TAG_RE = re.compile(r"\[measured:[^\]]*\]")
 NUMBER_RE = re.compile(r"\d[\d,]*(?:\.\d+)?")
+# P03 context filters (#96 a). Not config-gated: they only REMOVE false positives in --plan mode.
+DESIGN_TAG_RE = re.compile(r"\[design:[^\]]*\]")
+# Identifier/label tokens: start with a letter, contain a digit (R1-1, D-028, H3a, S2, CWE-209, gpt-4.1).
+LABEL_TOKEN_RE = re.compile(r"(?<![A-Za-z0-9_])[A-Za-z][A-Za-z0-9_]*(?:-[A-Za-z0-9_]+|(?<=\d)\.\d+)*")
+# Regions that carry no claim numbers: code spans, link targets, bare URLs, ISO dates/months.
+P03_MASK_RES = [re.compile(r"`[^`]*`"), re.compile(r"\]\([^)]*\)"), re.compile(r"https?://\S+"),
+                re.compile(r"\b\d{4}-\d{2}(?:-\d{2})?\b"),
+                # "by 10-07" (MM-DD after a date preposition); a bare "10-20" stays a range
+                re.compile(r"(?i)\b(?:by|on|before|until|after|since|due|from|through)\s+(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])\b")]
+# A number directly after one of these words is a reference (section 7.2, Table 3, RFC 7231), not a claim.
+REF_WORDS = ("section|sections|sec|table|figure|fig|appendix|item|step|week|phase|milestone|gate|option|"
+             "iso|iec|rfc|ieee|sp|cwe|cve|no")
+REF_BEFORE_RE = re.compile(r"(?i)(?:\b(?:" + REF_WORDS + r")\.?|§§?|#)\s*(?:[\d.]+\s*(?:,|and|&|[-\u2013]|to)\s*)*$")
+YEAR_RE = re.compile(r"(?:19|20)\d\d")
+# Words that make a 4-digit number a quantity rather than a year ("2000 questions").
+UNIT_AFTER_RE = re.compile(r"(?i)^(?:%|[a-z]|\s+(?:percent|ms|s|sec|seconds|minutes|tokens|questions|rows|files|users|"
+                           r"requests|calls|items|hits|docs|documents|chunks|bytes|kb|mb|gb|x|times|points|pp)\b)")
 SEPARATOR_RE = re.compile(r"^\|?[\s:\-|]+\|?$")
 DEFAULT_CONFIG = Path(__file__).with_name("research_config.json")
 
@@ -353,9 +370,256 @@ def check_findings_file(path, lines, cfg, fingerprint, ids_seen, findings):
         if n < need and not re.search(r"(?<![A-Za-z0-9])" + re.escape(s) + r"(?![A-Za-z0-9])", gap_lines):
             findings.append(Finding(path, hdr_line, "F10",
                                     f"sub-claim {s} has {n} antagonistic row(s), needs {need}, and no '## Gaps' line names it"))
+    # F12/F14 (config_version >= 5 files only; older files keep passing under their own config)
+    check_v5_rules(path, hdr, hdr_line, subclaims, rows, gap_lines, cfg, findings)
+    # F15/F16 (config_version >= 6 files only)
+    check_v6_rules(path, hdr, hdr_line, rows, cfg, findings)
     # F11 verdicts
     check_verdicts(path, verdict_table, subclaims, rows, cfg, findings, hdr_line)
     return hdr, rows
+
+
+def header_version(hdr):
+    """Integer config_version of a findings header, or None if absent/non-numeric."""
+    try:
+        return int(str(hdr.get("config_version", "")).strip())
+    except ValueError:
+        return None
+
+
+def is_antagonist_file(hdr):
+    """Adversarial (A*) or red-team (T*) file: by header angle or role."""
+    role = str(hdr.get("role", "")).lower()
+    return (hdr.get("angle") in ("against", "red_team")
+            or "adversarial" in role or "redteam" in role or "red-team" in role)
+
+
+GAP_LABEL_RE = re.compile(r"^\s*[-*]\s*\**\s*([A-Za-z0-9]+(?:\s*[,/&]\s*[A-Za-z0-9]+)*)\s*\**\s*[:\u2013\u2014-]")
+GAP_QUERY_RE = re.compile(r"`[^`]+`|\"[^\"]+\"")
+
+
+def parse_gap_lines(gap_text, subclaims):
+    """Return [(label_subclaims, line_text)] for Gaps bullets that start with a sub-claim label."""
+    out = []
+    for ln in gap_text.splitlines():
+        m = GAP_LABEL_RE.match(ln)
+        if not m:
+            continue
+        labels = [t for t in re.split(r"[\s,/&]+", m.group(1)) if t in subclaims]
+        if labels:
+            out.append((labels, ln))
+    return out
+
+
+def gap_line_problems(text, cfg):
+    """Why a Gaps line fails the dated-query format (empty list = valid)."""
+    date_rx = re.compile(cfg_get(cfg, "lint.date_pattern").strip("^$"))
+    reasons = cfg_get(cfg, "gap_reasons")
+    problems = []
+    if not GAP_QUERY_RE.search(text):
+        problems.append("no query in backticks or double quotes")
+    if not date_rx.search(text):
+        problems.append("no YYYY-MM-DD date")
+    if not any(r in text for r in reasons):
+        problems.append("no reason token (one of " + ", ".join(reasons) + ")")
+    return problems
+
+
+def check_v5_rules(path, hdr, hdr_line, subclaims, rows, gap_text, cfg, findings):
+    ver = header_version(hdr)
+    if ver is None or ver < 5 or not is_antagonist_file(hdr):
+        return
+    if "min_fulltext_antagonistic_per_subclaim" not in cfg or "gap_reasons" not in cfg:
+        return  # the config in use predates v5; nothing to enforce
+    anti = set(cfg_get(cfg, "antagonistic_stances"))
+    blocking_states = cfg_get(cfg, "evidence_chain.blocking_read_states")
+    need = cfg_get(cfg, "min_fulltext_antagonistic_per_subclaim")
+    gaps = parse_gap_lines(gap_text, subclaims)
+    valid_gap_for = set()
+    if cfg.get("gaps_require_dated_queries"):
+        for labels, text in gaps:
+            problems = gap_line_problems(text, cfg)
+            if problems:
+                findings.append(Finding(path, hdr_line, "F14",
+                                        f"Gaps line for {','.join(labels)} is not a dated-query gap: "
+                                        + "; ".join(problems)))
+            else:
+                valid_gap_for.update(labels)
+    else:
+        for labels, _ in gaps:
+            valid_gap_for.update(labels)
+    for s in subclaims:
+        n = sum(1 for r in rows if s in split_subclaims(r["sub_claim"]) and r["stance"] in anti
+                and r["read_status"] not in blocking_states)
+        if n < need and s not in valid_gap_for:
+            findings.append(Finding(path, hdr_line, "F12",
+                                    f"sub-claim {s} has {n} full-text antagonistic row(s) (read_status not in "
+                                    f"{blocking_states}), needs {need}, and no dated-query Gaps line for it"))
+
+
+def cfg_version(cfg):
+    try:
+        return int(str(cfg.get("config_version", "")).strip())
+    except ValueError:
+        return None
+
+
+def numeric_row_reason(row, cfg):
+    """PR-96-01: why a source row counts as numeric/measured (needs a full-text read), else None.
+    Reuses the P03 number-token logic (claim_numbers), so ids/labels/refs/dates and bare years are not counted."""
+    strengths = cfg.get("lint", {}).get("numeric_row_strengths", ["measured"])
+    q = str(row.get("quote", "")).strip()
+    if q.startswith("~"):
+        q = q[1:]
+    nums = claim_numbers(q)
+    if nums:
+        return "quote contains number " + repr(nums[0])
+    if str(row.get("strength", "")).strip() in strengths:
+        return "strength is " + repr(str(row.get("strength")).strip())
+    return None
+
+
+def check_v6_rules(path, hdr, hdr_line, rows, cfg, findings):
+    """F15 unknown header keys, F16 role consistency (#96 b), F17 numeric rows need a full-text read (PR-96-01).
+    Applies only when BOTH the file header and the config in use are config_version >= 6, so v5 and older
+    runs are unaffected."""
+    ver, cver = header_version(hdr), cfg_version(cfg)
+    if ver is None or ver < 6 or cver is None or cver < 6:
+        return
+    if cfg.get("lint", {}).get("numeric_rows_require_fulltext"):
+        bstates = cfg_get(cfg, "evidence_chain.blocking_read_states")
+        for r in rows:
+            why = numeric_row_reason(r, cfg)
+            if why and r["read_status"] in bstates:
+                findings.append(Finding(path, r["_line"], "F17",
+                                        f"row {r['id']} has read_status {r['read_status']} but {why}; "
+                                        "fetch the page and read it (READ-VERBATIM or READ-SUMMARIZER), "
+                                        "or remove the number and the 'measured' strength from this row"))
+    if "header_optional_keys" in cfg.get("lint", {}):
+        known = set(cfg_get(cfg, "lint.header_required_keys")) | set(cfg_get(cfg, "lint.header_optional_keys"))
+        unknown = sorted(k for k in hdr if k not in known)
+        if unknown:
+            findings.append(Finding(path, hdr_line, "F15",
+                                    "header has undeclared keys: " + ", ".join(unknown)
+                                    + " (declare them in lint.header_optional_keys or remove them)"))
+    kinds = cfg.get("role_consistency")
+    if not isinstance(kinds, dict):
+        return
+    role, angle = str(hdr.get("role", "")), hdr.get("angle")
+    # file-name kind vs role and angle
+    name = Path(str(path)).name
+    fkind = next((k for k, v in kinds.items() if re.search(r"-" + re.escape(v["file_kind"]) + r"(?:-|\.)", name)), None)
+    if fkind:
+        spec = kinds[fkind]
+        if role not in spec["roles"]:
+            findings.append(Finding(path, hdr_line, "F16",
+                                    f"file name kind {spec['file_kind']!r} expects header role in {spec['roles']}, got {role!r}"))
+        if angle in spec.get("angles_forbidden", []) or (
+                spec.get("angles_required") and angle not in spec["angles_required"]):
+            findings.append(Finding(path, hdr_line, "F16",
+                                    f"file name kind {spec['file_kind']!r} is inconsistent with header angle {angle!r}"))
+    # source-id role code vs role and angle
+    codes_seen = {}
+    for r in rows:
+        m = re.fullmatch(r"[^-]+-([A-Za-z]+)-S\d+", r["id"])
+        if m:
+            codes_seen.setdefault(m.group(1)[0], r["_line"])
+    for letter, ln in sorted(codes_seen.items()):
+        spec = next((v for v in kinds.values() if letter in v["id_codes"]), None)
+        if spec is None:
+            findings.append(Finding(path, ln, "F16", f"source id role code {letter!r} is not a known role code"))
+            continue
+        if role not in spec["roles"]:
+            findings.append(Finding(path, ln, "F16",
+                                    f"source id role code {letter!r} expects header role in {spec['roles']}, got {role!r}"))
+        if angle in spec.get("angles_forbidden", []) or (
+                spec.get("angles_required") and angle not in spec["angles_required"]):
+            findings.append(Finding(path, ln, "F16",
+                                    f"source id role code {letter!r} is inconsistent with header angle {angle!r}"))
+    if len(codes_seen) > 1:
+        findings.append(Finding(path, hdr_line, "F16", "source ids mix role codes " + ", ".join(sorted(codes_seen))))
+
+
+def version_number(p):
+    m = re.search(r"\.v(\d+)$", p.name)
+    return int(m.group(1)) if m else None
+
+
+def latest_version(base):
+    """Highest base.vN if any exists beside base, else base itself."""
+    base = Path(base)
+    best, best_n = base, -1
+    for c in base.parent.glob(base.name + ".v*"):
+        n = version_number(c)
+        if n is not None and n > best_n:
+            best, best_n = c, n
+    return best
+
+
+def run_findings_files(findings_dir, rid):
+    """Latest version of every base findings file <rid>-*.md in a directory."""
+    d = Path(findings_dir)
+    if not d.is_dir():
+        raise UsageError(f"--findings-dir: {findings_dir} is not a directory")
+    return [latest_version(b) for b in sorted(d.glob(f"{rid}-*.md"))]
+
+
+def parse_findings(lines, cfg):
+    """Quiet parse for tooling (metrics): header, source rows (dicts), verdicts {sub_claim: verdict}, gap lines."""
+    scratch = []
+    hdr, _ = parse_header(lines, cfg, "<parse>", scratch)
+    hdr = hdr or {}
+    rows, verdicts = [], {}
+    for t in parse_tables(lines):
+        h = [c.strip().lower() for c in t["header"]]
+        if h and h[0] == "sub_claim" and "verdict" in h:
+            for _, cells in t["rows"]:
+                if len(cells) >= 2:
+                    verdicts[cells[0]] = cells[1]
+        elif h and h[0] == "id":
+            for _, cells in t["rows"]:
+                if len(cells) == len(SOURCE_COLUMNS):
+                    rows.append(dict(zip(SOURCE_COLUMNS, cells)))
+    subclaims = hdr.get("subclaims") if isinstance(hdr.get("subclaims"), list) else []
+    gaps = parse_gap_lines(section_text(lines, "gaps"), subclaims)
+    return hdr, rows, verdicts, gaps
+
+
+def is_red_team_file(hdr, rows=()):
+    if hdr.get("angle") == "red_team":
+        return True
+    return any(re.fullmatch(r"[^-]+-T[a-z]{1,7}-S\d+", r.get("id", "")) for r in rows)
+
+
+def check_run_red_team(findings_dir, rid, profile, cfg, findings):
+    """R01: a run on a profile listed in red_team_file_required_for_profile needs a T-role file."""
+    required = cfg.get("red_team_file_required_for_profile", [])
+    files = run_findings_files(findings_dir, rid)
+    if profile not in required:
+        return files, False
+    for f in files:
+        hdr, rows, _, _ = parse_findings(read_lines(f), cfg)
+        if is_red_team_file(hdr, rows):
+            return files, True
+    findings.append(Finding(findings_dir, 1, "R01",
+                            f"run {rid} is on profile {profile!r} (requires a red-team file per config "
+                            f"red_team_file_required_for_profile {required}) but none of its {len(files)} findings "
+                            f"file(s) is a red-team (T-role / angle red_team) file"))
+    return files, False
+
+
+def resolve_run_profile(findings_dir, rid, explicit):
+    if explicit:
+        return explicit
+    spec = Path(findings_dir) / f"{rid}-spec.json"
+    try:
+        prof = json.loads(spec.read_text(encoding="utf-8")).get("profile")
+    except (OSError, ValueError, AttributeError):
+        prof = None
+    if not prof:
+        raise UsageError(f"--run {rid}: profile unknown; pass --profile or provide {spec} with a 'profile' key "
+                         f"(findings headers carry no profile field)")
+    return prof
 
 
 def section_text(lines, name):
@@ -405,6 +669,39 @@ def check_verdicts(path, table, subclaims, rows, cfg, findings, hdr_line):
 
 
 # ---------------------------------------------------------------- plan mode
+def claim_numbers(claim):
+    """Numbers in a plan claim that must trace to a cited quote. Skips ids/labels, section refs, ISO dates,
+    years not followed by a unit, code spans, link targets, enumerators, and numbers in the same sentence
+    as (before) a [design:...] tag. Real quantities ("72%", "30 questions", "4.99M") are kept."""
+    s = claim
+    for m in DESIGN_TAG_RE.finditer(claim):
+        cut = max([b.end() for b in re.finditer(r"[.;!?]\s", claim[:m.start()])] + [0])
+        s = s[:cut] + " " * (m.end() - cut) + s[m.end():]
+    for rx in P03_MASK_RES:
+        s = rx.sub(lambda m: " " * len(m.group(0)), s)
+    labels = [(m.start(), m.end()) for m in LABEL_TOKEN_RE.finditer(s)
+              if any(c.isdigit() for c in m.group(0)) and s[m.end():m.end() + 1] != "%"]
+    out = []
+    for m in NUMBER_RE.finditer(s):
+        text = m.group(0).rstrip(",")
+        a = m.start()
+        b = a + len(text)
+        if any(la <= a and b <= lb for la, lb in labels):
+            continue
+        if YEAR_RE.fullmatch(text) and not UNIT_AFTER_RE.match(s[b:]):
+            continue
+        if REF_BEFORE_RE.search(s[:a]):
+            continue
+        if s[b:b + 2].lower() == "xx":
+            continue  # HTTP status class such as 4xx/5xx
+        if s[max(0, a - 1):a] == "(" and s[b:b + 1] == ")" and text.isdigit() and len(text) <= 2:
+            continue
+        if re.fullmatch(r"\s*(?:[-*]\s+)?", s[:a]) and s[b:b + 1] in (".", ")"):
+            continue  # list marker
+        out.append(m.group(0))
+    return out
+
+
 def check_plan(path, lines, cfg, all_rows, findings):
     scan_secrets(path, lines, cfg, findings)
     by_id = {r["id"]: r for r in all_rows}
@@ -435,7 +732,7 @@ def check_plan(path, lines, cfg, all_rows, findings):
             quote_nums = set()
             for r in known:
                 quote_nums.update(x.replace(",", "") for x in NUMBER_RE.findall(r["quote"]))
-            for num in NUMBER_RE.findall(claim):
+            for num in claim_numbers(claim):
                 if num.replace(",", "") not in quote_nums:
                     findings.append(Finding(path, n, "P03",
                                             f"number {num!r} in claim does not appear in any cited row's quote "
@@ -558,6 +855,9 @@ def build_parser():
     p.add_argument("--legacy", action="store_true", help="report counts for pre-schema files; does not grade")
     p.add_argument("--strict", action="store_true", help="treat warnings as errors")
     p.add_argument("--json", action="store_true", help="emit JSON")
+    p.add_argument("--run", metavar="RESEARCH_ID", help="run-level checks (R01) for this research id; needs --findings-dir")
+    p.add_argument("--findings-dir", metavar="DIR", help="directory holding the run's findings files")
+    p.add_argument("--profile", help="profile of the --run (default: 'profile' in <DIR>/<RESEARCH_ID>-spec.json)")
     p.add_argument("--fingerprint", action="store_true", help="print the config fingerprint and exit")
     return p
 
@@ -568,8 +868,10 @@ def run(argv):
     if args.fingerprint:
         print(f"config_version={cfg.get('config_version')} config_sha256={fingerprint}")
         return EXIT_OK, None
-    if not args.findings and not args.check_agents:
-        raise UsageError("give at least one findings file or --check-agents DIR")
+    if bool(args.run) != bool(args.findings_dir):
+        raise UsageError("--run and --findings-dir must be given together")
+    if not args.findings and not args.check_agents and not args.run:
+        raise UsageError("give at least one findings file, --run/--findings-dir or --check-agents DIR")
     findings, rows_all, summaries = [], [], {}
     ids_seen = {}
     for f in args.findings:
@@ -579,6 +881,11 @@ def run(argv):
         else:
             _, rows = check_findings_file(f, lines, cfg, fingerprint, ids_seen, findings)
             rows_all.extend(rows)
+    if args.run:
+        profile = resolve_run_profile(args.findings_dir, args.run, args.profile)
+        run_files, ok = check_run_red_team(args.findings_dir, args.run, profile, cfg, findings)
+        print(f"run {args.run}: profile={profile} files={len(run_files)} red_team_file={'yes' if ok else 'no'}",
+              file=sys.stderr)
     if args.plan:
         if args.legacy:
             raise UsageError("--plan cannot be combined with --legacy")

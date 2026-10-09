@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "config_version": "6",
+  "config_version": "5",
   "profiles": {
     "rapid": {
       "max_calls_per_plan": 6,
@@ -12,7 +12,7 @@
       "verifier_scope": "load_bearing"
     },
     "standard": {
-      "max_calls_per_plan": 32,
+      "max_calls_per_plan": 12,
       "angles": [
         "support",
         "against",
@@ -23,11 +23,11 @@
     }
   },
   "budgets": {
-    "researcher_calls": 8,
-    "adversarial_calls": 8,
-    "red_team_calls": 8,
+    "researcher_calls": 4,
+    "adversarial_calls": 4,
+    "red_team_calls": 4,
     "verifier_calls": 1,
-    "verifier_slack": 4,
+    "verifier_slack": 2,
     "synthesizer_turns": 10,
     "researcher_max_turns": 25,
     "adversarial_max_turns": 25,
@@ -102,13 +102,6 @@
         "SUMMARY",
         "all rows are search[- ]summary"
       ]
-    ],
-    "numeric_rows_require_fulltext": true,
-    "numeric_row_strengths": [
-      "measured"
-    ],
-    "header_optional_keys": [
-      "children"
     ]
   },
   "quote_max_words": 25,
@@ -306,45 +299,5 @@
   "verification": {
     "human_spot_check_count": 2
   },
-  "findings_dir": "scratchpad",
-  "role_consistency": {
-    "researcher": {
-      "file_kind": "researcher",
-      "roles": [
-        "researcher"
-      ],
-      "id_codes": [
-        "R"
-      ],
-      "angles_forbidden": [
-        "red_team"
-      ]
-    },
-    "adversarial": {
-      "file_kind": "adversarial",
-      "roles": [
-        "adversarial-researcher"
-      ],
-      "id_codes": [
-        "A"
-      ],
-      "angles_forbidden": [
-        "red_team"
-      ]
-    },
-    "redteam": {
-      "file_kind": "redteam",
-      "roles": [
-        "adversarial-researcher",
-        "redteam-researcher",
-        "redteam"
-      ],
-      "id_codes": [
-        "T"
-      ],
-      "angles_required": [
-        "red_team"
-      ]
-    }
-  }
+  "findings_dir": "scratchpad"
 }

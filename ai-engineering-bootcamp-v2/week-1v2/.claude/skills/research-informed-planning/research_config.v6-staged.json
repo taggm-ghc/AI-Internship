@@ -12,7 +12,7 @@
       "verifier_scope": "load_bearing"
     },
     "standard": {
-      "max_calls_per_plan": 32,
+      "max_calls_per_plan": 12,
       "angles": [
         "support",
         "against",
@@ -23,11 +23,11 @@
     }
   },
   "budgets": {
-    "researcher_calls": 8,
-    "adversarial_calls": 8,
-    "red_team_calls": 8,
+    "researcher_calls": 4,
+    "adversarial_calls": 4,
+    "red_team_calls": 4,
     "verifier_calls": 1,
-    "verifier_slack": 4,
+    "verifier_slack": 2,
     "synthesizer_turns": 10,
     "researcher_max_turns": 25,
     "adversarial_max_turns": 25,
