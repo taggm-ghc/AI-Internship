@@ -297,10 +297,11 @@ def _is_host(url, cfg):
 
 
 def _result(spdx=None, name=None, url=None, source="none", confidence=0.0, nc=False, nd=False,
-            verdict="hold", reasons=(), read_ok=False, candidates=()):
+            verdict="hold", reasons=(), read_ok=False, candidates=(), family=None, hold_kind=None):
     return {"spdx": spdx, "name": name, "url": url, "source": source, "confidence": confidence,
             "nc": nc, "nd": nd, "verdict_hint": verdict, "ingest_ok": verdict == "ok",
-            "read_ok": read_ok, "reasons": list(reasons), "candidates": list(candidates), "restrictions": []}
+            "read_ok": read_ok, "reasons": list(reasons), "candidates": list(candidates), "restrictions": [],
+            "family": family, "hold_kind": hold_kind}
 
 
 def detect(raw_text_or_html, url, declared=None, cfg=None):
@@ -367,12 +368,18 @@ def _detect_core(raw_text_or_html, url, declared, cfg, texts):
     nc, nd = any(k["nc"] for k in cands), any(k["nd"] for k in cands)
     summary = sorted({k["spdx"] or k["name"] for k in cands})
     if not cands:
-        return _result(reasons=["no licence found"] + reasons, verdict=verdicts["none"])
+        return _result(reasons=["no licence found"] + reasons, verdict=verdicts["none"], hold_kind="none")
     versions = {fam: {k["spdx"] for k in ks if k["spdx"] != fam} for fam, ks in groups.items()}
     if len(groups) > 1 or any(len(v) > 1 for v in versions.values()):
         why = f"conflicting licences on one page: {summary}"
+        cv = verdicts["conflict"]
+        if nd:  # an ND claim in a conflict is still ND: the stricter verdict wins (incident 2026-10-09)
+            cv = max(cv, cfg["nd_policy"], key=VERDICT_RANK.get)
+            why += "; one claim is ND"
+        clean = all(k["verdict"] == "ok" for k in cands) and not nd
         return _result(confidence=min(k["confidence"] for k in cands), nc=nc, nd=nd, source="page",
-                       verdict=verdicts["conflict"], reasons=[why] + reasons, candidates=summary)
+                       verdict=cv, reasons=[why] + reasons, candidates=summary,
+                       hold_kind="conflict" if clean and cv == "hold" else None)
 
     best = max(cands, key=lambda k: (k["confidence"], k["spdx"] is not None and k["spdx"] != k["family"]))
     verdict = max((k["verdict"] for k in cands), key=VERDICT_RANK.get)
@@ -388,9 +395,12 @@ def _detect_core(raw_text_or_html, url, declared, cfg, texts):
             reasons.append(f"NC/ND licence ({'nd' if nd else 'nc-only'} policy {policy_v}): not ingestible; research-only reading may be allowed")
     source = best["source"]
     flagged_host = source == "page-host" or (source == "declared" and (host or decl_host))
+    hold_kind = None
     if flagged_host:
-        verdict = verdicts["host"]
+        # a host flag may raise a verdict but never lower it (ND reject must stay reject)
+        hold_kind = "host" if verdict == "ok" and verdicts["host"] == "hold" else None
+        verdict = max(verdict, verdicts["host"], key=VERDICT_RANK.get)
         reasons.append("host-sourced licence metadata is unreliable; human review required")
     read_ok = verdict == "ok" or (bool(nc or nd) and not flagged_host)
     return _result(best["spdx"], best["name"], best["url"], source, best["confidence"], nc, nd, verdict,
-                   reasons, read_ok, summary)
+                   reasons, read_ok, summary, family=best["family"], hold_kind=hold_kind)

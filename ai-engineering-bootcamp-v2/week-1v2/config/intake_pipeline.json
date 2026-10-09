@@ -14,7 +14,8 @@
     "policy": "gate0_policy_reject",
     "fetch": "gate1_fetch_error",
     "extract": "gate2_extract_reject",
-    "internal": "gate_internal_error"
+    "internal": "gate_internal_error",
+    "audit": "gate_audit_error"
   },
   "spdx_safe_regex": "^[A-Za-z0-9.+-]{1,64}$",
   "vetted_subdir": "vetted"

@@ -1,0 +1,25 @@
+{
+  "_comment": "Verify-only mode and licence-observation settings (items #96 H-21, #97). callers: deny by default; each id maps to a file path (relative to the week-1v2 directory) and a sha256 pin of that file; vet() checks the calling frame's __file__ and its hash. A null sha256 means registered-but-not-yet-built and is always denied. Update a pin after every edit of the caller file. This is an integrity check only (callers share the OS user; D-025). portal_map: host suffix -> portal id (empty until #71's portal list is wired; else the registrable domain is used).",
+  "callers": {
+    "check_quotes": {"path": "../../p3m3/check_quotes.py", "sha256": "c85bfceddb3507477a7c18496df10e095227d0b920438740138786c093045a87"},
+    "xfam_verifier": {"path": "../../p3m3/xfam_verifier.py", "sha256": null}
+  },
+  "verify_max_span_words": 25,
+  "verify_max_releases": 20,
+  "verify_max_calls": 200,
+  "verify_ttl_s": 600,
+  "audit_subdir": "audit",
+  "release_audit_file": "verify_releases.jsonl",
+  "observation_file": "licence_observations.jsonl",
+  "observation_max_bytes": 5242880,
+  "observation_keep": 3,
+  "licence_observations_db_enabled": false,
+  "licence_observations_db_timeout_ms": 2000,
+  "portal_map": {},
+  "second_level_markers": ["co", "com", "org", "ac", "gov", "edu", "net"],
+  "reason_codes": {
+    "audit": "gate_audit_error",
+    "caller_denied": "gate_verify_caller_denied",
+    "bad_purpose": "gate_verify_bad_purpose"
+  }
+}

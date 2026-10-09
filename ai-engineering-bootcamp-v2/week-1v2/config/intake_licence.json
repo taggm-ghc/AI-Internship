@@ -53,6 +53,22 @@
         "open[\\s\\-]access"
       ],
       "reason": "licence text restricts use to paid/for-fee access"
+    },
+    {
+      "id": "no-derivatives-prose",
+      "name": "No-derivatives restriction in prose",
+      "reject_regexes": [
+        "(?:may|can|must|shall)\\s+not\\b[^.\\n]{0,80}\\bderivative\\s+(?:works?|versions?)",
+        "(?<![A-Za-z])no\\s+derivative\\s+(?:works?|versions?)",
+        "(?:may|can|must|shall)\\s+not\\s+(?:be\\s+)?(?:modify|modified|alter|altered|adapt|adapted)\\s+(?:this|the|these)\\s+(?:work|text|content|material|document)"
+      ],
+      "hold_regexes": [],
+      "permit_regexes": [
+        "(?:may|can)\\s+(?:freely\\s+)?(?:modify|adapt|create\\s+derivative)",
+        "(?<!no\\s)(?<!not\\s)derivative\\s+works?\\s+(?:are|is)\\s+(?:permitted|allowed|welcome)",
+        "(?:free|permitted|allowed)\\s+to\\s+(?:modify|adapt|remix)"
+      ],
+      "reason": "licence text forbids derivative works"
     }
   ],
   "cue_window": 80,
