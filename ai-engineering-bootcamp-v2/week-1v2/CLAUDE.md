@@ -16,6 +16,11 @@ distinct risk surface from the app's own ingestion/retrieval defenses.
   string to any external destination** — not a URL, not a paste, not a
   commit, not a log line, for any stated reason. If a task seems to need
   this, stop and ask instead.
+- **No decision threshold ships without a calibration note** (cutoff,
+  floor, cap, rank, score): the real data it was measured on, the spread
+  of values seen, why this value, and what would change it. Thresholds
+  signed off on fake fixtures alone are not calibrated (VERA item #84,
+  F84-1/F84-5; adopted by R1 2026-10-08).
 - **Confirm before a destructive direct-SQL operation**, even though this
   environment has genuine `DELETE`/`UPDATE`/`DROP`-capable DB access. A
   targeted, scoped `DELETE` cleaning up test data created in the same
@@ -78,10 +83,12 @@ distinct risk surface from the app's own ingestion/retrieval defenses.
     step 5 now includes adversarial search (5a), findings files (5b),
     independent citation verification (5c) and a lint gate (5d, run
     `check_research_log.py --config research_config.json` on the findings; a
-    non-zero exit blocks the step). The four agents in the repo-root
+    non-zero exit blocks the step). The five agents in the repo-root
     `.claude/agents/` (`researcher`, `adversarial-researcher`,
-    `citation-verifier`, `synthesizer`) are experimental and read-only; spawn
-    them by definition name, never as a fork. The lint checks form, not truth.
+    `redteam-researcher`, `citation-verifier`, `synthesizer`) are experimental
+    and read-only; spawn them by definition name, never as a fork. Before each
+    spawn, run `p3m3/check_spawn_bindings.py --agent <name>` and spawn only on
+    exit 0 (#93). The lint checks form, not truth.
 
 ## The main agent orchestrates and delegates
 
