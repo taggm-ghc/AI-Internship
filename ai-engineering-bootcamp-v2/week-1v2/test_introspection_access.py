@@ -173,7 +173,32 @@ class DebugAccess(_Base):
         self.use_key(DIGEST)
         self.client.get("/debug/events", headers={"X-Debug-Key": WRONG_KEY})
         denied = [p for k, p in self.events if k == "debug_denied"]
-        self.assertEqual(denied, [{"path": "/debug/events", "client_ip": "testclient"}])
+        self.assertEqual(len(denied), 1)
+        self.assertEqual(set(denied[0]), {"path", "ip_version", "scope", "source_tag"})
+        self.assertEqual(denied[0]["path"], "/debug/events")
+        self.assertNotIn("client_ip", denied[0])
+
+    def test_denial_event_never_stores_raw_ip_d028(self):
+        """D-028 regression: a sentinel address must not appear in the stored
+        event or in the keyed /debug/events view, yet repeats stay linkable."""
+        self.use_key(DIGEST)
+        sentinel = "203.0.113.77"
+        main_hdr = {"X-Debug-Key": WRONG_KEY}
+        orig = main.get_remote_address
+        main.get_remote_address = lambda request: sentinel
+        try:
+            self.client.get("/debug/events", headers=main_hdr)
+            self.client.get("/debug/events", headers=main_hdr)
+        finally:
+            main.get_remote_address = orig
+        denied = [p for k, p in self.events if k == "debug_denied"]
+        self.assertEqual(len(denied), 2)
+        self.assertEqual(denied[0]["source_tag"], denied[1]["source_tag"])
+        self.assertEqual((denied[0]["ip_version"], denied[0]["scope"]), (4, "non-public"))  # TEST-NET-3 is not globally routable
+        self.assertNotIn(sentinel, json.dumps(denied))
+        self.assertNotIn("203.0.113", json.dumps(denied))
+        keyed = self.client.get("/debug/events", headers={"X-Debug-Key": TEST_KEY})
+        self.assertNotIn(sentinel, keyed.text)
 
     def test_failed_attempts_are_rate_limited_and_lock_out_the_right_key(self):
         self.use_key(DIGEST)
@@ -260,7 +285,7 @@ class AgentTrace(_Base):
     def test_wrong_or_unconfigured_key_gives_empty_trace(self):
         self.use_key(DIGEST)
         self.assertEqual(self.ask({"X-Debug-Key": WRONG_KEY})["trace"], [])
-        self.assertIn(("debug_denied", {"path": "/agent", "client_ip": "testclient"}), self.events)
+        self.assertTrue(any(k == "debug_denied" and p["path"] == "/agent" and "client_ip" not in p for k, p in self.events))
         self.use_key(None)
         self.assertEqual(self.ask({"X-Debug-Key": TEST_KEY})["trace"], [])
 

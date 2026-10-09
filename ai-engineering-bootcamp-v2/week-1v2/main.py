@@ -5,6 +5,8 @@ Run:
 """
 
 import hashlib
+import hmac
+import ipaddress
 import logging
 import os
 import re
@@ -624,6 +626,26 @@ def debug_key_valid(request: Request) -> bool:
     return secrets.compare_digest(sent, _DEBUG_KEY_DIGEST)
 
 
+DEBUG_DENIED_SOURCE_TAG_HEX_CHARS = 12
+
+
+def classify_denied_source(raw_address: str) -> dict:
+    """D-028: non-reversible description of a denied client address, so the raw
+    IP never reaches the events table. `source_tag` is a truncated HMAC-SHA256
+    keyed by the digest of DEBUG_API_KEY (an existing non-public setting), so an
+    operator can see repeated denials from one source but cannot recover the
+    address; with no key configured only the coarse class is recorded."""
+    try:
+        ip = ipaddress.ip_address(raw_address)
+        info = {"ip_version": ip.version, "scope": "public" if ip.is_global else "non-public"}
+    except ValueError:
+        info = {"ip_version": None, "scope": "unparsable"}
+    if _DEBUG_KEY_DIGEST is not None:
+        tag = hmac.new(_DEBUG_KEY_DIGEST, raw_address.encode(), hashlib.sha256).hexdigest()
+        info["source_tag"] = tag[:DEBUG_DENIED_SOURCE_TAG_HEX_CHARS]
+    return info
+
+
 def _debug_failure_bucket(request: Request) -> str:
     return f"debug-key-failures:{get_remote_address(request)}"
 
@@ -641,7 +663,7 @@ def _note_debug_failure(request: Request) -> None:
         limiter.limiter.hit(item, bucket)
     logger.warning("Debug access denied on %s", request.url.path)
     try:
-        record_event("debug_denied", {"path": request.url.path, "client_ip": get_remote_address(request)})
+        record_event("debug_denied", {"path": request.url.path, **classify_denied_source(get_remote_address(request))})
     except Exception:
         logger.exception("debug_denied audit event failed to write; denial unaffected")
 
