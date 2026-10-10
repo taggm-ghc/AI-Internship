@@ -1,0 +1,13 @@
+{
+  "_doc": "p3m3 item #99: portable SQL export (schema + data + grants) of the project schemas, read-only accounts only. Paths relative to week-1v2/. No hosts or secrets here: each schema names the env variables that hold its connection, loaded from env_files (values never printed).",
+  "export_root": "~/exports",
+  "env_files": ["../../../ai-eng-bootcamp.vera/.env", ".env.db-accounts", ".env"],
+  "statement_timeout_ms": 300000,
+  "connect_timeout_s": 15,
+  "dir_mode": "0o700",
+  "file_mode": "0o600",
+  "schemas": {
+    "vera_vjay": {"url_env": "VERA_DB_URL_RO"},
+    "internship": {"account_env": "DB_BACKUP_RO_USER", "password_env_prefix": "DB_ACCOUNT_PASSWORD_", "host_env": "DB_HOST", "host_suffix_env": "DB_HOST_EXTERNAL_SUFFIX", "dbname_env": "DB_NAME"}
+  }
+}
