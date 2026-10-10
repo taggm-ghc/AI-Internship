@@ -64,6 +64,7 @@ def ql(value: str) -> str:
 # --------------------------------------------------------------------------- catalog queries
 Q = {
     "user_and_version": "select current_user, current_setting('server_version'), current_setting('server_version_num')",
+    "tx_state": "select current_setting('transaction_read_only'), current_setting('transaction_isolation')",
     "write_privs": """select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace
         where n.nspname=%(s)s and c.relkind in ('r','p','v','m','f') and has_table_privilege(c.oid, %(p)s)""",
     "schema": """select n.oid, pg_get_userbyid(n.nspowner), n.nspacl::text[], obj_description(n.oid,'pg_namespace')
@@ -360,7 +361,7 @@ def conninfo(sconf: dict) -> dict:
     if not account:
         raise ExportBlocked(f"env {acct_env} is unset: no read-only login is provisioned for this schema "
                             f"(owner: R1 / DB admin; creating one needs a named request)")
-    pw_env = sconf["password_env_prefix"] + account
+    pw_env = sconf["password_env"] if "password_env" in sconf else sconf["password_env_prefix"] + account
     missing = [v for v in (pw_env, sconf["host_env"], sconf["dbname_env"]) if not os.getenv(v)]
     if missing:
         raise ExportBlocked(f"env {missing} unset for account in {acct_env}")
@@ -420,9 +421,17 @@ Warnings recorded at export time: {json.dumps(ddl['warnings'])}
 """
 
 
-def export_schema(conn, schema: str, out_dir: Path, dmode: int, fmode: int, timeout_ms: int) -> dict:
+def export_schema(conn, schema: str, out_dir: Path, dmode: int, fmode: int, timeout_ms: int,
+                  allow_write_login: bool = False) -> dict:
+    """allow_write_login (R1 decision 8, 2026-10-10, internship): the configured login may hold write privileges
+    (the existing course-service login); the only control is then the READ ONLY, REPEATABLE READ transaction, whose
+    state is verified from the server before any export query runs."""
     cur = conn.cursor()
     cur.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY")
+    cur.execute(Q["tx_state"])
+    ro, iso = cur.fetchone()
+    if ro != "on" or iso != "repeatable read":
+        raise ExportBlocked(f"session is not a READ ONLY REPEATABLE READ transaction (read_only={ro}, isolation={iso}): refusing")
     cur.execute("SELECT set_config('statement_timeout', %s, true)", (str(int(timeout_ms)),))
     # pin name qualification of pg_get_*def() output, as pg_dump does; and fail loudly instead of
     # silently exporting only the rows a row-level-security policy shows this account
@@ -430,7 +439,7 @@ def export_schema(conn, schema: str, out_dir: Path, dmode: int, fmode: int, time
     cur.execute(Q["user_and_version"])
     user, version, version_num = cur.fetchone()
     cur.execute(Q["write_privs"], {"s": schema, "p": WRITE_PRIVS})
-    if cur.fetchone()[0]:
+    if cur.fetchone()[0] and not allow_write_login:
         raise ExportBlocked(f"account {user!r} holds write privileges in {schema!r}: refusing (read-only accounts only)")
 
     def fetch(key, params):
@@ -532,7 +541,8 @@ def main(argv: list[str]) -> int:
             for d in (root, date_dir):
                 d.mkdir(parents=True, exist_ok=True)
                 os.chmod(d, dmode)
-            m = export_schema(conn, schema, date_dir / schema, dmode, fmode, cfg["statement_timeout_ms"])
+            m = export_schema(conn, schema, date_dir / schema, dmode, fmode, cfg["statement_timeout_ms"],
+                              allow_write_login=bool(sconf.get("allow_write_login")))
             total = sum(t["rows"] for t in m["tables"].values())
             print(f"[{schema}] exported {len(m['tables'])} tables, {total} rows -> {date_dir / schema}")
             for w in m["warnings"]:

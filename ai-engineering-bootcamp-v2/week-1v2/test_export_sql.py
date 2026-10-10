@@ -133,11 +133,15 @@ def test_redact_hides_host():
 
 
 class FakeCursor:
-    def __init__(self, write_privs=0):
-        self.write_privs, self._last = write_privs, None
+    def __init__(self, write_privs=0, tx=("on", "repeatable read")):
+        self.write_privs, self._last, self.tx, self.executed = write_privs, None, tx, []
 
     def execute(self, sql, params=None):
         self._sql, self._params = sql, params
+        self.executed.append(sql)
+        if sql == ex.Q["tx_state"]:
+            self._last = [self.tx]
+            return
         if sql == ex.Q["user_and_version"]:
             self._last = [("demo_ro", "18.6", "180006")]
         elif sql == ex.Q["write_privs"]:
@@ -243,3 +247,36 @@ def test_redact_hides_configured_values_and_ips():
     e = Exception("invalid dsn: postgresql://u:s3cretpw@db.internal.example:5432/x at 10.0.0.7")
     out = ex.redact(e, ("postgresql://u:s3cretpw@db.internal.example:5432/x",))
     assert "s3cretpw" not in out and "10.0.0.7" not in out
+
+
+def test_write_login_allowed_only_with_flag_and_runs_read_only(tmp_path):
+    cur = FakeCursor(write_privs=3)
+    m = ex.export_schema(FakeConn(cur), SCHEMA, tmp_path / "w", 0o700, 0o600, 1000, allow_write_login=True)
+    assert m["tables"]
+    assert cur.executed[0] == "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY"
+    assert cur.executed.index(ex.Q["tx_state"]) < cur.executed.index(ex.Q["write_privs"])
+    # nothing but SELECT / COPY TO / SET TRANSACTION / set_config is ever executed
+    for q in cur.executed:
+        assert q.lstrip().split()[0].upper() in ("SET", "SELECT", "WITH"), q
+
+
+@pytest.mark.parametrize("tx", [("off", "repeatable read"), ("on", "read committed")])
+def test_session_not_read_only_snapshot_is_refused(tmp_path, tx):
+    with pytest.raises(ex.ExportBlocked, match="READ ONLY REPEATABLE READ"):
+        ex.export_schema(FakeConn(FakeCursor(write_privs=3, tx=tx)), SCHEMA, tmp_path / "n", 0o700, 0o600, 1000,
+                         allow_write_login=True)
+    assert not (tmp_path / "n").exists()
+
+
+def test_internship_config_uses_course_service_login_with_flag():
+    cfg = json.loads((Path(__file__).resolve().parent / "config" / "sql_export.json").read_text())
+    s = cfg["schemas"]["internship"]
+    assert s["account_env"] == "DB_ACCOUNT" and s["password_env"] == "DB_PASSWORD" and s["allow_write_login"] is True
+    assert "allow_write_login" not in cfg["schemas"]["vera_vjay"]
+
+
+def test_conninfo_password_env(monkeypatch):
+    for k, v in {"A": "svc", "PW": "pw", "H": "h", "S": ".x", "D": "db"}.items():
+        monkeypatch.setenv(k, v)
+    ci = ex.conninfo({"account_env": "A", "password_env": "PW", "host_env": "H", "host_suffix_env": "S", "dbname_env": "D"})
+    assert ci["user"] == "svc" and ci["password"] == "pw" and ci["host"] == "h.x"

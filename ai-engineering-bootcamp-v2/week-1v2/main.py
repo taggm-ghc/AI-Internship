@@ -721,7 +721,7 @@ def _guard_ingest(request: Request, text: str) -> tuple[dict, dict]:
             status_code=422,
             detail=f"rejected: {flags['invisible_unicode_chars']} invisible/zero-width Unicode character(s) found -- no legitimate use in plain text, always blocked",
         )
-    extra = {"client_ip": get_remote_address(request), "authenticated": authenticated}
+    extra = {**classify_denied_source(get_remote_address(request)), "authenticated": authenticated}
     if flags:
         extra["adversarial_flags"] = flags
     return extra, flags
@@ -1149,7 +1149,7 @@ def _ingest_or_stage(
     if exists:
         staged = stage_document_version(
             target_id, text, metadata, provenance, provenance["content_sha256"],
-            flags, extra_event_fields["client_ip"], authenticated,
+            flags, extra_event_fields.get("source_tag"), authenticated,  # D-028: keyed tag in the client_ip text column, never the raw IP
         )
         if staged.get("duplicate"):
             return finish(IngestResponse(document_id=target_id, chunks_indexed=0, status="duplicate", version=None, accepted=None), False)
@@ -1300,7 +1300,7 @@ def post_accept_ingest_version(request: Request, body: AcceptVersionRequest) -> 
         raise HTTPException(status_code=404, detail=f"document_id {body.document_id!r} has no version {body.version}")
     if "invisible_unicode_chars" in detect_adversarial_content(version_row["text_content"] or ""):
         raise HTTPException(status_code=422, detail="rejected: version contains invisible Unicode characters; filters apply to every caller")
-    extra_event_fields = {"client_ip": get_remote_address(request), "authenticated": True}
+    extra_event_fields = {**classify_denied_source(get_remote_address(request)), "authenticated": True}
     try:
         chunks_indexed = _accept_version_now(
             body.document_id, body.version, version_row["text_content"], version_row["metadata"],

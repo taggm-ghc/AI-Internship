@@ -13,7 +13,7 @@
   "observation_file": "licence_observations.jsonl",
   "observation_max_bytes": 5242880,
   "observation_keep": 3,
-  "licence_observations_db_enabled": false,
+  "licence_observations_db_enabled": true,
   "licence_observations_db_timeout_ms": 2000,
   "portal_map": {},
   "second_level_markers": ["co", "com", "org", "ac", "gov", "edu", "net"],

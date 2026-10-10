@@ -50,12 +50,22 @@ def vet(cfg, body, **kw):
     return pipeline.vet("https://example.org/a", opener=lambda q: Resp(body), resolver=lambda h, p: [PUB], cfg=cfg, **kw)
 
 
-def test_flag_default_off():
+def test_shipped_config_flag_on_u03():
+    """U03 (R1 2026-10-10): the shipped config enables the DB path."""
     v = verify.load_config()
-    assert v["licence_observations_db_enabled"] is False and verify.db_enabled(v) is False
+    assert v["licence_observations_db_enabled"] is True and verify.db_enabled(v) is True
+
+
+def test_shipped_flag_path_reaches_stub_only(cfg, monkeypatch):
+    """With the shipped config (no override) a vet reaches the DB inserter exactly once; stubbed, so no production write."""
+    seen = []
+    monkeypatch.setattr(verify, "insert_observation_db", lambda rec, vcfg, engine=None: seen.append(rec))
+    assert vet(cfg, benign(CC))["verdict"] == "allow"
+    assert len(seen) == 1
 
 
 def test_flag_off_makes_no_db_call(cfg, monkeypatch):
+    cfg["verify"] = {**verify.load_config(), "licence_observations_db_enabled": False}
     monkeypatch.setattr(verify, "insert_observation_db", lambda *a, **k: pytest.fail("DB touched with flag off"))
     r = vet(cfg, benign(CC))
     assert r["verdict"] == "allow" and len(lines(cfg, "licence_observations.jsonl")) == 1
