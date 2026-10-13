@@ -43,11 +43,12 @@ PUBLIC_ROUTES = {
     "/ask", "/ask/stream", "/agent", "/stats/summary",
     "/corpus-summary",
     "/ingest", "/ingest/batch", "/ingest-pdf",
-    "/ingest/versions", "/ingest/versions/diff",
+    "/ingest/versions",
     # Public route with its own fail-closed X-Ingest-Key check (not the debug key).
     "/ingest/versions/accept",
 }
-DEBUG_KEYED_ROUTES = {"/debug/retrieve", "/debug/similar-documents", "/debug/events", "/debug/corpus-summary"}
+DEBUG_KEYED_ROUTES = {"/debug/retrieve", "/debug/similar-documents", "/debug/events", "/debug/corpus-summary",
+                      "/ingest/versions/diff"}  # U12: document-text diffs, keyed like /debug/*
 
 
 def _iter_routes(routes):
@@ -126,6 +127,33 @@ DEBUG_REQUESTS = [
     "/debug/events?limit=5",
     "/debug/corpus-summary?sample_size=2",
 ]
+
+
+DIFF_URL = "/ingest/versions/diff?document_id=doc-a&from_version=1&to_version=2"
+
+
+class IngestDiffAccess(_Base):
+    """U12: /ingest/versions/diff is keyed with the debug key. DB stubbed."""
+
+    def setUp(self):
+        super().setUp()
+        rows = {1: {"text_content": "a\nb"}, 2: {"text_content": "a\nc"}}
+        patcher = mock.patch.object(main, "get_document_version", lambda doc_id, v: rows.get(v))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.use_key(DIGEST)
+
+    def test_no_key_is_401(self):
+        self.assertEqual(self.client.get(DIFF_URL).status_code, 401)
+
+    def test_wrong_key_is_401(self):
+        r = self.client.get(DIFF_URL, headers={main.DEBUG_KEY_HEADER: WRONG_KEY})
+        self.assertEqual(r.status_code, 401)
+
+    def test_right_key_is_200(self):
+        r = self.client.get(DIFF_URL, headers={main.DEBUG_KEY_HEADER: TEST_KEY})
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("unified_diff", r.json())
 
 
 class DebugAccess(_Base):

@@ -2,7 +2,7 @@
 
 This folder is the course service (the weekly assignments; the capstone, VERA,
 is a separate repository) built across the bootcamp's first four
-sessions, one FastAPI app and one Streamlit UI growing week by week:
+sessions (Week 5 maps to VERA or is Path B: [Week 5](#week-5-maps-to-vera)), one FastAPI app and one Streamlit UI growing week by week:
 
 | Session | What it adds | Where |
 |---|---|---|
@@ -32,7 +32,7 @@ are traceable.
 | POST | `/ask/stream` | Same retrieval, streamed freeform text (no citations) |
 | POST | `/agent` | LangGraph agent with a `search_corpus` tool |
 | POST | `/ingest`, `/ingest/batch`, `/ingest-pdf` | Add documents to the corpus |
-| GET/POST | `/ingest/versions`, `/ingest/versions/diff`, `/ingest/versions/accept` | Review and accept staged re-ingests |
+| GET/POST | `/ingest/versions`, `/ingest/versions/diff` (X-Debug-Key), `/ingest/versions/accept` | Review and accept staged re-ingests |
 | GET | `/stats/summary` | Public, aggregate-only operational stats (counts, rates, latency percentiles, cost totals; small cells suppressed) |
 | GET | `/corpus-summary` | Public, read-only corpus orientation (document count plus a corpus-level description; no titles, URLs, chunks, events or IPs) |
 | GET | `/debug/retrieve` | Raw retrieval (top-k chunks + distances), no LLM involved. **Requires `X-Debug-Key`** |
@@ -365,9 +365,10 @@ uvicorn stages.stage_3_guardrails_and_observability:app --host 127.0.0.1 --port 
 | `python smoke_test.py` | Starts the API, checks `/health` and `/docs` | No tokens |
 | `python -m unittest test_citations test_pdf_extract test_db_admin_fallback` | APA formatter and marker rendering; PDF extraction; DB URL built from parts + admin-login retry (32 tests) | No network, no DB |
 | `python -m pytest -q test_quote_guard.py test_introspection_access.py test_item62_ui.py` | Item #62: 300-char quote guard, `X-Debug-Key` access on every `/debug/*` route plus the route inventory, `/stats/summary` suppression, the Streamlit key widget (55 tests; with the three suites above, 87 under pytest). `pytest` is pinned in `requirements-dev.txt` (not in `requirements.txt`; the Docker image never installs it). Verified 2026-10-02: 32 unittest and 55 pytest tests pass locally | No network, no DB |
+| `python -m pytest -q` (from `week-1v2/`; use the `.venv` interpreter) | The whole suite, run with no live flags: 596 passed, 5 skipped on 2026-10-12 (the skips are the live-server tests in `test_all_stages.py` and `tests/test_api_triage.py`). It touches the shared Postgres through the app path only | No billable calls; needs the DB settings |
 | `python scripts/test_db_connection.py` | The app's own DB connection (which account, which host) | One `select 1` |
 | `python scripts/provision_db_accounts.py --verify` | Least-privilege accounts: privilege matrix, no admin rights, logins work | Read-only |
-| `python test_all_stages.py` | Live `/ask` contract: structured answer, guardrail retry, model override, cost scaling | Real calls, well under a cent (5 calls ≈ $0.0006) |
+| `python test_all_stages.py` | Live `/ask` contract: structured answer, guardrail retry, model override, cost scaling. Under pytest it runs only with `API_BASE_URL=... pytest --run-live-stages`; setting `API_BASE_URL` alone is a deprecated alias that works until 2026-10-25 and warns; otherwise it skips | Real calls, well under a cent (5 calls ≈ $0.0006) |
 | `python golden_eval.py [--base-url URL]` | The 9 active golden questions (`config/golden_eval_set.json`; 1 purged entry kept aside): retrieval hit, supported/refusal correctness, content overlap | Real calls via `/ask`; writes request, retrieval and `golden_eval` events to the DB |
 | `python scripts/retrieval_eval.py` | Retrieval eval (`config/retrieval_eval_set.json`, 195 active entries after the 2026-10-01 purge; the retrieval evidence below was measured on the earlier 200-question set): dense vs. hybrid vs. reranked, paired t-test + permutation test, per-stratum | Real embedding + reranker calls; read-only against the DB |
 | `python scripts/rerank_gate_calibration.py` | Calibrates the reranker's high-confidence skip threshold from saved eval results | Embedding calls only |
@@ -732,9 +733,9 @@ DB-side in `internship.artifacts`.
   `citations.py` shows a licence note. Live behaviour is UNVERIFIED.
 - **Item #62** (debug key, `/stats/summary`, quoting): plan in the local
   planning record; pushed 2026-10-04 but NOT deployed yet (deploys are manual). `DEBUG_API_KEY` must be set on the Render API service
-  before deploy (fail closed locks the routes otherwise). Open: `GET
-  /ingest/versions/diff` is public and returns document-text diffs; R1 has
-  not decided to restrict it. **Item #63** (purge and licence gate) is recorded there too.
+  before deploy (fail closed locks the routes otherwise). `GET
+  /ingest/versions/diff` now requires `X-Debug-Key` (U12, decided under R1's
+  delegation; R1 H3 2026-10-11). **Item #63** (purge and licence gate) is recorded there too.
 
 ### Retrieval decisions, and the evidence behind them
 
@@ -891,6 +892,10 @@ values, and no database accounts beyond those described there should be created.
 The `RAG_*` switches are read at request time, so changing one in the host's
 dashboard and restarting is enough; no redeploy is needed.
 
+## Week 5 (maps to VERA)
+
+From this repository's side, every Week 5 item maps to VERA (the separate capstone repository) or is Path B; no Week 5 feature is built in the course service. The skills used here are in `.claude/skills/` (`rag-scaffold`, `research-informed-planning`).
+
 ## File Map
 
 ```text
@@ -916,13 +921,15 @@ week-1v2/
 ├── pages/                      # Observability Dashboard, Health, Setup, Agent, Trace Eval
 ├── api_client.py, ui_theme.py, ui_widgets.py            # Shared Streamlit helpers
 ├── config/                     # model selection/pricing, golden set, retrieval eval set, citation metadata
-├── migrations/                 # Postgres schema (001 operational store, 002 trace eval, 003 eval run label)
+├── migrations/                 # Postgres schema (001 operational store, 002 trace eval, 003 eval run label, 006 source identity)
 ├── scripts/                    # evals, calibration, metadata builder, DB account provisioning, curriculum demos, pricing tools
 ├── stages/                     # Session 1 teaching references
+├── conftest.py                 # `base` fixture and the `--run-live-stages` gate for live-server tests
+├── tests/                      # pytest suites (UI host-leak, error-leak, API triage (live), trace eval page, live gate)
 ├── smoke_test.py, golden_eval.py, test_*.py   # test_gpt6_astra.py is a live-API smoke script, not a unit test
 ├── build-in-public-post.md     # Draft post text (not part of the service)
 ├── sample_docs/                # Northwind course material (stays in the repo)
-├── .claude/skills/             # Project Claude Code skills (rag-scaffold, research-informed-planning, which now has a findings-file lint script; its four experimental agents are in the repo-root .claude/agents/)
+├── .claude/skills/             # Project Claude Code skills (rag-scaffold, research-informed-planning, which now has a findings-file lint script; the repo-root .claude/agents/ holds 9 agent files, including the read-only research agents)
 └── ingestion_quarantine/       # Local source PDFs, duplicate staging copy (gitignored, not deployed; see its README)
 ```
 
@@ -948,8 +955,8 @@ week-1v2/
   and verify scripts cannot run as written (`operational_store.py` only
   mentions the retired store in its docstring). Cleanup awaits R2 approval (p3m3 item #63, open question 7).
 - **Item #62 not deployed.** Pushed 2026-10-04 and unit-tested; deploy
-  requires `DEBUG_API_KEY` on the API service first. `GET /ingest/versions/diff` is still public
-  and returns document-text diffs (undecided).
+  requires `DEBUG_API_KEY` on the API service first. `GET /ingest/versions/diff` now requires
+  `X-Debug-Key` (U12, 2026-10-11).
 - **Ingest filters.** The `INGEST_API_KEY` fail-open default is closed and
   injection phrasing is labelled non-actionable rather than exempted by key
   (items #60-ingest, #65); see Security.

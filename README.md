@@ -8,16 +8,17 @@ This repository contains code snippets, notebooks, and exercises for various AI 
 Build a typed LLM service step by step: FastAPI + structured output (Session 1), RAG with PostgreSQL/pgvector and APA 7 citations (Session 2), LangGraph agent with tool orchestration (Session 3), and a TRACE evaluation system (Session 4).
 
 **Sessions 1–3 (Weeks 1–3):** complete.
-**Session 4 (Week 4): TRACE evaluation system** — in progress; the Maven submission is due Oct 7, 2026.
+**Session 4 (Week 4): TRACE evaluation system** — built; the Oct 7, 2026 Maven deadline has passed (submission status is tracked outside this repository).
 - Phases 1–4: discover failure patterns in 20 traces (the course-provided Harmony Apartments set), codify them as three deterministic checks, run the baseline, and build and measure a targeted fix.
 - Measured baseline (2026-10-01): 6 of 20 traces pass all three checks (30%), which is below the 85% ship threshold, so the decision is BLOCK. The per-check results are 8/20, 17/20 and 18/20.
 - Fix: a deterministic post-generation grounding gate (`grounding_gate.py`). Measured re-run (2026-10-04): 20/20 by the same three checks, "SHIP by checks, see caveats". Caveats: the gate was designed on the same 20 traces (overfitting risk, no held-out set), and ungrounded replies are replaced wholesale. Earlier "60%" and "85% after fix" figures were simulated, never measured, and are retracted.
-- Status (2026-10-04): code pushed and deployed, including the Trace Eval page and debug-key gating. Screenshots and the post are still to do.
-- Phase 5 (Ship): Maven submission.
+- Status: the Trace Eval page was deployed 2026-10-04; the debug-key gating (#62) is pushed but not yet deployed. Later changes (e.g. keyed `/ingest/versions/diff`, the `--run-live-stages` test gate) are in the working tree, not yet committed, and the course service has not been redeployed with them.
+- **Week 5:** from this repository's side every 5.x item maps to VERA or is Path B; no Week 5 feature is built here (see the course README).
 
 - **Location:** `ai-engineering-bootcamp-v2/week-1v2/`
 - **Planning:** kept in a local, gitignored planning record (`p3m3/`) that is not part of this public repository.
 - **Get Started:** see [ai-engineering-bootcamp-v2/README.md](ai-engineering-bootcamp-v2/README.md)
+- **Tests:** from `week-1v2/`, run `python -m pytest -q` with the `.venv` interpreter; live-server tests skip unless you pass `--run-live-stages` (details in the course README).
 
 ### AI Builders Bootcamp
 Practical builder sessions for agent workflows, AI evals, and production tooling.
@@ -36,7 +37,7 @@ Learn to build production-ready multi-agent systems using LangGraph.
 ### VERA: Capstone Project
 Verifiable Evidence-based Research Answers: a provenance-grounded research assistant that aims to produce auditable, evidence-backed answers.
 
-VERA is the bootcamp capstone. It is a separate project in its own repository and is not included here; the weekly course assignments (Sessions 1–4) were built in `ai-engineering-bootcamp-v2/week-1v2/`. It is under active development; nothing here documents its status or schedule.
+VERA is the bootcamp capstone. It is a separate project in its own repository and is not included here; the weekly course assignments (Sessions 1–4) were built in `ai-engineering-bootcamp-v2/week-1v2/`. It is under active development; nothing here documents its status or schedule. This repository's root `.claude/agents/` holds 9 agent definitions used for research and planning here; they are not VERA's code.
 
 ### AI Engineering Bootcamp (v1)
 Earlier bootcamp modules — RAG, ADK/LangGraph agents, eval monitoring, and more.

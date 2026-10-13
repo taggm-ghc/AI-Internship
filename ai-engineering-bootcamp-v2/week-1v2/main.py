@@ -1250,14 +1250,17 @@ class VersionDiffResponse(BaseModel):
     unified_diff: str
 
 
-@app.get("/ingest/versions/diff")
+@app.get("/ingest/versions/diff", dependencies=[Depends(require_debug_key)])
 def get_ingest_versions_diff(document_id: str, from_version: int, to_version: int) -> VersionDiffResponse:
     """p3m3 item #33 -- "examine the evolution of changes between document
     versions." difflib is stdlib -- no new dependency for this. Serves two
     uses: a human reviewer sees exactly what changed before accepting a
     staged version, and general lineage forensics independent of
     accept/reject (every version, including the original, stays diffable
-    against any other, forever)."""
+    against any other, forever).
+
+    U12 (2026-10-11, H3 under R1 delegation): returns stored document text, so
+    it requires X-Debug-Key like /debug/*; 401 for missing/wrong/unconfigured."""
     import difflib
 
     from_row = get_document_version(document_id, from_version)
