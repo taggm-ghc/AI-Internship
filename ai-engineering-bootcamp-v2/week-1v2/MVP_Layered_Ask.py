@@ -4,6 +4,10 @@ Run:
   streamlit run MVP_Layered_Ask.py
 """
 
+import hashlib
+import logging
+from urllib.parse import urlsplit
+
 import pandas as pd
 import altair as alt
 import streamlit as st
@@ -11,15 +15,24 @@ import streamlit as st
 from api_client import (
     earliest_failure,
     failure_reason,
-    triage_api,
+    triage_api as _raw_triage_api,
     build_payload,
     build_stream_payload,
-    call_json,
-    call_stream,
+    call_json as _raw_call_json,
+    call_stream as _raw_call_stream,
+    debug_headers,
+    default_api_base_url,
     render_curl,
 )
+from debug_key_widget import debug_key_sidebar_widget
+from public_view import (
+    AUTO_PROVIDER_LABEL,
+    provider_choices,
+    public_ask_view,
+    public_stream_view,
+)
 from ui_theme import apply_custom_css
-from ui_widgets import base_url_sidebar_widget, references_widget
+from ui_widgets import references_widget
 from pricing_config import load_model_selection
 
 # Read from config/model-selection.json (the same file main.py reads)
@@ -39,26 +52,9 @@ MODELS = _model_selection.supported_models if _model_selection else ["gpt-4o-min
 # drifting copies. This file now only defines Streamlit UI rendering.
 
 
-def render_attempts(data: dict | str) -> None:
-    if not isinstance(data, dict):
-        return
-
-    attempts = data.get("attempts", [])
-    if not attempts:
-        return
-
-    st.markdown("### Attempts")
-    for attempt in attempts:
-        status = "passed" if attempt.get("ok") else "failed"
-        title = f"Attempt {attempt.get('attempt')}: {attempt.get('step')} ({status})"
-        with st.expander(title, expanded=True):
-            st.write(attempt.get("message"))
-            if attempt.get("raw_output"):
-                st.markdown("**Raw model output**")
-                st.code(attempt["raw_output"], language="json")
-            if attempt.get("validation_error"):
-                st.markdown("**Validation error**")
-                st.code(attempt["validation_error"], language="text")
+# Item 9 (2026-10-15): render_attempts() was removed. It printed raw model
+# output, validation errors and internal step codes, which the public Ask page
+# must never show (see public_view.py).
 
 
 def format_cost(value: float | None) -> str:
@@ -75,61 +71,25 @@ def format_cost(value: float | None) -> str:
     return f"{value:.6f}"
 
 
-def render_response_summary(data: dict | str) -> None:
-    if not isinstance(data, dict) or "error" in data:
+def render_response_summary(view) -> None:
+    """Public rendering of a public_view.PublicView (item 9). Shows the answer,
+    the coarse grounding status, a citation count and the sanitized APA
+    references. Model, latency, tokens, cost, chunk ids, confidence, skills and
+    attempts are never rendered here."""
+    if view.kind == "error" or view.kind == "withheld":
+        st.warning(view.message)
         return
 
-    answer = data.get("answer")
-    if isinstance(answer, dict):
-        st.markdown("### Answer")
-        st.write(answer.get("answer", ""))
-        st.caption(
-            f"confidence: {answer.get('confidence')} | "
-            f"sources_needed: {answer.get('sources_needed')}"
-        )
+    st.markdown("### Answer")
+    st.markdown(view.answer_text, unsafe_allow_html=False)
 
-    # Two rows: overview, then the prompt/completion + input/output split
-    # (added 2026-09-14 — AskResponse now returns these separately, not
-    # just the pre-combined tokens_used/cost_usd).
-    row1 = st.columns(3)
-    row1[0].metric("Model", str(data.get("model", "-")))
-    row1[1].metric("Latency", f"{data.get('latency_ms', '-')} ms")
-    row1[2].metric("Total cost", f"${format_cost(data.get('cost_usd'))}")
-
-    row2 = st.columns(4)
-    row2[0].metric("Prompt tokens", str(data.get("prompt_tokens", "-")))
-    row2[1].metric("Completion tokens", str(data.get("completion_tokens", "-")))
-    row2[2].metric("Input cost", f"${format_cost(data.get('input_cost_usd'))}")
-    row2[3].metric("Output cost", f"${format_cost(data.get('output_cost_usd'))}")
-
-    # None unless the serving provider has a free-tier allowance (see
-    # main.py's free_tier_note()) — added 2026-09-14 after a real Groq
-    # free-tier call showed a nonzero cost with nothing signaling it
-    # likely wasn't actually billed money.
-    if data.get("free_tier_note"):
-        st.caption(f"ℹ️ {data['free_tier_note']}")
-
-    # RAG fields, added Week 2 (2026-09-17) — always present on every /ask
-    # response now (see main.py's ask(), 2.21's always-on-retrieval
-    # design), not just when a grounded answer actually resulted.
-    rag_status = data.get("status")
-    if rag_status == "supported":
-        st.success(f"Grounded in retrieved context — {len(data.get('citations', []))} citation(s)")
-        st.caption("Citations (chunk IDs): " + ", ".join(data.get("citations", [])))
-        references_widget(data.get("references", []))
-    elif rag_status == "insufficient":
+    if view.status == "supported":
+        st.success(f"Grounded in retrieved context — {view.citation_count} citation(s)")
+        references_widget(view.references)
+    elif view.status == "insufficient":
         st.warning("Question was topically relevant, but the retrieved context didn't cover it — refused rather than guessed.")
-    elif rag_status == "not_applicable":
+    elif view.status == "not_applicable":
         st.caption("ℹ️ status: not_applicable — retrieval judged this question unrelated to the ingested corpus; answered directly.")
-    st.caption(f"embedding_cost_usd: ${format_cost(data.get('embedding_cost_usd'))}")
-
-    # Static project metadata, added 2026-09-22 — same value on every
-    # response (see main.py's SKILLS_USED), not something this specific
-    # request caused; surfaced here so it's visible in the main Response
-    # view, not just the Raw JSON panel.
-    skills_used = data.get("skills_used")
-    if skills_used:
-        st.caption(f"Skills used (this project's own development): {', '.join(skills_used)}")
 
 
 # LOCAL_INFERENCE_PROVIDER_NAME's value, duplicated here rather than
@@ -269,7 +229,98 @@ st.caption(
     "One final demo endpoint. The separate `stages/` files show how this grows step by step."
 )
 
-base_url = base_url_sidebar_widget()
+# Item 9 (owner correction 2026-10-15): the Ask page has NO browser-editable
+# API endpoint. Requests go only to the endpoint the server is configured with
+# (API_BASE_URL env / local URL file, read through api_client.default_api_base_url).
+# The "Custom API base URL" box (ui_widgets.base_url_sidebar_widget) is no longer
+# rendered here; no trusted server-side override exists, so there is none.
+_logger = logging.getLogger("ask_page")
+REQUEST_FAILED_MESSAGE = "The request could not be completed. Try again later."
+
+
+def call_json(*args, **kwargs):
+    """api_client.call_json, but any exception (httpx.InvalidURL, transport or
+    JSON errors, anything unexpected) becomes a fixed public failure. Only the
+    exception CLASS NAME goes to the server log, never its text."""
+    try:
+        return _raw_call_json(*args, **kwargs)
+    except Exception as exc:
+        _logger.warning("call_json failed: %s", type(exc).__name__)
+        return 0, {"error": REQUEST_FAILED_MESSAGE}
+
+
+def call_stream(*args, **kwargs):
+    try:
+        return _raw_call_stream(*args, **kwargs)
+    except Exception as exc:
+        _logger.warning("call_stream failed: %s", type(exc).__name__)
+        return 0, "", None, None, [], []
+
+
+def triage_api(*args, **kwargs):
+    try:
+        return _raw_triage_api(*args, **kwargs)
+    except Exception as exc:
+        _logger.warning("triage_api failed: %s", type(exc).__name__)
+        return [{"step": "API check", "ok": False, "detail": REQUEST_FAILED_MESSAGE}]
+
+
+try:
+    base_url = default_api_base_url()
+except Exception as exc:  # unreadable config: calls below fail with the fixed message
+    _logger.warning("default_api_base_url failed: %s", type(exc).__name__)
+    base_url = ""
+
+# Item 9 (2026-10-15): the public page is fail-closed. Manual provider/model
+# selection and the forced-bad-response demo exist for authorized development
+# only. "Authorized" = a debug key typed into the sidebar box AND accepted by
+# the API (the same X-Debug-Key mechanism the Observability and Agent pages
+# use; /debug/events needs it, DEBUG_API_KEY unset locks it). Anything else
+# (no key, wrong key, API unreachable, error) leaves public mode on. The
+# verdict is cached per key so reruns do not re-call the API.
+_debug_key = debug_key_sidebar_widget()
+
+
+def _dev_mode_enabled(key: str, api_base: str) -> bool:
+    """Development mode needs a non-empty key AND the trusted configured API to
+    answer 200 for it. The verdict is bound to sha256(endpoint NUL key): a
+    different endpoint, a different key or a cleared session entry means no
+    verdict, so it is re-verified. At most ONE check is sent per (endpoint, key)
+    per session: every outcome is remembered, reruns never re-send, and a check
+    that could not be completed (0, 429, 5xx, ...) is public with a neutral
+    caption and retried only when the user clicks "Retry key check". NOTE: this
+    page-side limit does not fix the API's shared-IP lockout design (FO-5)."""
+    if not key or not api_base:
+        return False
+    digest = hashlib.sha256((api_base + "\0" + key).encode()).hexdigest()
+    verdicts = st.session_state.setdefault("_dev_mode_verdicts", {})   # digest -> True
+    attempts = st.session_state.setdefault("_dev_mode_attempts", {})   # digest -> last HTTP status
+    if verdicts.get(digest) is True and attempts.get(digest) == 200:
+        return True
+    retry = False
+    if attempts.get(digest) not in (None, 200, 401, 403):
+        st.sidebar.caption("Key could not be checked; try again later.")
+        retry = st.sidebar.button("Retry key check")
+    if digest in attempts and not (retry or attempts[digest] == 200):
+        return False
+    status, _ = call_json("GET", f"{api_base.rstrip('/')}/debug/events?limit=1", headers=debug_headers(key))
+    attempts[digest] = status
+    if status == 200:
+        verdicts[digest] = True
+        return True
+    verdicts.pop(digest, None)
+    if status not in (401, 403):
+        st.sidebar.caption("Key could not be checked; try again later.")
+    return False
+
+
+_dev_mode = _dev_mode_enabled(_debug_key, base_url)
+try:
+    _api_host = urlsplit(base_url).hostname or ""
+except ValueError:
+    _api_host = ""
+if _dev_mode:
+    st.sidebar.caption("Development mode: manual provider and force-bad controls unlocked.")
 
 # p3m3 permanent item #20 — corpus hint, directly motivated by #19: a
 # question the corpus was never going to answer (e.g. "apple pie") can get
@@ -321,7 +372,7 @@ with st.sidebar.expander("📚 What's in the corpus?", expanded=False):
 # seconds the first time; an unreachable API leaves it as [], which both
 # this panel and the selector already handle (selector falls back to
 # "Auto"/"openai" only).
-if "provider_status" not in st.session_state:
+if _dev_mode and "provider_status" not in st.session_state:
     _, _initial_status = call_json("GET", f"{base_url.rstrip('/')}/providers/status")
     st.session_state["provider_status"] = _initial_status if isinstance(_initial_status, list) else []
 
@@ -331,64 +382,66 @@ if "provider_status" not in st.session_state:
 # providers.py's import time, before main.py's load_dotenv() ran) made
 # LAN-local silently never activate even when correctly configured in
 # .env. GET /providers/status costs nothing and never returns key values.
-st.sidebar.markdown("### Provider status")
-if st.sidebar.button("Refresh provider status"):
-    status, providers_data = call_json("GET", f"{base_url.rstrip('/')}/providers/status")
-    if not isinstance(providers_data, list):
-        # p3m3 item #81 (R1 2026-10-07): say why, then check the API itself instead of a bare connection-failure label
-        st.sidebar.error("Provider status unavailable. " + failure_reason(status, providers_data))
-        with st.sidebar.status("Triaging the API connection…", expanded=True) as _triage_box:
-            _steps = triage_api(base_url, "/providers/status")
-            for _s in _steps:
-                st.write(("✅ " if _s["ok"] else "❌ ") + f"{_s['step']}: {_s['detail']}")
-            _first = earliest_failure(_steps)
-            _triage_box.update(label=(f"Earliest failure: {_first['step']}" if _first else "All checks passed"),
-                               state="error" if _first else "complete")
-    else:
-        st.session_state["provider_status"] = providers_data
-        for entry in providers_data:
-            label = entry.get("provider", "?")
-            state = entry.get("status", "?")
-            # state can now be "configured: key_expiring_YYYY-MM-DD" or
-            # "unavailable: key_expired_YYYY-MM-DD" (see
-            # providers.key_expiry_status) — startswith, not ==, so an
-            # expiring-soon key still reads as "working but needs
-            # attention" (🟡) rather than falling into the same gray
-            # bucket as a genuinely unconfigured provider.
-            if state.startswith("configured") and "expiring" in state:
-                icon = "🟡"
-            elif state == "configured":
-                icon = "🟢"
-            else:
-                icon = "⚪"
-            # base_url/compatible_with added 2026-09-14 to GET
-            # /providers/status — None here means "OpenAI SDK's own
-            # default endpoint" (only the terminal openai entry), not
-            # unknown.
-            served_url = entry.get("base_url") or "(OpenAI SDK default)"
-            compat = entry.get("compatible_with", "?")
-            # p3m3 item #82: a missing or expired key links to the provider's own key page (URL from config)
-            _cred_url = str(entry.get("credential_url") or "")
-            _state_text = (f"[{state}]({_cred_url}) — get a key" if _cred_url.startswith("https://")
-                           and state.startswith("unavailable") and ("credential" in state or "key_expired" in state)
-                           else state)
-            line = (
-                f"{icon} **{label}** — {entry.get('model', '?')} ({_state_text})\n\n"
-                f"{served_url} · {compat}-compatible"
-            )
-            # None unless this entry has a free_entitlement_* allowance —
-            # added 2026-09-14, same information as main.py's
-            # free_tier_note, shown here too (not just attached to a live
-            # response) since this panel is the one place meant to answer
-            # "what would using this provider actually cost me."
-            free_amount = entry.get("free_entitlement_amount")
-            if free_amount is not None:
-                line += (
-                    f"\n\nℹ️ {free_amount:g} {entry.get('free_entitlement_unit')}/"
-                    f"{entry.get('free_entitlement_period')} free — its cost_usd "
-                    "won't necessarily reflect money actually billed."
+# Item 9: provider inventory (names, models, hosts) is development-only.
+if _dev_mode:
+    st.sidebar.markdown("### Provider status")
+    if st.sidebar.button("Refresh provider status"):
+        status, providers_data = call_json("GET", f"{base_url.rstrip('/')}/providers/status")
+        if not isinstance(providers_data, list):
+            # p3m3 item #81 (R1 2026-10-07): say why, then check the API itself instead of a bare connection-failure label
+            st.sidebar.error("Provider status unavailable. " + failure_reason(status, providers_data))
+            with st.sidebar.status("Triaging the API connection…", expanded=True) as _triage_box:
+                _steps = triage_api(base_url, "/providers/status")
+                for _s in _steps:
+                    st.write(("✅ " if _s["ok"] else "❌ ") + f"{_s['step']}: {_s['detail']}")
+                _first = earliest_failure(_steps)
+                _triage_box.update(label=(f"Earliest failure: {_first['step']}" if _first else "All checks passed"),
+                                   state="error" if _first else "complete")
+        else:
+            st.session_state["provider_status"] = providers_data
+            for entry in providers_data:
+                label = entry.get("provider", "?")
+                state = entry.get("status", "?")
+                # state can now be "configured: key_expiring_YYYY-MM-DD" or
+                # "unavailable: key_expired_YYYY-MM-DD" (see
+                # providers.key_expiry_status) — startswith, not ==, so an
+                # expiring-soon key still reads as "working but needs
+                # attention" (🟡) rather than falling into the same gray
+                # bucket as a genuinely unconfigured provider.
+                if state.startswith("configured") and "expiring" in state:
+                    icon = "🟡"
+                elif state == "configured":
+                    icon = "🟢"
+                else:
+                    icon = "⚪"
+                # base_url/compatible_with added 2026-09-14 to GET
+                # /providers/status — None here means "OpenAI SDK's own
+                # default endpoint" (only the terminal openai entry), not
+                # unknown.
+                served_url = entry.get("base_url") or "(OpenAI SDK default)"
+                compat = entry.get("compatible_with", "?")
+                # p3m3 item #82: a missing or expired key links to the provider's own key page (URL from config)
+                _cred_url = str(entry.get("credential_url") or "")
+                _state_text = (f"[{state}]({_cred_url}) — get a key" if _cred_url.startswith("https://")
+                               and state.startswith("unavailable") and ("credential" in state or "key_expired" in state)
+                               else state)
+                line = (
+                    f"{icon} **{label}** — {entry.get('model', '?')} ({_state_text})\n\n"
+                    f"{served_url} · {compat}-compatible"
                 )
-            st.sidebar.caption(line)
+                # None unless this entry has a free_entitlement_* allowance —
+                # added 2026-09-14, same information as main.py's
+                # free_tier_note, shown here too (not just attached to a live
+                # response) since this panel is the one place meant to answer
+                # "what would using this provider actually cost me."
+                free_amount = entry.get("free_entitlement_amount")
+                if free_amount is not None:
+                    line += (
+                        f"\n\nℹ️ {free_amount:g} {entry.get('free_entitlement_unit')}/"
+                        f"{entry.get('free_entitlement_period')} free — its cost_usd "
+                        "won't necessarily reflect money actually billed."
+                    )
+                st.sidebar.caption(line)
 
 # Week 2: ingest a document into the same Postgres collection (internship.vectors) /ask's
 # retrieval step reads from. Collapsed by default — most demo visits are
@@ -472,13 +525,11 @@ with main_col:
     # cut of this listed every provider_chain entry regardless of whether
     # it could actually serve a request, which meant picking one like
     # gemini or openrouter (no key set) would only ever fail.
-    _provider_names = sorted({
-        e["provider"] for e in _provider_status
-        if e.get("provider") != "openai" and str(e.get("status", "")).startswith("configured")
-    })
+    # Item 9: public mode offers Auto only (no provider inventory).
     provider_choice = st.selectbox(
         "Provider",
-        ["Auto (free-tier-first)", "openai"] + _provider_names,
+        provider_choices(_provider_status, _dev_mode),
+        disabled=not _dev_mode,
         help=(
             "Forces one specific provider on the no-override chain instead of "
             "letting the frontier ranking pick. 'openai' is handled via the "
@@ -536,7 +587,7 @@ with main_col:
                 "by design. Pick Auto to exercise that chain instead."
             )
         force_bad = False
-        if not is_stream:
+        if not is_stream and _dev_mode:  # item 9: development-only demo control
             force_bad = st.checkbox(
                 "Force a bad first response to demo validation + retry",
                 value=False,
@@ -562,6 +613,10 @@ with main_col:
         rag_mode = {"Auto": "auto", "Force RAG": "force_rag", "No RAG": "no_rag"}[rag_mode_choice]
         submitted = st.form_submit_button("Ask", type="primary")
 
+    if not _dev_mode:  # defence in depth: public requests never carry overrides
+        _is_specific_provider = False
+        model = None
+        force_bad = False
     forced_provider = provider_choice if _is_specific_provider else None
     payload = (
         build_stream_payload(question, model, forced_provider, rag_mode)
@@ -583,35 +638,38 @@ with main_col:
                 st.write(("✅ " if _s["ok"] else "❌ ") + f"{_s['step']}: {_s['detail']}")
 
     if submitted:
+        # Item 9: every display below is built from public_view, never from the
+        # raw API body, headers or error text.
         if is_stream:
             with st.spinner("Calling /ask/stream..."):
                 status, text, served_by, grounded, citations, skills_used = call_stream(
                     f"{base_url.rstrip('/')}{endpoint_path}", payload
                 )
+            stream_view = public_stream_view(status, text, grounded, citations, _api_host)
             st.markdown("### Response")
-            st.markdown(f"**HTTP {status}**" if status else "**Request failed**")
-            if status == 200 and grounded is not None:
-                st.caption(
-                    f"RAG grounded: {grounded}"
-                    + (f" — citations: {', '.join(citations)}" if citations else "")
-                )
-            if skills_used:
-                st.caption(f"Skills used (this project's own development): {', '.join(skills_used)}")
-            if served_by:
-                st.caption(f"Served by: {served_by}")
-                if status == 200:
-                    # /ask/stream returns no usage data at all (see
-                    # call_stream's docstring) — LAN-local's cost is
-                    # nonetheless exactly known ($0.0, not missing),
-                    # everything else is genuinely unknown.
-                    is_local = served_by.startswith(_LOCAL_PROVIDER_PREFIX)
-                    record_roundtrip(served_by, None, None, 0.0 if is_local else None)
-            st.markdown("### Answer")
-            st.write(text)
+            st.markdown(f"**HTTP {stream_view.http_status}**" if stream_view.http_status else "**Request failed**")
+            if _dev_mode and status == 200 and served_by:
+                # Development-only bookkeeping for the dev-only sidebar.
+                is_local = served_by.startswith(_LOCAL_PROVIDER_PREFIX)
+                record_roundtrip(served_by, None, None, 0.0 if is_local else None)
+            if stream_view.ok:
+                if stream_view.grounded is not None:
+                    st.caption(
+                        f"RAG grounded: {stream_view.grounded}"
+                        + (f" — {stream_view.citation_count} citation(s)" if stream_view.citation_count else "")
+                    )
+                st.markdown("### Answer")
+                try:
+                    st.markdown(stream_view.text, unsafe_allow_html=False)
+                except Exception as exc:
+                    _logger.warning("render failed: %s", type(exc).__name__)
+                    st.warning(REQUEST_FAILED_MESSAGE)
+            else:
+                st.warning(stream_view.message)
         else:
             with st.spinner("Calling /ask..."):
                 status, data = call_json("POST", f"{base_url.rstrip('/')}{endpoint_path}", payload)
-            if status == 200 and isinstance(data, dict) and "error" not in data:
+            if _dev_mode and status == 200 and isinstance(data, dict) and "error" not in data:
                 record_roundtrip(
                     str(data.get("model", "unknown")),
                     data.get("prompt_tokens"),
@@ -620,27 +678,23 @@ with main_col:
                     data.get("free_tier_note"),
                     data.get("latency_ms"),
                 )
+            view = public_ask_view(status, data, _api_host)
             st.markdown("### Response")
-            st.markdown(f"**HTTP {status}**" if status else "**Request failed**")
-            render_response_summary(data)
-            render_attempts(data)
+            st.markdown(f"**HTTP {view.http_status}**" if view.http_status else "**Request failed**")
+            try:
+                render_response_summary(view)
+            except Exception as exc:  # e.g. UnicodeEncodeError: fixed public message, never a traceback
+                _logger.warning("render failed: %s", type(exc).__name__)
+                st.warning(REQUEST_FAILED_MESSAGE)
 
-# Raw JSON: a peer of main_col (and so of Provider's own container), not
-# nested under Response — see the comment above main_col/raw_col.
+# Public-fields JSON panel: a peer of main_col (see the comment above
+# main_col/raw_col). Shows view.panel only (answer, status, rag_mode and two
+# counts; or a fixed error / withheld message). The raw API body is never
+# rendered, including non-JSON upstream text.
 if submitted and not is_stream:
     with raw_col:
-        with st.expander("Raw JSON", expanded=False):
-            # st.json expects an actual JSON-able object — handing it a
-            # plain string (call_json's fallback for a non-JSON body, e.g.
-            # Render's bare-text error responses) makes it try to
-            # client-side JSON.parse() that string and surface a raw
-            # "Json Parse Error" instead of just showing the text. Found
-            # live 2026-09-15 against a Render edge bounce during cold
-            # start.
-            if isinstance(data, (dict, list)):
-                st.json(data)
-            else:
-                st.code(str(data), language="text")
+        with st.expander("Response (JSON, public fields)", expanded=False):
+            st.json(view.panel)
 
 # Running (session) costs — left pane: shows what a call *would* cost
 # cumulatively as you keep testing, broken out per provider/model since
@@ -657,12 +711,14 @@ if submitted and not is_stream:
 # tokens/cost never appeared in the grand total. Moving it here (same
 # bottom-of-sidebar visual position, since it was already the last
 # sidebar section) fixes that without changing the layout.
-st.sidebar.markdown("### Running costs (this session)")
-render_running_costs()
+# Item 9: per-provider/model costs, tokens and latency are development-only.
+if _dev_mode:
+    st.sidebar.markdown("### Running costs (this session)")
+    render_running_costs()
 
-st.sidebar.markdown("### Latency (this session)")
-render_latency_boxplot()
+    st.sidebar.markdown("### Latency (this session)")
+    render_latency_boxplot()
 
-if st.sidebar.button("Reset session totals"):
-    st.session_state["running_costs"] = {}
-    st.rerun()
+    if st.sidebar.button("Reset session totals"):
+        st.session_state["running_costs"] = {}
+        st.rerun()

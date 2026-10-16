@@ -17,3 +17,4 @@ slowapi==0.1.10
 limits==5.8.0
 sqlalchemy==2.0.36
 streamlit==1.63.0
+markdown-it-py==4.2.0
